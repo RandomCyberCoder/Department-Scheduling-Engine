@@ -7,9 +7,11 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
+import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.solver.TimetableConstraintProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
@@ -31,23 +33,30 @@ public class TimetableApp {
     }
 
     public static void main(String[] args) {
-        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
-                .withSolutionClass(Timetable.class)
-                .withEntityClasses(Lesson.class)
-                .withConstraintProviderClass(TimetableConstraintProvider.class)
-                // The solver runs only for 5 seconds on this small dataset.
-                // It's recommended to run for at least 5 minutes ("5m") otherwise.
-                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+        System.out.println("does nothing");
+        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
+        ScheduleFormat schedule = parsedSchedules.get(0);
+        System.out.println("value of fall that is empty i think");
+        System.out.println(schedule.getName());
+        System.out.println(schedule.getFall().size());
 
-        // Load the problem
-        Timetable problem = generateDemoData(DemoData.SMALL);
-
-        // Solve the problem
-        Solver<Timetable> solver = solverFactory.buildSolver();
-        Timetable solution = solver.solve(problem);
-
-        // Visualize the solution
-        printTimetable(solution);
+//        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
+//                .withSolutionClass(Timetable.class)
+//                .withEntityClasses(Lesson.class)
+//                .withConstraintProviderClass(TimetableConstraintProvider.class)
+//                // The solver runs only for 5 seconds on this small dataset.
+//                // It's recommended to run for at least 5 minutes ("5m") otherwise.
+//                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+//
+//        // Load the problem
+//        Timetable problem = generateDemoData(DemoData.SMALL);
+//
+//        // Solve the problem
+//        Solver<Timetable> solver = solverFactory.buildSolver();
+//        Timetable solution = solver.solve(problem);
+//
+//        // Visualize the solution
+//        printTimetable(solution);
     }
 
     public static Timetable generateDemoData(DemoData demoData) {
