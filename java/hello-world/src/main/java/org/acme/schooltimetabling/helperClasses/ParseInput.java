@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.List;
 
 public class ParseInput {
+
     public static List<ScheduleFormat> readScheduleClasses(){
         List<ScheduleFormat> parsedSchedules = null;
         ObjectMapper objectMapper = new ObjectMapper();
