@@ -7,8 +7,7 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
-import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
+import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.solver.TimetableConstraintProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,12 +59,7 @@ public class TimetableApp {
         /*read the prev quarter survey*/
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
 
-
-        /*test code*/
-        BitSet bitSet = new BitSet();
-        bitSet.or(BitSetHelper.surveyBitset("9 PM"));
-        bitSet.or(BitSetHelper.surveyBitset("7 AM2"));
-        System.out.println(bitSet);
+        HashMap<String, Teacher>instructorHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
 
 
 
