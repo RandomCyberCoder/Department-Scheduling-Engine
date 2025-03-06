@@ -118,7 +118,10 @@ public class Generator {
     }
 
     public static ArrayList<Timeslot> generateTimeslots(){
-
+        //parse csv
+        //loop through entries
+            //insatniate a timeslot instance for every entry
+            //add the timeslot instant to our list
         return new ArrayList<>();
     }
 }

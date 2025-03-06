@@ -2,11 +2,64 @@ package org.acme.schooltimetabling.helperClasses;
 import org.apache.poi.hssf.record.CFHeaderRecord;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STUnsignedDecimalNumber;
 
+import java.time.LocalTime;
 import java.util.BitSet;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
 
 public class BitSetHelper {
+
+    private static final int MONDAY_OFFSET = 0;
+    private static final int TUESDAY_OFFSET = 30;
+    private static final int WEDNESDAY_OFFSET = 60;
+    private static final int THURSDAY_OFFSET = 90;
+    private static final int FRIDAY_OFFSET = 120;
+
+    public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, boolean monday,
+                                        boolean tuesday, boolean wednesday, boolean thursday,
+                                        boolean friday) throws Exception{
+        BitSet bitSet = new BitSet();
+        int dayOffset = 0;
+
+        dayOffset = switch (startTime.getHour()) {
+            case 7 -> 0;
+            case 8 -> 2;
+            case 9 -> 4;
+            case 10 -> 6;
+            case 11 -> 8;
+            case 12 -> 10;
+            case 13 -> 12;
+            case 14 -> 14;
+            case 15 -> 16;
+            case 16 -> 18;
+            case 17 -> 20;
+            case 18 -> 22;
+            case 19 -> 24;
+            case 20 -> 26;
+            case 21 -> 28;
+            default ->
+                    throw new Exception(String.format("There was an error reading the time '%s'", startTime.toString()));
+        };
+
+        /* the 'to index' (the second index passed) to BitSet.set() is exclusive*/
+        if(monday){
+            bitSet.set(MONDAY_OFFSET +  dayOffset, MONDAY_OFFSET + dayOffset + numberOfBlocks);
+        }
+        if(tuesday){
+            bitSet.set(TUESDAY_OFFSET +  dayOffset, TUESDAY_OFFSET + dayOffset + numberOfBlocks);
+        }
+        if(wednesday){
+            bitSet.set(WEDNESDAY_OFFSET +  dayOffset, WEDNESDAY_OFFSET + dayOffset + numberOfBlocks);
+        }
+        if(thursday){
+            bitSet.set(THURSDAY_OFFSET +  dayOffset, THURSDAY_OFFSET + dayOffset + numberOfBlocks);
+        }
+        if(friday){
+            bitSet.set(FRIDAY_OFFSET +  dayOffset, FRIDAY_OFFSET + dayOffset + numberOfBlocks);
+        }
+
+        return bitSet;
+    }
 
     public static BitSet surveyBitset(String header) throws Exception{
         /*bitset for a day is broken into 30min blocks starting from
