@@ -1,44 +1,74 @@
-days, time, hours
-MWF, 7:10am-9:00am, 2
-MWF, 8:10am-10:00am, 2
-MWF, 9:10am-11:00am, 2
-MWF, 10:10am-12:00pm, 2
-MWF, 11:10am-1:00pm, 2
-MWF, 12:10pm-2:00pm, 2
-MWF, 1:10pm-3:00pm, 2
-MWF, 2:10pm-4:00pm, 2
-MWF, 3:10pm-5:00pm, 2
-MWF, 4:10pm-6:00pm, 2
-MWF, 5:10pm-7:00pm, 2
-MWF, 6:10pm-8:00pm, 2
-MWF, 7:10pm-9:00pm, 2
-TR, 7:40am-9:00am, 1.5
-TR, 8:10am-9:30am, 1.5
-TR, 9:40am-11:00am, 1.5
-TR, 12:10pm-1:30pm, 1.5
-TR, 1:40pm-3:00pm, 1.5
-TR, 3:10pm-4:30pm, 1.5
-TR, 4:10pm-5:30pm, 1.5
-TR, 4:40pm-6:00pm, 1.5
-TR, 5:10pm-6:30pm, 1.5
-TR, 5:40pm-7:00pm, 1.5
-TR, 6:10pm-7:30pm, 1.5
-TR, 6:40pm-8:00pm, 1.5
-TR, 7:10pm-8:30pm, 1.5
-TR, 7:40pm-9:00pm, 1.5
-TR, 8:10pm-9:30pm, 1.5
-TR, 8:40pm-10:00pm, 1.5
-MTWR, 7:10am-8:00am, 1
-MTWR, 8:10am-9:00am, 1
-MTWR, 9:10am-10:00am, 1
-MTWR, 10:10am-11:00am, 1
-MTWR, 11:10am-12:00pm, 1
-MTWR, 12:10pm-1:00pm, 1
-MTWR, 1:10pm-2:00pm, 1
-MTWR, 2:10pm-3:00pm, 1
-MTWR, 3:10pm-4:00pm, 1
-MTWR, 4:10pm-5:00pm, 1
-MTWR, 5:10pm-6:00pm, 1
-MTWR, 6:10pm-7:00pm, 1
-MTWR, 7:10pm-8:00pm, 1
-MTWR, 8:10pm-9:00pm, 1
+days, time, lecture_hours, total_hours
+MWF, 7:00am-9:00am, 1, 2
+MWF, 8:00am-10:00am, 1, 2
+MWF, 9:00am-11:00am, 1, 2
+MWF, 10:00am-12:00pm, 1, 2
+MWF, 11:00am-1:00pm, 1, 2
+MWF, 12:00pm-2:00pm, 1, 2
+MWF, 1:00pm-3:00pm, 1, 2
+MWF, 2:00pm-4:00pm, 1, 2
+MWF, 3:00pm-5:00pm, 1, 2
+MWF, 4:00pm-6:00pm, 1, 2
+MWF, 5:00pm-7:00pm, 1, 2
+MWF, 6:00pm-8:00pm, 1, 2
+MWF, 7:00pm-9:00pm, 1, 2
+TR, 8:00am-11:00am, 1.5, 3
+TR, 12:00pm-3:00pm, 1.5, 3
+TR, 1:30pm-4:30pm, 1.5, 3
+TR, 3:00pm-6:00pm, 1.5, 3
+TR, 4:00pm-7:00pm, 1.5, 3
+TR, 4:30pm-7:30pm, 1.5, 3
+TR, 5:00pm-8:00pm, 1.5, 3
+TR, 5:30pm-8:30pm, 1.5, 3
+TR, 6:00pm-9:00pm, 1.5, 3
+TR, 6:30pm-9:30pm, 1.5, 3
+TR, 7:00pm-10:00pm, 1.5, 3
+MTWR, 7:00am-8:00am, 1, 1
+MTWR, 8:00am-9:00am, 1, 1
+MTWR, 9:00am-10:00am, 1, 1
+MTWR, 10:00am-11:00am, 1, 1
+MTWR, 11:00am-12:00pm, 1, 1
+MTWR, 12:00pm-1:00pm, 1, 1
+MTWR, 1:00pm-2:00pm, 1, 1
+MTWR, 2:00pm-3:00pm, 1, 1
+MTWR, 3:00pm-4:00pm, 1, 1
+MTWR, 4:00pm-5:00pm, 1, 1
+MTWR, 5:00pm-6:00pm, 1, 1
+MTWR, 6:00pm-7:00pm, 1, 1
+MTWR, 7:00pm-8:00pm, 1, 1
+MTWR, 8:00pm-9:00pm, 1, 1
+TR, 7:00am-9:00am, 2, 2
+TR, 9:00am-11:00am, 2, 2
+TR, 12:00pm-2:00pm, 2, 2
+TR, 2:00pm-4:00pm, 2, 2
+TR, 4:00pm-6:00pm, 2, 2
+TR, 5:00pm-7:00pm, 2, 2
+TR, 6:00pm-8:00pm, 2, 2
+TR, 7:00pm-9:00pm, 2, 2
+TR, 8:00pm-10:00pm, 2, 2
+MW, 7:00am-9:00am, 1, 2
+MW, 8:00am-10:00am, 1, 2
+MW, 9:00am-11:00am, 1, 2
+MW, 10:00am-12:00pm, 1, 2
+MW, 11:00am-1:00pm, 1, 2
+MW, 12:00pm-2:00pm, 1, 2
+MW, 1:00pm-3:00pm, 1, 2
+MW, 2:00pm-4:00pm, 1, 2
+MW, 3:00pm-5:00pm, 1, 2
+MW, 4:00pm-6:00pm, 1, 2
+MW, 5:00pm-7:00pm, 1, 2
+MW, 6:00pm-8:00pm, 1, 2
+MW, 7:00pm-9:00pm, 1, 2
+WF, 7:00am-9:00am, 1, 2
+WF, 8:00am-10:00am, 1, 2
+WF, 9:00am-11:00am, 1, 2
+WF, 10:00am-12:00pm, 1, 2
+WF, 11:00am-1:00pm, 1, 2
+WF, 12:00pm-2:00pm, 1, 2
+WF, 1:00pm-3:00pm, 1, 2
+WF, 2:00pm-4:00pm, 1, 2
+WF, 3:00pm-5:00pm, 1, 2
+WF, 4:00pm-6:00pm, 1, 2
+WF, 5:00pm-7:00pm, 1, 2
+WF, 6:00pm-8:00pm, 1, 2
+WF, 7:00pm-9:00pm, 1, 2
