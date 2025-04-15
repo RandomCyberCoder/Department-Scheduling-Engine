@@ -59,6 +59,7 @@ public class TimetableApp {
         /*read the prev quarter survey*/
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
 
+        /*teacher name -> teacher object*/
         HashMap<String, Teacher>instructorHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
 
 

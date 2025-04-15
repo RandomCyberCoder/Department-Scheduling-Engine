@@ -73,7 +73,7 @@ public class Timeslot {
         this.startTimeLec = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("h:mma"));
         /*LocalTime is immutable so doing this won't modify startTimeLec*/
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
-        /* initialize the lecture BitSet */
+        /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
         this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(lecHours * 2),
                 this.monday, this.tuesday, this.wednesday, this.thursday, this.friday);
 
@@ -81,6 +81,8 @@ public class Timeslot {
          * lectures only */
         if(this.onlyLec){
             this.startTimeLabAct = this.endTimeLabAct = this.endTimeLec;
+            /*if the first time slot was only a lecture time slot we now want to check if the adjacent time slot has
+            * a lab time.*/
             this.labActBitSet = new BitSet();
         }
         else{
