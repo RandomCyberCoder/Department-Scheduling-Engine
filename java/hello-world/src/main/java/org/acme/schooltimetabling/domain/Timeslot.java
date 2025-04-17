@@ -25,7 +25,8 @@ public class Timeslot {
     private LocalTime endTimeLabAct;
     private BitSet labActBitSet;
     private BitSet allTimesBitSet;
-    private boolean monday, tuesday, wednesday, thursday, friday;
+    private boolean lecMonday, lecTuesday, lecWednesday, lecThursday, lecFriday;
+    private boolean nonLecMonday, nonLecTuesday, nonLecWednesday, nonLecThursday, nonLecFriday
     float lecHours;
     float totalHours;
 
@@ -42,26 +43,27 @@ public class Timeslot {
         this.endTime = endTime;
     }
 
-    public Timeslot(int ID, String days, String startTime, LocalTime endTime, float lecHours, float totalHours)
+    public Timeslot(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
+                    String days2, String startTime2, String endTime2, float lecture_hours2, float total_hours2)
             throws Exception{
 
         this.ID = ID;
         /*Mark what days the timeslot occupies*/
-        monday = tuesday = wednesday = thursday = friday = false;
+        lecMonday = lecTuesday = lecWednesday = lecThursday = lecFriday = false;
         if(days.contains("M")){
-            monday = true;
+            lecMonday = true;
         }
         if(days.contains("T")){
-            tuesday = true;
+            lecTuesday = true;
         }
         if(days.contains("W")){
-            wednesday = true;
+            lecWednesday = true;
         }
         if(days.contains("R")){
-            thursday = true;
+            lecThursday = true;
         }
         if(days.contains("F")){
-            friday = true;
+            lecFriday = true;
         }
         /*determine if the timeslot will accommodate only lectures*/
         this.lecHours = lecHours;
@@ -75,25 +77,53 @@ public class Timeslot {
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
         /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
         this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(lecHours * 2),
-                this.monday, this.tuesday, this.wednesday, this.thursday, this.friday);
+                this.lecMonday, this.lecTuesday, this.lecWednesday, this.lecThursday, this.lecFriday);
 
         /* initialize the lab/activity members based off if the timeslot is for
          * lectures only */
         if(this.onlyLec){
-            this.startTimeLabAct = this.endTimeLabAct = this.endTimeLec;
             /*if the first time slot was only a lecture time slot we now want to check if the adjacent time slot has
             * a lab time.*/
-            this.labActBitSet = new BitSet();
+            if(days2.isBlank()){
+                this.labActBitSet = new BitSet();
+                this.startTimeLabAct = this.endTimeLabAct = this.endTimeLec;
+            }
+            else{
+                this.nonLecMonday = this.nonLecTuesday = this.nonLecWednesday = this.nonLecThursday = this.nonLecFriday = false;
+                if(days.contains("M")){
+                    this.nonLecMonday = true;
+                }
+                if(days.contains("T")){
+                    this.nonLecTuesday = true;
+                }
+                if(days.contains("W")){
+                    this.nonLecWednesday = true;
+                }
+                if(days.contains("R")){
+                    this.nonLecThursday = true;
+                }
+                if(days.contains("F")){
+                    this.nonLecFriday = true;
+                }
+                this.endTimeLabAct = LocalTime.parse(endTime2, DateTimeFormatter.ofPattern("h:mma"));
+                this.startTimeLabAct = LocalTime.parse(startTime2, DateTimeFormatter.ofPattern("h:mma"));
+                this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lecHours * 2),
+                        this.nonLecMonday, this.nonLecTuesday, this.nonLecWednesday, this.nonLecThursday, this.nonLecFriday);
+            }
         }
         else{
-            //ED this should really be endTime.minusMinutes(Math.round(lecHours * 60)))
-            this.startTimeLabAct = this.endTimeLec;
-            /* compute how much time is left after the lecture for the timeslot*/
-            //ED shouldn't this just be the endTime passed?
-            this.endTimeLabAct = startTimeLabAct.plusMinutes(Math.round(MINUTES_PER_HOUR * (this.totalHours - this.lecHours)));
+            /* end time of the timeslot is when the lab will end */
+            this.endTimeLabAct = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("h:mma"));
+            /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.*/
+            this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
             /* create BitSet for the lab/lec */
+            this.nonLecMonday = this.lecMonday;
+            this.nonLecTuesday = this.lecTuesday;
+            this.nonLecWednesday = this.lecWednesday;
+            this.nonLecThursday = this.lecThursday;
+            this.nonLecFriday = this.lecFriday;
             this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lecHours * 2),
-                    this.monday, this.tuesday, this.wednesday, this.thursday, this.friday);
+                    this.nonLecMonday, this.nonLecTuesday, this.nonLecWednesday, this.nonLecThursday, this.nonLecFriday);
         }
 
     }
