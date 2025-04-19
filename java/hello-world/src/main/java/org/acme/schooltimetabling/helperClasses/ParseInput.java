@@ -3,15 +3,36 @@ package org.acme.schooltimetabling.helperClasses;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
+import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 public class ParseInput {
     /*value for failing */
     private static final int PROGRAM_FAILURE = 1;
+    public static final String YAML_FILE_PATH = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/config.yaml";
+    public static ScheduleConfig scheduleConfig;
+
+    static{
+        Yaml yaml = new Yaml();
+        InputStream inputStream = null;
+        try {
+            // Load the YAML file
+            inputStream = new FileInputStream(YAML_FILE_PATH);
+            if (inputStream == null) {
+                throw new FileNotFoundException("YAML file not found at " + YAML_FILE_PATH);
+            }
+
+            // Initialize scheduleConfig with the parsed YAML content
+            scheduleConfig = yaml.loadAs(inputStream, ScheduleConfig.class);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Program is terminating. Couldn't read the yaml file");
+            System.exit(PROGRAM_FAILURE);
+        }
+    }
 
     public static List<ScheduleFormat> readScheduleClasses(){
         List<ScheduleFormat> parsedSchedules = null;

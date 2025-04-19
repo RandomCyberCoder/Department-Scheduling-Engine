@@ -30,6 +30,9 @@ public class TimetableApp {
 
     public static void main(String[] args) throws Exception{
         System.out.println("does nothing");
+        System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
+                ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
+                ParseInput.scheduleConfig.seasonTerm);
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
         ScheduleFormat schedule = parsedSchedules.get(0);
         System.out.println("value of fall that is empty i think");
