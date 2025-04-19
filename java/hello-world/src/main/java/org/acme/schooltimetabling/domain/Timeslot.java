@@ -15,8 +15,9 @@ public class Timeslot {
     private DayOfWeek dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
-    private int ID;
 
+    /*new*/
+    private int ID;
     private LocalTime startTimeLec;
     private LocalTime endTimeLec;
     private BitSet lectureBitSet;
