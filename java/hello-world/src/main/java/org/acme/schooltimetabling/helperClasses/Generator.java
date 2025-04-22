@@ -16,7 +16,7 @@ public class Generator {
      * @param times The name of the keys in the <code>surveyEntry</code> parameter
      * that corresponds to times
      * @param instructorID the unique ID for the instructor*/
-    private static Teacher generateTeacher(HashMap<String, String>surveyEntry, ArrayList<String>times,
+    private static Teacher generateTeacher(HashMap<String, String>surveyEntry, List<String>times,
                                     int instructorID) throws Exception{
         String instructorName = surveyEntry.get("name");
         BitSet preferred = new BitSet();
@@ -48,7 +48,7 @@ public class Generator {
      *
      * @param curQuarterSurvey current quarter survey file path assuming it's in src directory
      * @param prevQuarterSurvey prev quarter survey file path assuming it's in src directory*/
-    public static HashMap<String, Teacher> generateTeachers(ArrayList<HashMap<String, String>> curQuarterSurvey,
+    public static HashMap<String, Teacher> generateTeachers(List<HashMap<String, String>> curQuarterSurvey,
                                                      ArrayList<HashMap<String, String>>  prevQuarterSurvey) throws Exception
     {
         /* This Hash map will map the teacher's name to the teacher's object */
@@ -59,7 +59,7 @@ public class Generator {
         /*List of the time headers that are key's in the survey
         * entry HashMaps*/
         /*make it unmodifiable because this list should never change*/
-        final ArrayList<String> surveyTimes = (ArrayList<String>)
+        final List<String> surveyTimes =
                 Collections.unmodifiableList(new ArrayList<>(Arrays.asList(
                 "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
                 "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",

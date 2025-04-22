@@ -77,28 +77,29 @@ public class ParseInput {
                         headers = replacementHeaders;
                     }
                     headerRead = true;
+                    continue;
                 }
 
                 //System.out.println("----------- Reading a record -----------");
-                Stack<String> headerStack = new Stack<>();
-                headerStack.addAll(headers);
+                Queue<String> headerStack = new LinkedList<>(replacementHeaders);
+                //headerStack.addAll(headers);
                 int overFlow = 1;
                 for (String cell : nextRecord) {
                     /*if we run out of headers we create sum for excess data to prevent
                      * data loss.
                      * */
-                    if (headerStack.empty()) {
+                    if (headerStack.isEmpty()) {
                         String overFlowHeader = String.format("overFlow_%d", overFlow++);
                         mapRow.put(overFlowHeader, cell);
                     } else {
-                        String nextHeaderKey = headerStack.pop();
+                        String nextHeaderKey = headerStack.remove();
                         mapRow.put(nextHeaderKey, cell);
                     }
                     //System.out.println(cell + "\t");
                 }
                 /*if the queue of headers is not empty we assign those headers an empty string
                 value for the key-value mapping*/
-                if (!headerStack.empty()) {
+                if (!headerStack.isEmpty()) {
                     for (String header : headerStack) {
                         mapRow.put(header, "");
                     }
