@@ -53,6 +53,8 @@ public class TimetableApp {
                         "pref", "comment", "stars")
         );
 
+
+
         /*read the current quarter survey*/
         String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
         String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
@@ -63,6 +65,8 @@ public class TimetableApp {
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>instructorHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+
+        ArrayList<Timeslot> timesRead = Generator.generateTimeslots();
 
 
 

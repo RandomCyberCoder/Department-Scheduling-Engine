@@ -119,9 +119,24 @@ public class Generator {
 
     public static ArrayList<Timeslot> generateTimeslots(){
         //parse csv
+        String timeslotsFile = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/possibleTimes.csv";
+        ArrayList<HashMap<String, String>> timeslotList = null;
+        try{
+            timeslotList = ParseInput.readCSV(timeslotsFile, null);
+            if(timeslotList.isEmpty()){
+                throw new Exception("timeslot list is empty");
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            System.exit(ParseInput.PROGRAM_FAILURE);
+        }
         //loop through entries
-            //insatniate a timeslot instance for every entry
+        for(HashMap<String, String > timeslotMap: timeslotList) {
+            //instantiate a timeslot instance for every entry
+
             //add the timeslot instant to our list
+        }
         return new ArrayList<>();
     }
 }

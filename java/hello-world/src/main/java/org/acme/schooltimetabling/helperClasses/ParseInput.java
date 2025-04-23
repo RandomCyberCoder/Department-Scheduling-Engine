@@ -10,7 +10,7 @@ import java.util.*;
 
 public class ParseInput {
     /*value for failing */
-    private static final int PROGRAM_FAILURE = 1;
+    public static final int PROGRAM_FAILURE = 1;
     public static final String YAML_FILE_PATH = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/config.yaml";
     public static ScheduleConfig scheduleConfig;
 
