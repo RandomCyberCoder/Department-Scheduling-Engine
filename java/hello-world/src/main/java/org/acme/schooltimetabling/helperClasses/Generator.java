@@ -55,7 +55,7 @@ public class Generator {
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
         /*ID for a teacher. Will increment everytime */
         int teacherId = 0;
-        String bleedForward = "Yes, use the same as last term";
+        final String bleedForward = "Yes, use the same as last term";
         /*List of the time headers that are key's in the survey
         * entry HashMaps*/
         /*make it unmodifiable because this list should never change*/

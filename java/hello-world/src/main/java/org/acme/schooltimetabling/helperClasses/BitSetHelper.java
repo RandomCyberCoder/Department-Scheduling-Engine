@@ -71,8 +71,9 @@ public class BitSetHelper {
         int thursdayOffset = 90;
         int fridayOffset = 120;
         int dayOffset = 0;
+        boolean timeTR = "2".equals(header.substring(header.length() -1));
         /*truncate the 2 if this is a TR time*/
-        String time = "2".equals(header.substring(header.length() -1)) ? header.substring(0, header.length()-1) : header;
+        String time = timeTR ? header.substring(0, header.length()-1) : header;
 
         dayOffset = switch (time) {
             case "7 AM" -> 0;
@@ -98,7 +99,7 @@ public class BitSetHelper {
         /*Note that we set <dayOffWeek>Offset + dayOffset for first
         * 30 minutes of the hour then add one for the second 30 minutes
         * of the hour*/
-        if(header.contains("2")){
+        if(timeTR){
             /*set Tuesday bits*/
             bitset.set(tuesdayOffset + dayOffset);
             bitset.set(tuesdayOffset + dayOffset + 1);
