@@ -65,8 +65,6 @@ public class BitSetHelper {
         /*bitset for a day is broken into 30min blocks starting from
         * 7:00 AM - 10:00 PM for a total of 30 30-minute blocks per day*/
         BitSet bitset = new BitSet();
-        /*check if the time is for TR or MWF; if it has a 2 then TR*/
-        boolean onTR = header.contains("2");
         int mondayOffset = 0;
         int tuesdayOffset = 30;
         int wednesdayOffset = 60;
@@ -74,7 +72,7 @@ public class BitSetHelper {
         int fridayOffset = 120;
         int dayOffset = 0;
         /*truncate the 2 if this is a TR time*/
-        String time = onTR ? header.substring(0, header.length()-1) : header;
+        String time = "2".equals(header.substring(header.length() -1)) ? header.substring(0, header.length()-1) : header;
 
         dayOffset = switch (time) {
             case "7 AM" -> 0;
