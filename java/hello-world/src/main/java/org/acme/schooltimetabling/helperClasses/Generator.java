@@ -117,13 +117,20 @@ public class Generator {
         return teacherHashMap;
     }
 
+    private static Timeslot generateTimeslot(HashMap<String, String> timeslotMap, List<String> timeslotCSVHeaders){
+        Timeslot generatedTimeslot;
+        return new Timeslot();
+    }
     public static ArrayList<Timeslot> generateTimeslots(){
         //parse csv
         String timeslotsFile = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/possibleTimes.csv";
-        ArrayList<HashMap<String, String>> timeslotList = null;
+        List<String> timeslotCSVHeaders = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("days", "time_start",
+                "time_end", "lecture_hours", "total_hours", "days2", "time_start2", "time_end2", "lecture_hours2", "total_hours2")));
+        ArrayList<Timeslot> timeslotList = new ArrayList<>();
+        ArrayList<HashMap<String, String>> timeslotCSV= null;
         try{
-            timeslotList = ParseInput.readCSV(timeslotsFile, null);
-            if(timeslotList.isEmpty()){
+            timeslotCSV = ParseInput.readCSV(timeslotsFile, null);
+            if(timeslotCSV.isEmpty()){
                 throw new Exception("timeslot list is empty");
             }
         }
@@ -132,11 +139,12 @@ public class Generator {
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
         //loop through entries
-        for(HashMap<String, String > timeslotMap: timeslotList) {
+        for(HashMap<String, String > timeslotMap: timeslotCSV) {
             //instantiate a timeslot instance for every entry
-
+            Timeslot newTimeslot = generateTimeslot(timeslotMap, timeslotCSVHeaders);
             //add the timeslot instant to our list
+            timeslotList.add(newTimeslot);
         }
-        return new ArrayList<>();
+        return timeslotList;
     }
 }
