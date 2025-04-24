@@ -7,6 +7,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ParseInput {
     /*value for failing */
@@ -72,7 +73,8 @@ public class ParseInput {
                 if (!headerRead) {
                     /*check if user wants the default header of they gave us a new header to use*/
                     if (replacementHeaders == null) {
-                        headers = (ArrayList<String>) Arrays.asList(nextRecord);
+                        headers = Arrays.stream(nextRecord)
+                                .map(String::trim).collect(Collectors.toCollection(ArrayList::new));
                     } else {
                         headers = replacementHeaders;
                     }
@@ -81,7 +83,7 @@ public class ParseInput {
                 }
 
                 //System.out.println("----------- Reading a record -----------");
-                Queue<String> headerStack = new LinkedList<>(replacementHeaders);
+                Queue<String> headerStack = new LinkedList<>(headers);
                 //headerStack.addAll(headers);
                 int overFlow = 1;
                 for (String cell : nextRecord) {

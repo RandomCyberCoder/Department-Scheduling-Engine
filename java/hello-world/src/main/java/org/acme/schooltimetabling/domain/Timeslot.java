@@ -79,7 +79,7 @@ public class Timeslot {
         this.onlyLec = Math.abs(lecHours - totalHours) < FLOAT_TIME_DELTA;
 
         /*check start and end time for the lab and possibly for the lab/activity */
-        this.startTimeLec = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("h:mma"));
+        this.startTimeLec = LocalTime.parse(startTime.trim(), DateTimeFormatter.ofPattern("h:mma"));
         /*LocalTime is immutable so doing this won't modify startTimeLec*/
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
         /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
@@ -114,15 +114,15 @@ public class Timeslot {
                 if(days.contains("F")){
                     this.nonLecFriday = true;
                 }
-                this.endTimeLabAct = LocalTime.parse(endTime2, DateTimeFormatter.ofPattern("h:mma"));
-                this.startTimeLabAct = LocalTime.parse(startTime2, DateTimeFormatter.ofPattern("h:mma"));
+                this.endTimeLabAct = LocalTime.parse(endTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
+                this.startTimeLabAct = LocalTime.parse(startTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
                 this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(total_hours2 * 2),
                         this.nonLecMonday, this.nonLecTuesday, this.nonLecWednesday, this.nonLecThursday, this.nonLecFriday);
             }
         }
         else{
             /* end time of the timeslot is when the lab will end */
-            this.endTimeLabAct = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("h:mma"));
+            this.endTimeLabAct = LocalTime.parse(endTime.trim(), DateTimeFormatter.ofPattern("h:mma"));
             /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.*/
             this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
             /* create BitSet for the lab/lec */
