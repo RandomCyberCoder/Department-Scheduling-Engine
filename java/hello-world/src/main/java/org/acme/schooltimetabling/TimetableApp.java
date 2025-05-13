@@ -34,13 +34,16 @@ public class TimetableApp {
         System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
                 ParseInput.scheduleConfig.seasonTerm);
+        /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
+        //note that when we start the generation of classes i think we can skip the step that beard has
+        //where he creates a string on unprocessed stuff
         ScheduleFormat schedule = parsedSchedules.get(0);
         System.out.println("value of fall that is empty i think");
         System.out.println(schedule.getName());
         System.out.println(schedule.getFall().size());
-        String splited[] = "unsplitable-".split("-");
+        String splited[] = "unsplitable- ".split("-");
         Stream.of(splited).forEach(System.out::println);
         System.out.println(splited.length);
 //        /*New headers for the survey*/
