@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 public class ParseInput {
     /*value for failing */
     public static final int PROGRAM_FAILURE = 1;
-    public static final String YAML_FILE_PATH = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/config.yaml";
-    public static ScheduleConfig scheduleConfig;
     public static final String PATH_FROM_ROOT = "java/hello-world/src/main/java/org/acme/schooltimetabling/";
+    public static final String YAML_FILE_PATH = PATH_FROM_ROOT + "constants/config.yaml";
+    public static ScheduleConfig scheduleConfig;
 
     static{
         Yaml yaml = new Yaml();

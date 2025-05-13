@@ -2,6 +2,10 @@ package org.acme.schooltimetabling.constants;
 
 import java.util.Map;
 
+/**
+ * This class is should contain constants that are used throughout the program that don't
+ * fit anywhere else, like a class.
+ */
 public class Constants {
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
     public static final Map<String, String> SKIP_SCHEDULE;
