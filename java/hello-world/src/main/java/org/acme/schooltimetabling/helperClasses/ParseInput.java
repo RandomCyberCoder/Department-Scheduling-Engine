@@ -15,8 +15,6 @@ public class ParseInput {
     public static final String YAML_FILE_PATH = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/config.yaml";
     public static ScheduleConfig scheduleConfig;
     public static final String PATH_FROM_ROOT = "java/hello-world/src/main/java/org/acme/schooltimetabling/";
-    public static final Map<String, String> SPECIAL_CODE_CONVERSION;
-    public static final Map<String, String> SKIP_SCHEDULE;
 
     static{
         Yaml yaml = new Yaml();
@@ -37,22 +35,6 @@ public class ParseInput {
             System.exit(PROGRAM_FAILURE);
         }
 
-        SPECIAL_CODE_CONVERSION = Map.ofEntries(
-                Map.entry("",""),
-                Map.entry("R", "Remote"),
-                Map.entry("S2", "SecondSplit"),
-                Map.entry("H", "HandSchedule"),
-                Map.entry("M", "Double"),
-                Map.entry("MM", "Triple")
-        );
-
-        SKIP_SCHEDULE = Map.ofEntries(
-                Map.entry("Remote", ""),
-                Map.entry("SecondSplit", ""),
-                Map.entry("HandSchedule", ""),
-                Map.entry("Double", ""),
-                Map.entry("Triple", "")
-        );
     }
 
     public static List<ScheduleFormat> readScheduleClasses(){
