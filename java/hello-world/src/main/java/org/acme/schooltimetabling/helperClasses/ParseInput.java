@@ -14,6 +14,9 @@ public class ParseInput {
     public static final int PROGRAM_FAILURE = 1;
     public static final String YAML_FILE_PATH = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/config.yaml";
     public static ScheduleConfig scheduleConfig;
+    public static final String PATH_FROM_ROOT = "java/hello-world/src/main/java/org/acme/schooltimetabling/";
+    public static final Map<String, String> SPECIAL_CODE_CONVERSION;
+    public static final Map<String, String> SKIP_SCHEDULE;
 
     static{
         Yaml yaml = new Yaml();
@@ -33,6 +36,23 @@ public class ParseInput {
             System.out.println("Program is terminating. Couldn't read the yaml file");
             System.exit(PROGRAM_FAILURE);
         }
+
+        SPECIAL_CODE_CONVERSION = Map.ofEntries(
+                Map.entry("",""),
+                Map.entry("R", "Remote"),
+                Map.entry("S2", "SecondSplit"),
+                Map.entry("H", "HandSchedule"),
+                Map.entry("M", "Double"),
+                Map.entry("MM", "Triple")
+        );
+
+        SKIP_SCHEDULE = Map.ofEntries(
+                Map.entry("Remote", ""),
+                Map.entry("SecondSplit", ""),
+                Map.entry("HandSchedule", ""),
+                Map.entry("Double", ""),
+                Map.entry("Triple", "")
+        );
     }
 
     public static List<ScheduleFormat> readScheduleClasses(){
@@ -118,5 +138,44 @@ public class ParseInput {
 
 
         return csvRead;
+    }
+
+    /**
+     * Reads the course configuration file given and returns the courses mapped
+     * to their configurations. Both key and values will be strings
+     *
+     * @param filePath file path assuming its read as you're in the project directory
+     * @return a hashmap with the course name as the key and the configuration as the value
+     */
+    public static HashMap<String, String> readCourseConfigs(String filePath) throws Exception{
+        HashMap<String, String> courseConfigs = new HashMap<>();
+        String completeFilePath = PATH_FROM_ROOT + filePath;
+
+        try{
+            BufferedReader buf = new BufferedReader(new FileReader(completeFilePath));
+            String lineRead = null;
+            String lineProcessed[];
+            String course;
+            String configuration;
+
+            while(true){
+                lineRead = buf.readLine();
+                if(lineRead == null){
+                    break;
+                }
+                lineProcessed = lineRead.split("\t");
+                course = lineProcessed[0];
+                configuration = lineProcessed[1];
+                courseConfigs.put(course, configuration);
+            }
+
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            System.out.format("Tried to read file at path \"%s\"", completeFilePath);
+            throw new Exception("Error thrown from readCourseConfigs from ParseInput Class");
+        }
+        return courseConfigs;
     }
 }
