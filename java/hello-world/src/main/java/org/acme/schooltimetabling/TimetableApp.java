@@ -46,6 +46,7 @@ public class TimetableApp {
         String splited[] = "unsplitable- ".split("-");
         Stream.of(splited).forEach(System.out::println);
         System.out.println(splited.length);
+
 //        /*New headers for the survey*/
 //        ArrayList<String> newSurveyHeaders = new ArrayList<>(
 //                Arrays.asList("id", "start", "complete", "email", "name", "use_old",
