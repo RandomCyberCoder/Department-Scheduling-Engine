@@ -1,6 +1,8 @@
 package org.acme.schooltimetabling.constants;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is should contain constants that are used throughout the program that don't
@@ -8,7 +10,7 @@ import java.util.Map;
  */
 public class Constants {
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
-    public static final Map<String, String> SKIP_SCHEDULE;
+    public static final Set<String> SKIP_SCHEDULE;
     static{
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
                 Map.entry("",""),
@@ -19,12 +21,8 @@ public class Constants {
                 Map.entry("MM", "Triple")
         );
 
-        SKIP_SCHEDULE = Map.ofEntries(
-                Map.entry("Remote", ""),
-                Map.entry("SecondSplit", ""),
-                Map.entry("HandSchedule", ""),
-                Map.entry("Double", ""),
-                Map.entry("Triple", "")
-        );
+        SKIP_SCHEDULE =  Set.of("Remote", "SecondSplit", "HandSchedule",
+                "Double", "Triple");
+
     }
 }

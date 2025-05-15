@@ -1,12 +1,15 @@
 package org.acme.schooltimetabling.helperClasses;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Generator {
     /**
@@ -181,9 +184,14 @@ public class Generator {
     }
 
 
+
     public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                        List<ScheduleFormat> schedules){
         final int STARTING_SECTION_NUMBER = 1;
+        final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
+        final String DEPARTMENT = ParseInput.scheduleConfig.department;
+        LinkedList<Lesson> lessons = new LinkedList<>();
+
         /*create a list of courses to section number*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
         for(String course: courseConfigs.keySet()){
@@ -193,32 +201,61 @@ public class Generator {
             courseSectionCounter.put(course, STARTING_SECTION_NUMBER);
         }
 
+        /*loop through what schedule (list of courses) a teacher is planned
+        * to teach*/
         for(ScheduleFormat schedule: schedules){
-            //read name
             final String teacherName = schedule.getName();
-            final String currentTerm = ParseInput.scheduleConfig.curTerm;
-            //use the quarter to determine what list to read
+            /*This is a list courses that will be scheduled*/
             List<String> coursesToSchedule;
-            if("fall".equals(currentTerm)){
-                coursesToSchedule = schedule.getFall();
+
+            /*some instructors might be in multiple departments, so we may not want
+            * to make sure we only schedule courses for the department we are only concerned
+            * about */
+            List<String> potentialCourses = new ArrayList<>();
+            if("fall".equals(CURRENT_TERM)){
+                potentialCourses = schedule.getFall();
             }
-            else if("winter".equals(currentTerm)){
-                coursesToSchedule = schedule.getWinter();
+            else if("winter".equals(CURRENT_TERM)){
+                potentialCourses = schedule.getWinter();
             }
             else{
-                coursesToSchedule = schedule.getSpring();
+                potentialCourses = schedule.getSpring();
             }
 
-            List<String> coursesToSchedule;
-            /*once list is identified only add classes to schedule for the person based on if the
-            * the course has the abbreviation.*/
+            /*filter out the courses that aren't currently in the department we
+            * want to schedule*/
+            coursesToSchedule = potentialCourses.stream()
+                    .filter(course -> course.contains(DEPARTMENT)).
+                    collect(Collectors.toCollection(ArrayList::new));
+
+
             /*once list has been made schedule */
+            for(String course: coursesToSchedule){
+                /*we check if the course has any modifiers
+                * This is also used to check if we want to skip the course*/
+                String[] courseInformation = course.split("-");
+                if(courseInformation.length == 1){
+                    /*creat class*/
+                }
+                else{
+                    /*we found a modifier so check if we want to schedule it
+                    * or do anything special*/
+                    if(Constants.SKIP_SCHEDULE.contains(courseInformation[0])){
+                        continue;
+                    }
+                    //Create the lesson
+                }
+            }
+
 
         }
     }
 
     /**
-     * This method will take a mapping of courseConfig
+     * <p>This method will take an iterator of all possible courses and will
+     * return a bidirectional map of courses in the current department we want
+     * to schedule mapped to an ID created for them (an integer)</p>
+     *
      * @param courses an iterator for all courses
      * @return A bidirectional map of a course to its ID
      */

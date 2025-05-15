@@ -46,7 +46,7 @@ public class TimetableApp {
         System.out.println("value of fall that is empty i think");
         System.out.println(schedule.getName());
         System.out.println(schedule.getFall().size());
-        String splited[] = "unsplitable- ".split("-");
+        String splited[] = "-unsplitable- ".split("-");
         Stream.of(splited).forEach(System.out::println);
         System.out.println(splited.length);
 
