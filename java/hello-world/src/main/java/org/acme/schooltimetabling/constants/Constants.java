@@ -1,16 +1,18 @@
 package org.acme.schooltimetabling.constants;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * This class is should contain constants that are used throughout the program that don't
+ * This class is should contain constants that are used throughout the program that don"t
  * fit anywhere else, like a class.
  */
 public class Constants {
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
     public static final Set<String> SKIP_SCHEDULE;
+    public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
     static{
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
                 Map.entry("",""),
@@ -23,6 +25,18 @@ public class Constants {
 
         SKIP_SCHEDULE =  Set.of("Remote", "SecondSplit", "HandSchedule",
                 "Double", "Triple");
+
+        /*These are the starter mapping we have but have to create more later*/
+        /*Ideally all the mapping should be here or in some file that can be read from*/
+        TEACHER_NAME_TO_CANON = new HashMap<>(Map.ofEntries(
+                Map.entry("BJ Klingenberg", "Klingenberg, Bernhard J."),
+                Map.entry("James Mealy", "Mealy, Bryan J."),
+                Map.entry("John Fox", "Fox, J. Kristofer"),
+                Map.entry("Dave Parkinson", "Parkinson, David Shawn"),
+                Map.entry("Lucas Pierce", "Pierce, Lucas Shane"),
+                Map.entry("Kirk Duran", "Duran, Kirk Alberto"),
+                Map.entry("Bret Hartman", "Hartman, Bret Andrew")
+                ));
 
     }
 }

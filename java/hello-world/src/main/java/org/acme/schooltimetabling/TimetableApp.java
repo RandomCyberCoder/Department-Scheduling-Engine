@@ -4,6 +4,7 @@ import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
 import com.google.common.collect.BiMap;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -30,56 +31,64 @@ public class TimetableApp {
         LARGE
     }
 
+    private static HashMap<String, Teacher> remapName(HashMap<String, Teacher> teacherHashMap){
+        HashMap<String, Teacher> reampedNames = new HashMap<>();
+        String canonName;
+        final HashMap<String, String> TEACHER_NAME_TO_CANON = Constants.TEACHER_NAME_TO_CANON;
+
+        for(String teacherName: teacherHashMap.keySet()){
+            Teacher teacherObj = teacherHashMap.get(teacherName);
+            canonName = TEACHER_NAME_TO_CANON.get(teacherName);
+            reampedNames.put(canonName, teacherObj);
+        }
+
+        return  reampedNames;
+    }
+
     public static void main(String[] args) throws Exception{
         System.out.println("does nothing");
         System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
                 ParseInput.scheduleConfig.seasonTerm);
+
+        /*New headers for the survey*/
+        ArrayList<String> newSurveyHeaders = new ArrayList<>(
+                Arrays.asList("id", "start", "complete", "email", "name", "use_old",
+                        "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
+                        "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",
+                        "8 AM2","9 AM2","10 AM2","11 AM2","12 PM2","1 PM2","2 PM2",
+                        "3 PM2","4 PM2","5 PM2","6 PM2","7 PM2","8 PM2","9 PM2",
+                        "mwf_1", "tr_1", "mwf_2", "mwf_tr",
+                        "tr_2", "mwf_3","mwf_2_tr_1", "mwf_1_tr_2",
+                        "tr_3", "mwrf", "mtwr", "mw", "tr",
+                        "back_to_back", "gap", "constraint", "require",
+                        "pref", "comment", "stars")
+        );
+
+
+
+        /*read the current quarter survey*/
+        String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
+        String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
+        System.out.println("Reading the current quarter teacher survey");
+        ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
+        System.out.println("Reading the previous quarter teacher survey");
+        /*read the prev quarter survey*/
+        ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
+        /*teacher name -> teacher object*/
+        HashMap<String, Teacher>teacherHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+        ArrayList<Timeslot> timesRead = Generator.generateTimeslots();
+
         /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
+        /*create mapping of all the possible names a teacher has to their cannon name*/
+        Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);
+        /*redo mapping of teacherHashMap to use canon names instead.
+        *  Needed for when we create the Lessons... what a headache*/
+        teacherHashMap = remapName(teacherHashMap);
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules);
-        //note that when we start the generation of classes i think we can skip the step that beard has
-        //where he creates a string on unprocessed stuff
-        ScheduleFormat schedule = parsedSchedules.get(0);
-        System.out.println("value of fall that is empty i think");
-        System.out.println(schedule.getName());
-        System.out.println(schedule.getFall().size());
-        String splited[] = "-unsplitable- ".split("-");
-        Stream.of(splited).forEach(System.out::println);
-        System.out.println(splited.length);
-
-//        /*New headers for the survey*/
-//        ArrayList<String> newSurveyHeaders = new ArrayList<>(
-//                Arrays.asList("id", "start", "complete", "email", "name", "use_old",
-//                        "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
-//                        "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",
-//                        "8 AM2","9 AM2","10 AM2","11 AM2","12 PM2","1 PM2","2 PM2",
-//                        "3 PM2","4 PM2","5 PM2","6 PM2","7 PM2","8 PM2","9 PM2",
-//                        "mwf_1", "tr_1", "mwf_2", "mwf_tr",
-//                        "tr_2", "mwf_3","mwf_2_tr_1", "mwf_1_tr_2",
-//                        "tr_3", "mwrf", "mtwr", "mw", "tr",
-//                        "back_to_back", "gap", "constraint", "require",
-//                        "pref", "comment", "stars")
-//        );
-//
-//
-//
-//        /*read the current quarter survey*/
-//        String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
-//        String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
-//        System.out.println("Reading the current quarter teacher survey");
-//        ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
-//        System.out.println("Reading the previous quarter teacher survey");
-//        /*read the prev quarter survey*/
-//        ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
-//        /*teacher name -> teacher object*/
-//        HashMap<String, Teacher>instructorHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-//        Float.parseFloat(" 1");
-//        ArrayList<Timeslot> timesRead = Generator.generateTimeslots();
-//
-
+        //Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
 
         //their stuff

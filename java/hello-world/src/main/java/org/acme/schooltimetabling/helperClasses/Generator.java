@@ -190,11 +190,15 @@ public class Generator {
 
 
     public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
-                                       List<ScheduleFormat> schedules){
+                                       List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department;
         LinkedList<Lesson> lessons = new LinkedList<>();
+        int lessonID = 1;
+        String[] courseInformation;
+        String courseName;
+        String coureseModifier;
 
         /*create a list of courses to section number*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
@@ -237,17 +241,22 @@ public class Generator {
             for(String course: coursesToSchedule){
                 /*we check if the course has any modifiers
                 * This is also used to check if we want to skip the course*/
-                String[] courseInformation = course.split("-");
+                courseInformation = course.split("-");
                 if(courseInformation.length == 1){
-                    /*creat class*/
+                    courseName = courseInformation[0];
+                    /*create class*/
                 }
                 else{
+                    courseName = courseInformation[1];
+                    coureseModifier = courseInformation[0];
                     /*we found a modifier so check if we want to schedule it
                     * or do anything special*/
                     if(Constants.SKIP_SCHEDULE.contains(courseInformation[0])){
                         continue;
                     }
-                    //Create the lesson
+                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), courseName, teacherName,
+                            coureseModifier, courseConfigs.get(courseName), courseIdMapping.get(courseName),
+                            teacherHashMap.get());
                 }
             }
 
@@ -255,6 +264,46 @@ public class Generator {
         }
     }
 
+    /**
+     * <p>The function creates a mapping from the names in the teacher HashMap to the respective
+     * name in the schedules List. We need this so we can link the names in the teachers survey file
+     * to the names in the schedule-DEPARTMENT-TERM file because they names are not the same. The name
+     * in the latter file will be the cannon name which all names for the teacher must map to.</p>
+     *
+     * @param teacherHashMap Hashmap of the teacher's name to their Teacher object
+     * @param schedules List of ScheduleFormat objects that contain what courses each teacher will teach
+     * @return A mapping of the names from the teacher HashMap to the respective name in the List parameter
+     */
+    public static void createTeacherNameMapping(
+            HashMap<String, Teacher> teacherHashMap, List<ScheduleFormat> schedules){
+        String teacherName_schedule;
+        String[] nameSplit;
+        String firstName;
+        String lastName;
+        HashMap<String, String> teacherNameToCanon = Constants.TEACHER_NAME_TO_CANON;
+        for(String teacherName: teacherHashMap.keySet()){
+            /*I'm assuming here that the names in the survey file are in the format
+            * "<First> <Last>" where first and last are both char sequences with no spaces*/
+            nameSplit = teacherName.split(" ");
+            firstName = nameSplit[0];
+            lastName = nameSplit[1];
+            for(ScheduleFormat schedule: schedules){
+                teacherName_schedule = schedule.getName();
+                if(teacherName_schedule.contains(firstName) && teacherName_schedule.contains(lastName)){
+                    teacherNameToCanon.put(teacherName, teacherName_schedule);
+                }
+            }
+        }
+    }
+
+    private static Teacher findTeacher(String teacherName, HashMap<String, Teacher> teacherHashMap) throws Exception{
+        /*Later on we should include more sophisticated code to do extra searches to find a teacher*/
+        Teacher teacherFound = teacherHashMap.get(teacherName);
+        if(teacherFound == null){
+            throw new Exception(String.format("Couldn't find a teacher object for teacher '%s'", teacherName));
+        }
+        return teacherFound;
+    }
     /**
      * <p>This method will take an iterator of all possible courses and will
      * return a bidirectional map of courses in the current department we want
