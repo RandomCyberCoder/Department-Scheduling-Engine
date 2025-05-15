@@ -11,6 +11,10 @@ import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/*TODO makes this generator class a abstract parent class:
+*   -should have abstract methods: generateObj and generateObjects
+*   -child classes will be gen<Obj> where objec can be Class, Teacher, ....
+*   -any other non specific class methods can go in the parent class... I think*/
 public class Generator {
     /**
      * Generates the Teacher object for the instructor's survey entry. It
