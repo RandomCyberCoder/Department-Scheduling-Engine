@@ -13,6 +13,16 @@ public class Lesson {
     private String subject;
     private String teacher;
     private String studentGroup;
+    public String courseName;
+    public String teacherName;
+    public int courseID;
+    public int teacherID;
+    public boolean lab_activity;
+    public int lec_section;
+    public String modifiers;
+    public float lec_hours;
+    public float lab_activity_hours;
+
 
     @PlanningVariable
     private Timeslot timeslot;

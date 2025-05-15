@@ -1,4 +1,6 @@
 package org.acme.schooltimetabling.helperClasses;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.Teacher;
@@ -177,4 +179,62 @@ public class Generator {
         }
         return timeslotList;
     }
+
+
+    public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
+                                       List<ScheduleFormat> schedules){
+        final int STARTING_SECTION_NUMBER = 1;
+        /*create a list of courses to section number*/
+        HashMap<String, Integer> courseSectionCounter = new HashMap<>();
+        for(String course: courseConfigs.keySet()){
+            if(!course.contains(ParseInput.scheduleConfig.department)){
+                continue;
+            }
+            courseSectionCounter.put(course, STARTING_SECTION_NUMBER);
+        }
+
+        for(ScheduleFormat schedule: schedules){
+            //read name
+            final String teacherName = schedule.getName();
+            final String currentTerm = ParseInput.scheduleConfig.curTerm;
+            //use the quarter to determine what list to read
+            List<String> coursesToSchedule;
+            if("fall".equals(currentTerm)){
+                coursesToSchedule = schedule.getFall();
+            }
+            else if("winter".equals(currentTerm)){
+                coursesToSchedule = schedule.getWinter();
+            }
+            else{
+                coursesToSchedule = schedule.getSpring();
+            }
+
+            List<String> coursesToSchedule;
+            /*once list is identified only add classes to schedule for the person based on if the
+            * the course has the abbreviation.*/
+            /*once list has been made schedule */
+
+        }
+    }
+
+    /**
+     * This method will take a mapping of courseConfig
+     * @param courses an iterator for all courses
+     * @return A bidirectional map of a course to its ID
+     */
+    public static BiMap<String, Integer> genCourseToIdMapping(Iterator<String> courses){
+        BiMap<String, Integer> courseIdMapping = HashBiMap.create();
+        int count = 1;
+
+        while(courses.hasNext()) {
+            String course = courses.next();
+            if(!course.contains(ParseInput.scheduleConfig.department)){
+                continue;
+            }
+            courseIdMapping.put(course, count++);
+        }
+
+        return courseIdMapping;
+    }
+
 }

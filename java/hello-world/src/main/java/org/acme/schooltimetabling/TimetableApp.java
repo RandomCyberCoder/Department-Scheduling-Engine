@@ -3,6 +3,7 @@ package org.acme.schooltimetabling;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -37,6 +38,8 @@ public class TimetableApp {
         /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
+        BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
+        Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules);
         //note that when we start the generation of classes i think we can skip the step that beard has
         //where he creates a string on unprocessed stuff
         ScheduleFormat schedule = parsedSchedules.get(0);
