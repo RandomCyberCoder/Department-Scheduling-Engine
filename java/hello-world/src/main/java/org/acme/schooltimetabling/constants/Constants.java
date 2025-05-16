@@ -34,6 +34,8 @@ public class Constants {
 
         /*These are the starter mapping we have but have to create more later*/
         /*Ideally all the mapping should be here or in some file that can be read from*/
+        /*TODO beard just sent me a excel file with this data so ideally this should
+        *  no longer be needed.... ideally*/
         TEACHER_NAME_TO_CANON = new HashMap<>(Map.ofEntries(
                 Map.entry("BJ Klingenberg", "Klingenberg, Bernhard J."),
                 Map.entry("James Mealy", "Mealy, Bryan J."),
