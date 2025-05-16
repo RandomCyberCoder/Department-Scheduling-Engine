@@ -161,6 +161,7 @@ public class Generator {
         return newTimeslot;
     }
 
+    /*TODO change this to take in the file name instead*/
     public static ArrayList<Timeslot> generateTimeslots(){
         int timeslotID = 0;
         //parse csv
@@ -250,7 +251,9 @@ public class Generator {
                     collect(Collectors.toCollection(ArrayList::new));
 
             /*TODO extract this logic of creating a single lesson in a function like other object generation functions
-            *  to a function that will generate just the object*/
+            *  to a function that will generate just the objectd
+            *  Not actually sure if this is possible because this would require that the function signatures to be
+            *  the same but this might not be possible*/
             /*once list has been made schedule */
             for(String course: coursesToSchedule){
                 /*we check if the course has any modifiers
@@ -304,9 +307,14 @@ public class Generator {
     }
 
     /**
-     * <p></p>
-     * @param courseConfig
-     * @return
+     * <p>The function determines if the giving course configuration has
+     * a lab/activity</p>
+     *
+     * @param courseConfig a course configuration in format E-L-A where
+     *                     E = lecture units, L = lab units, and
+     *                     A = activity units
+     * @return returns true if the course configuration contains a lab
+     * or activity
      */
     private static boolean determineLabOrAct(String courseConfig){
         final int NO_UNITS = 0;
