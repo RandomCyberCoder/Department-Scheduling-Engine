@@ -10,6 +10,12 @@ import java.util.Set;
  * fit anywhere else, like a class.
  */
 public class Constants {
+    /**
+     * This class attribute is used for debug print statements. I kept it
+     * from being constant to allow the flexibility to turn on/off debug print
+     * statements as needed.
+     */
+    public static boolean DEBUG = true;
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
     public static final Set<String> SKIP_SCHEDULE;
     public static final HashMap<String, String> TEACHER_NAME_TO_CANON;

@@ -7,11 +7,6 @@ import org.acme.schooltimetabling.helperClasses.Teacher;
 
 @PlanningEntity
 public class Lesson {
-    /*One unit of lecture is equal to one hour in class*/
-    final private int LEC_UNITS_TO_HOURS = 1;
-    /*One unit of Lab is equal to three hours in lab*/
-    final private int LAB_UNITS_TO_HOURS = 3;
-    final private int ACTIVITY_UNITS_TO_HOURS = 2;
     @PlanningId
     private String id;
 
@@ -19,9 +14,9 @@ public class Lesson {
     private String teacher;
     private String studentGroup;
     public String courseName, teacherName, modifiers;
-    public int courseID, teacherID, lecSection;
-    public boolean lab_activity;
-    public float lec_hours, lab_activity_hours;
+    public int courseID, lecSection, labActSection;
+    public boolean hasLabAct;
+    public int lec_hours, lab_activity_hours;
     public Teacher teacherObj;
 
 
@@ -51,10 +46,42 @@ public class Lesson {
 
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
-    public Lesson(String Id, String courseName, String teacherName, String modifiers,
+    public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj){
-        /*here we will have to calculate how many lec_hours we need*/
-        /*TODO pick up here again should be easy to wrap up.. I think*/
+        /*One unit of lecture is equal to one hour in class*/
+        final int LEC_UNITS_TO_HOURS = 1;
+        /*One unit of Activity is equal to two hours in the activity*/
+        int ACTIVITY_UNITS_TO_HOURS = 2;
+        /*One unit of Lab is equal to three hours in lab*/
+        final int LAB_UNITS_TO_HOURS = 3;
+        final int NO_HOURS = 0;
+        final int NO_SECTION = -1;
+        /*the courseConfig stream is assumed to come in the format
+        * E-L-A where E is the number of lecture units, L is the number of
+        * lab units, and A is the number of activity units */
+        String[] units = courseConfig.split("-");
+        int lecUnits = Integer.parseInt(units[0]);
+        int labUnits = Integer.parseInt(units[1]);
+        int actUnits = Integer.parseInt(units[2]);
+        lec_hours = lecUnits * LEC_UNITS_TO_HOURS;
+        /*Note that I don't actually consider a scenario where a course has both a
+        * lab and an activity, but I do this, so I don't have to check for a lab/activity specifically*/
+        lab_activity_hours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
+        if(lab_activity_hours == NO_HOURS){
+            hasLabAct = false;
+        }
+        /*mark true if there is a lab/activity; false otherwise*/
+        this.hasLabAct = !(lab_activity_hours == NO_HOURS);
+        this.id = Id;
+        this.lecSection = lecSection;
+        this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
+        this.courseID = courseID;
+        this.courseName = courseName;
+        this.teacherName = teacherName;
+        this.teacherObj = teacherObj;
+        this.modifiers = modifiers;
+
+
 
     }
 

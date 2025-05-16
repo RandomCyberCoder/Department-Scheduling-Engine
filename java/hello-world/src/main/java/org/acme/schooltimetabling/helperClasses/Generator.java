@@ -192,6 +192,7 @@ public class Generator {
     public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                        List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
+        final String DUMMY_COURSE_MODIFIER = "";
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department;
         LinkedList<Lesson> lessons = new LinkedList<>();
@@ -199,6 +200,10 @@ public class Generator {
         String[] courseInformation;
         String courseName;
         String coureseModifier;
+        String courseConfig;
+        boolean hasLabOrAct;
+        String teacherName;
+        int sectionNumber;
 
         /*create a list of courses to section number*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
@@ -212,7 +217,7 @@ public class Generator {
         /*loop through what schedule (list of courses) a teacher is planned
         * to teach*/
         for(ScheduleFormat schedule: schedules){
-            final String teacherName = schedule.getName();
+            teacherName = schedule.getName();
             /*This is a list courses that will be scheduled*/
             List<String> coursesToSchedule;
 
@@ -236,7 +241,8 @@ public class Generator {
                     .filter(course -> course.contains(DEPARTMENT)).
                     collect(Collectors.toCollection(ArrayList::new));
 
-
+            /*TODO extract this logic of creating a single lesson in a function like other object generation functions
+            *  to a function that will generate just the object*/
             /*once list has been made schedule */
             for(String course: coursesToSchedule){
                 /*we check if the course has any modifiers
@@ -244,24 +250,54 @@ public class Generator {
                 courseInformation = course.split("-");
                 if(courseInformation.length == 1){
                     courseName = courseInformation[0];
+                    coureseModifier = DUMMY_COURSE_MODIFIER;
+                    courseConfig = courseConfigs.get(courseName);
+                    hasLabOrAct = determineLabOrAct(courseConfig);
+                    sectionNumber = courseSectionCounter.get(courseName);
+                    /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
+                     * and its lab/act and a lab/act section number is separate from its respective lecture section
+                     * number*/
+                    courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
                     /*create class*/
+                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
+                            coureseModifier, courseConfig, courseIdMapping.get(courseName),
+                            teacherHashMap.get(teacherName));
+                    lessons.add(newLesson);
                 }
                 else{
                     courseName = courseInformation[1];
                     coureseModifier = courseInformation[0];
+                    courseConfig = courseConfigs.get(courseName);
+                    hasLabOrAct = determineLabOrAct(courseConfig);
+                    sectionNumber = courseSectionCounter.get(courseName);
+                    /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
+                    * and its lab/act and a lab/act section number is separate from its respective lecture section
+                    * number*/
+                    courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
+
+
                     /*we found a modifier so check if we want to schedule it
                     * or do anything special*/
                     if(Constants.SKIP_SCHEDULE.contains(courseInformation[0])){
                         continue;
                     }
-                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), courseName, teacherName,
-                            coureseModifier, courseConfigs.get(courseName), courseIdMapping.get(courseName),
-                            teacherHashMap.get());
+                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
+                            coureseModifier, courseConfig, courseIdMapping.get(courseName),
+                            teacherHashMap.get(teacherName));
+                    lessons.add(newLesson);
                 }
             }
 
 
         }
+    }
+
+    private static boolean determineLabOrAct(String courseConfig){
+        final int NO_UNITS = 0;
+        String[] units = courseConfig.split("-");
+        int labUnits = Integer.parseInt(units[1]);
+        int actUnits = Integer.parseInt(units[2]);
+        return !(labUnits == NO_UNITS && actUnits == NO_UNITS);
     }
 
     /**
@@ -281,17 +317,32 @@ public class Generator {
         String firstName;
         String lastName;
         HashMap<String, String> teacherNameToCanon = Constants.TEACHER_NAME_TO_CANON;
+        boolean mappingFound;
+
         for(String teacherName: teacherHashMap.keySet()){
+            mappingFound = false;
             /*I'm assuming here that the names in the survey file are in the format
-            * "<First> <Last>" where first and last are both char sequences with no spaces*/
+            * "<First> <Last>" where First is a char sequences with no spaces and
+            * Last a char sequence the can have spaces but only the first portion of
+            * it is considered. If it violates this I assume it's some generic schedule and skip it*/
             nameSplit = teacherName.split(" ");
+            if(Constants.DEBUG && nameSplit.length < 2){
+                System.out.println((String.format("In createTeacherNameMapping skipping teacher key in HashMap " +
+                        "that has value %s", teacherName)));
+                continue;
+            }
             firstName = nameSplit[0];
             lastName = nameSplit[1];
             for(ScheduleFormat schedule: schedules){
                 teacherName_schedule = schedule.getName();
                 if(teacherName_schedule.contains(firstName) && teacherName_schedule.contains(lastName)){
+                    mappingFound = true;
                     teacherNameToCanon.put(teacherName, teacherName_schedule);
+                    break;
                 }
+            }
+            if(Constants.DEBUG && !mappingFound){
+                System.out.printf("Couldn't find a mapping for %s\n", teacherName);
             }
         }
     }
