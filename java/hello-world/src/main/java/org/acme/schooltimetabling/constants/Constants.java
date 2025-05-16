@@ -18,6 +18,7 @@ public class Constants {
     public static boolean DEBUG = true;
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
     public static final Set<String> SKIP_SCHEDULE;
+    public static final Set<String> SKIP_CONFIGURATIONS;
     public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
     static{
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
@@ -33,6 +34,7 @@ public class Constants {
         SKIP_SCHEDULE =  Set.of("Remote", "SecondSplit", "HandSchedule",
                 "Double", "Triple");
 
+        SKIP_CONFIGURATIONS = Set.of("various", "non-standard", "0-0-2");
         /*These are the starter mapping we have but have to create more later*/
         /*Ideally all the mapping should be here or in some file that can be read from*/
         /*TODO beard just sent me a excel file with this data so ideally this should

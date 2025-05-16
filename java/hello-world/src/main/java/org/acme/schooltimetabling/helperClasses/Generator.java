@@ -263,37 +263,15 @@ public class Generator {
                 if(courseInformation.length == 1){
                     courseName = courseInformation[0];
                     courseModifier = DUMMY_COURSE_MODIFIER;
-                    courseConfig = courseConfigs.get(courseName);
-                    hasLabOrAct = determineLabOrAct(courseConfig);
-                    sectionNumber = courseSectionCounter.get(courseName);
-                    /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
-                     * and its lab/act and a lab/act section number is separate from its respective lecture section
-                     * number*/
-                    courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
-                    /*create class*/
-                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
-                            courseModifier, courseConfig, courseIdMapping.get(courseName),
-                            teacherHashMap.get(teacherName));
-                    lessons.add(newLesson);
                 }
                 else{
                     courseName = courseInformation[1];
                     courseModifier = courseInformation[0];
                     courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
-                    courseConfig = courseConfigs.get(courseName);
-                    hasLabOrAct = determineLabOrAct(courseConfig);
-                    sectionNumber = courseSectionCounter.get(courseName);
-                    /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
-                    * and its lab/act and a lab/act section number is separate from its respective lecture section
-                    * number*/
-                    courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
 
 
                     /*we found a modifier so check if we want to schedule it
                     * or do anything special*/
-                    /*TODO realized this doesn't actually currently work because the course has the abbreviation
-                    *  and the SKiP_SCHEDULE set contains the non-abbreviated terms. Fix this and add debug
-                    *  statements when we skip a course*/
                     if(Constants.SKIP_SCHEDULE.contains(courseModifier)){
                         if(Constants.DEBUG){
                             System.out.printf("Skipping scheduling of course with name %s with " +
@@ -301,11 +279,29 @@ public class Generator {
                         }
                         continue;
                     }
-                    Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
-                            courseModifier, courseConfig, courseIdMapping.get(courseName),
-                            teacherHashMap.get(teacherName));
-                    lessons.add(newLesson);
                 }
+
+                courseConfig = courseConfigs.get(courseName);
+                hasLabOrAct = determineLabOrAct(courseConfig);
+                sectionNumber = courseSectionCounter.get(courseName);
+
+                if(Constants.SKIP_CONFIGURATIONS.contains(courseConfig)){
+                    if(Constants.DEBUG){
+                        System.out.printf("Skipping course '%s' with configuration %s\n", courseName, courseConfig);
+                    }
+                    continue;
+                }
+
+                /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
+                 * and its lab/act and a lab/act section number is separate from its respective lecture section
+                 * number*/
+                courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
+
+                /*create class*/
+                Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
+                        courseModifier, courseConfig, courseIdMapping.get(courseName),
+                        teacherHashMap.get(teacherName));
+                lessons.add(newLesson);
             }
 
 
@@ -325,6 +321,7 @@ public class Generator {
      * or activity
      */
     private static boolean determineLabOrAct(String courseConfig){
+        System.out.printf("parsing course config %s\n", courseConfig);
         final int NO_UNITS = 0;
         String[] units = courseConfig.split("-");
         int labUnits = Integer.parseInt(units[1]);
