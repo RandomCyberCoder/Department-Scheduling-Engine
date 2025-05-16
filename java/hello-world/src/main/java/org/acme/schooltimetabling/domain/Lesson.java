@@ -46,6 +46,19 @@ public class Lesson {
 
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
+
+    /**
+     * Class constructor
+     *
+     * @param Id unique ID for the lesson
+     * @param lecSection unique section number for the lecture
+     * @param courseName name of the course that will be taught for this lesson
+     * @param teacherName name of teacher that will give this lesson
+     * @param modifiers any course modifiers. If no modifiers pass a "" string
+     * @param courseConfig configuration of the <i>courseName</i> for this lesson
+     * @param courseID ID of the <i>courseName</i>, used at solving time for fast comparisons
+     * @param teacherObj teacher object associated with the <i>teacherName</i>
+     */
     public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj){
         /*One unit of lecture is equal to one hour in class*/

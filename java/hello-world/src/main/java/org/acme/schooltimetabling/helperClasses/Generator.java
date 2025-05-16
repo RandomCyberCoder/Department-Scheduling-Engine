@@ -188,7 +188,15 @@ public class Generator {
     }
 
 
-
+    /**
+     * <p>Generates all lessons and filter out any lesson types specified by the Constants.SKIP_SCHEDULE
+     * variable given</p>
+     * @param courseConfigs HashMap of course names to their configurations
+     * @param courseIdMapping a bimap of course names to their unique ID
+     * @param schedules a list of ScheduleFormat objects containing courses that
+     *                  will be taught by a teacher
+     * @param teacherHashMap HashMap of teacher canon names to their teacher object
+     */
     public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                        List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
@@ -278,6 +286,9 @@ public class Generator {
 
                     /*we found a modifier so check if we want to schedule it
                     * or do anything special*/
+                    /*TODO realized this doesn't actually currently work because the course has the abbreviation
+                    *  and the SKiP_SCHEDULE set contains the non-abbreviated terms. Fix this and add debug
+                    *  statements when we skip a course*/
                     if(Constants.SKIP_SCHEDULE.contains(courseInformation[0])){
                         continue;
                     }
@@ -292,6 +303,11 @@ public class Generator {
         }
     }
 
+    /**
+     * <p></p>
+     * @param courseConfig
+     * @return
+     */
     private static boolean determineLabOrAct(String courseConfig){
         final int NO_UNITS = 0;
         String[] units = courseConfig.split("-");
@@ -361,6 +377,7 @@ public class Generator {
         }
         return teacherFound;
     }
+
     /**
      * <p>This method will take an iterator of all possible courses and will
      * return a bidirectional map of courses in the current department we want

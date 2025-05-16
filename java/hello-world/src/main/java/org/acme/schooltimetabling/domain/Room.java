@@ -8,7 +8,7 @@ public class Room {
     private String id;
 
     private String name;
-
+    private String type;
     public Room() {
     }
 
