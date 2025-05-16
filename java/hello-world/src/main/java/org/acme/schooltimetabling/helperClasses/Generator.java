@@ -318,6 +318,7 @@ public class Generator {
         String lastName;
         HashMap<String, String> teacherNameToCanon = Constants.TEACHER_NAME_TO_CANON;
         boolean mappingFound;
+        String preexistingName;
 
         for(String teacherName: teacherHashMap.keySet()){
             mappingFound = false;
@@ -333,6 +334,11 @@ public class Generator {
             }
             firstName = nameSplit[0];
             lastName = nameSplit[1];
+            /*If the name is already in the name remapping then it means that they
+            * are a special case, and already exists in the mapping, so we can skip*/
+            if(teacherNameToCanon.get(teacherName) != null){
+                continue;
+            }
             for(ScheduleFormat schedule: schedules){
                 teacherName_schedule = schedule.getName();
                 if(teacherName_schedule.contains(firstName) && teacherName_schedule.contains(lastName)){
