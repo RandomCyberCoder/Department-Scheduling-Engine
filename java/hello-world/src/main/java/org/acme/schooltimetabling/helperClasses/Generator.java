@@ -198,26 +198,27 @@ public class Generator {
      *                  will be taught by a teacher
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      */
-    public static void generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
+    public static LinkedList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                        List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
         final String DUMMY_COURSE_MODIFIER = "";
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
-        final String DEPARTMENT = ParseInput.scheduleConfig.department;
+        final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
         LinkedList<Lesson> lessons = new LinkedList<>();
         int lessonID = 1;
         String[] courseInformation;
         String courseName;
-        String coureseModifier;
+        String courseModifier;
         String courseConfig;
         boolean hasLabOrAct;
         String teacherName;
         int sectionNumber;
 
+
         /*create a list of courses to section number*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
         for(String course: courseConfigs.keySet()){
-            if(!course.contains(ParseInput.scheduleConfig.department)){
+            if(!course.contains(DEPARTMENT)){
                 continue;
             }
             courseSectionCounter.put(course, STARTING_SECTION_NUMBER);
@@ -261,7 +262,7 @@ public class Generator {
                 courseInformation = course.split("-");
                 if(courseInformation.length == 1){
                     courseName = courseInformation[0];
-                    coureseModifier = DUMMY_COURSE_MODIFIER;
+                    courseModifier = DUMMY_COURSE_MODIFIER;
                     courseConfig = courseConfigs.get(courseName);
                     hasLabOrAct = determineLabOrAct(courseConfig);
                     sectionNumber = courseSectionCounter.get(courseName);
@@ -271,13 +272,14 @@ public class Generator {
                     courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
                     /*create class*/
                     Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
-                            coureseModifier, courseConfig, courseIdMapping.get(courseName),
+                            courseModifier, courseConfig, courseIdMapping.get(courseName),
                             teacherHashMap.get(teacherName));
                     lessons.add(newLesson);
                 }
                 else{
                     courseName = courseInformation[1];
-                    coureseModifier = courseInformation[0];
+                    courseModifier = courseInformation[0];
+                    courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
                     courseConfig = courseConfigs.get(courseName);
                     hasLabOrAct = determineLabOrAct(courseConfig);
                     sectionNumber = courseSectionCounter.get(courseName);
@@ -292,11 +294,15 @@ public class Generator {
                     /*TODO realized this doesn't actually currently work because the course has the abbreviation
                     *  and the SKiP_SCHEDULE set contains the non-abbreviated terms. Fix this and add debug
                     *  statements when we skip a course*/
-                    if(Constants.SKIP_SCHEDULE.contains(courseInformation[0])){
+                    if(Constants.SKIP_SCHEDULE.contains(courseModifier)){
+                        if(Constants.DEBUG){
+                            System.out.printf("Skipping scheduling of course with name %s with " +
+                                    "modifier %s\n", courseName, courseModifier);
+                        }
                         continue;
                     }
                     Lesson newLesson = new Lesson(Integer.toString(lessonID++), sectionNumber, courseName, teacherName,
-                            coureseModifier, courseConfig, courseIdMapping.get(courseName),
+                            courseModifier, courseConfig, courseIdMapping.get(courseName),
                             teacherHashMap.get(teacherName));
                     lessons.add(newLesson);
                 }
@@ -304,6 +310,8 @@ public class Generator {
 
 
         }
+
+        return lessons;
     }
 
     /**
@@ -395,12 +403,14 @@ public class Generator {
      * @return A bidirectional map of a course to its ID
      */
     public static BiMap<String, Integer> genCourseToIdMapping(Iterator<String> courses){
+        final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
         BiMap<String, Integer> courseIdMapping = HashBiMap.create();
         int count = 1;
+        String course;
 
-        while(courses.hasNext()) {
-            String course = courses.next();
-            if(!course.contains(ParseInput.scheduleConfig.department)){
+        while(courses.hasNext()){
+            course = courses.next();
+            if(!course.contains(DEPARTMENT)){
                 continue;
             }
             courseIdMapping.put(course, count++);

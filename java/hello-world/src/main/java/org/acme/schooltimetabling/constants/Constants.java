@@ -23,6 +23,7 @@ public class Constants {
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
                 Map.entry("",""),
                 Map.entry("R", "Remote"),
+                Map.entry("S", "Split"),
                 Map.entry("S2", "SecondSplit"),
                 Map.entry("H", "HandSchedule"),
                 Map.entry("M", "Double"),
