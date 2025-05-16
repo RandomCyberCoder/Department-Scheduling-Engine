@@ -88,7 +88,8 @@ public class TimetableApp {
         teacherHashMap = remapName(teacherHashMap);
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        //Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
+        /*TODO add debug code to this and test this to make sure it actually works*/
+        Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
 
         //their stuff
