@@ -3,6 +3,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.Teacher;
@@ -416,4 +417,19 @@ public class Generator {
         return courseIdMapping;
     }
 
+    private static Room generateRoom(String roomName){
+        int roomID = Constants.ROOM_TO_ID_BIMAP.get(roomName);
+        return new Room(String.valueOf(roomID), roomName, roomID);
+    }
+    public static ArrayList<Room> generateRooms(){
+        ArrayList<Room> roomsList = new ArrayList<>();
+        Room newRoom;
+
+        for(String room: Constants.POSSIBLE_ROOMS){
+            newRoom = generateRoom(room);
+            roomsList.add(newRoom);
+        }
+
+        return roomsList;
+    }
 }
