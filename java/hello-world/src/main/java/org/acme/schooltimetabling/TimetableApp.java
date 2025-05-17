@@ -51,6 +51,8 @@ public class TimetableApp {
         *  and that they are in an ArrayList for quick access especially since
         *  we won't have to modify them during the constraint solver*/
         ArrayList<Room> roomList;
+        ArrayList<Lesson> lessonList;
+        ArrayList<Timeslot> timeslotList;
 
         System.out.println("does nothing");
         System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
@@ -83,7 +85,7 @@ public class TimetableApp {
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>teacherHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-        ArrayList<Timeslot> timesRead = Generator.generateTimeslots();
+        timeslotList = Generator.generateTimeslots();
 
         /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
@@ -94,9 +96,9 @@ public class TimetableApp {
         teacherHashMap = remapName(teacherHashMap);
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
+        lessonList = Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
-
+        roomList = Generator.generateRooms();
         //their stuff
 //        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
 //                .withSolutionClass(Timetable.class)

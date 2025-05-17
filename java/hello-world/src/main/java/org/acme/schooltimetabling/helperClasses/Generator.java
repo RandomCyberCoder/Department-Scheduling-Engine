@@ -200,13 +200,13 @@ public class Generator {
      *                  will be taught by a teacher
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      */
-    public static LinkedList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
+    public static ArrayList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                        List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
         final String DUMMY_COURSE_MODIFIER = "";
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
-        LinkedList<Lesson> lessons = new LinkedList<>();
+        ArrayList<Lesson> lessons = new ArrayList<>();
         int lessonID = 1;
         String[] courseInformation;
         String courseName;
