@@ -1,4 +1,4 @@
-package org.acme.schooltimetabling.helperClasses;
+package org.acme.schooltimetabling.helperClasses.Generators;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.constants.Constants;
@@ -6,6 +6,7 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 
@@ -201,7 +202,7 @@ public class Generator {
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      */
     public static ArrayList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
-                                       List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
+                                                    List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
         final String DUMMY_COURSE_MODIFIER = "";
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;

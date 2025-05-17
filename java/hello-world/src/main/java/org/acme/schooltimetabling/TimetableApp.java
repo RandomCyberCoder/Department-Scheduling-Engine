@@ -1,8 +1,5 @@
 package org.acme.schooltimetabling;
 
-import ai.timefold.solver.core.api.solver.Solver;
-import ai.timefold.solver.core.api.solver.SolverFactory;
-import ai.timefold.solver.core.config.solver.SolverConfig;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
@@ -10,17 +7,15 @@ import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.helperClasses.*;
-import org.acme.schooltimetabling.solver.TimetableConstraintProvider;
+import org.acme.schooltimetabling.helperClasses.Generators.Generator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 
 import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /*TODO make a debug wrapper or something to turn intermediately*/
 public class TimetableApp {
