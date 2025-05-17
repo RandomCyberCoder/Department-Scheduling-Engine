@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/*TODO make a debug wrapper or something to turn intermediately*/
 public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
@@ -32,20 +33,25 @@ public class TimetableApp {
     }
 
     private static HashMap<String, Teacher> remapName(HashMap<String, Teacher> teacherHashMap){
-        HashMap<String, Teacher> reampedNames = new HashMap<>();
+        HashMap<String, Teacher> remappedNames = new HashMap<>();
         String canonName;
         final HashMap<String, String> TEACHER_NAME_TO_CANON = Constants.TEACHER_NAME_TO_CANON;
 
         for(String teacherName: teacherHashMap.keySet()){
             Teacher teacherObj = teacherHashMap.get(teacherName);
             canonName = TEACHER_NAME_TO_CANON.get(teacherName);
-            reampedNames.put(canonName, teacherObj);
+            remappedNames.put(canonName, teacherObj);
         }
 
-        return  reampedNames;
+        return  remappedNames;
     }
 
     public static void main(String[] args) throws Exception{
+        /*TODO make sure that all the list of planning variables are up here
+        *  and that they are in an ArrayList for quick access especially since
+        *  we won't have to modify them during the constraint solver*/
+        ArrayList<Room> roomList;
+
         System.out.println("does nothing");
         System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
@@ -88,7 +94,6 @@ public class TimetableApp {
         teacherHashMap = remapName(teacherHashMap);
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        /*TODO add debug code to this and test this to make sure it actually works*/
         Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
 

@@ -1,12 +1,13 @@
 package org.acme.schooltimetabling.constants;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
+
+import java.util.*;
 
 /**
- * This class is should contain constants that are used throughout the program that don"t
+ * This class should contain constants that are used throughout the program that don"t
  * fit anywhere else, like a class.
  */
 public class Constants {
@@ -16,11 +17,45 @@ public class Constants {
      * statements as needed.
      */
     public static boolean DEBUG = true;
+    /**
+     * Map of abbreviated course modifiers mapped to non-abbreviated course
+     * modifiers
+     */
     public static final Map<String, String> SPECIAL_CODE_CONVERSION;
+    /**
+     * Set of course non-abbreviated modifiers that should be skipped*/
     public static final Set<String> SKIP_SCHEDULE;
+    /**
+     * Set of course configurations that should be skipped
+     */
     public static final Set<String> SKIP_CONFIGURATIONS;
+    /**
+     * name of room that will be used for courses with that only
+     * have a lecture
+     */
+    public static final String LEC_ONLY = "LECTURE_ONLY";
+    /**
+     * The unique ID of the room for lecture only courses*/
+    public static int LEC_ROOM_ONLY_ID;
+    /**
+     * This set should contain all lab room names plus the
+     * <i>LEC_ONLY</i> class attribute which is needed to
+     * assign a room to lessons that are strictly lecture only
+     */
+    public static final LinkedHashSet<String> POSSIBLE_ROOMS;
+    /**
+     * HashMap that maps the teacher name (format FIRST LAST) mapped
+     * to the teacher canon name. The canon name is assumed to be the
+     * one in the schedule json file and the teacher non-canon name
+     * is the one found in the survey csv file*/
     public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
+    /**
+     * BiMap containing rooms mapped to their unique IDs*/
+    public static final BiMap<String, Integer> ROOM_TO_ID_BIMAP;
+
     static{
+        int counter;
+
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
                 Map.entry("",""),
                 Map.entry("R", "Remote"),
@@ -49,5 +84,36 @@ public class Constants {
                 Map.entry("Bret Hartman", "Hartman, Bret Andrew")
                 ));
 
+        if(ParseInput.scheduleConfig.department.equals("CSC")){
+            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
+                    "301", "302", "255", "256", "257", "20-127", "232A", "192-206",
+                    "192-333", LEC_ONLY
+            ));
+        }
+        else{
+            /*These are the CPE lab rooms*/
+            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
+                    "20-100", "20-132", "14-303", "20-145", LEC_ONLY
+            ));
+        }
+
+        counter = 1;
+        ROOM_TO_ID_BIMAP = HashBiMap.create();
+        for(String room: POSSIBLE_ROOMS){
+            ROOM_TO_ID_BIMAP.put(room, counter++);
+        }
+
+
+        try{
+            /*This will throw an error if the LEC_ONLY constant is not added
+            * to the set of possible room*/
+            LEC_ROOM_ONLY_ID = ROOM_TO_ID_BIMAP.get(LEC_ONLY);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            System.out.println("In Constants class include 'LEC_ONLY (variable) " +
+                    "room to the LinkedHashSet exiting program until fixed");
+            System.exit(ParseInput.PROGRAM_FAILURE);
+        }
     }
 }

@@ -192,6 +192,7 @@ public class Generator {
     /**
      * <p>Generates all lessons and filter out any lesson types specified by the Constants.SKIP_SCHEDULE
      * variable given</p>
+     *
      * @param courseConfigs HashMap of course names to their configurations
      * @param courseIdMapping a bimap of course names to their unique ID
      * @param schedules a list of ScheduleFormat objects containing courses that
@@ -254,7 +255,8 @@ public class Generator {
             /*TODO extract this logic of creating a single lesson in a function like other object generation functions
             *  to a function that will generate just the objectd
             *  Not actually sure if this is possible because this would require that the function signatures to be
-            *  the same but this might not be possible*/
+            *  the same but this might not be possible
+            *  or maybe we can but the parent class won't be abstract */
             /*once list has been made schedule */
             for(String course: coursesToSchedule){
                 /*we check if the course has any modifiers
@@ -337,7 +339,6 @@ public class Generator {
      *
      * @param teacherHashMap Hashmap of the teacher's name to their Teacher object
      * @param schedules List of ScheduleFormat objects that contain what courses each teacher will teach
-     * @return A mapping of the names from the teacher HashMap to the respective name in the List parameter
      */
     public static void createTeacherNameMapping(
             HashMap<String, Teacher> teacherHashMap, List<ScheduleFormat> schedules){
@@ -347,7 +348,6 @@ public class Generator {
         String lastName;
         HashMap<String, String> teacherNameToCanon = Constants.TEACHER_NAME_TO_CANON;
         boolean mappingFound;
-        String preexistingName;
 
         for(String teacherName: teacherHashMap.keySet()){
             mappingFound = false;
