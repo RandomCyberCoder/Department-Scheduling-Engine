@@ -7,7 +7,7 @@ import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.helperClasses.*;
-import org.acme.schooltimetabling.helperClasses.Generators.Generator;
+import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
@@ -79,8 +79,8 @@ public class TimetableApp {
         /*read the prev quarter survey*/
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/
-        HashMap<String, Teacher>teacherHashMap = Generator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-        timeslotList = Generator.generateTimeslots();
+        HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+        timeslotList = TimeslotGenerator.generateTimeslots();
 
         /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
@@ -91,9 +91,9 @@ public class TimetableApp {
         teacherHashMap = remapName(teacherHashMap);
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        lessonList = Generator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
+        lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
-        roomList = Generator.generateRooms();
+        roomList = RoomGenerator.generateRooms();
         //their stuff
 //        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
 //                .withSolutionClass(Timetable.class)
