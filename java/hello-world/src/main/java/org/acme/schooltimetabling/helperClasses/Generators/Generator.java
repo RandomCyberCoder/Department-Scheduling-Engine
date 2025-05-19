@@ -8,10 +8,6 @@ import org.acme.schooltimetabling.helperClasses.Teacher;
 
 import java.util.*;
 
-/*TODO makes this generator class a abstract parent class:
-*   -should have abstract methods: generateObj and generateObjects
-*   -child classes will be gen<Obj> where objec can be Class, Teacher, ....
-*   -any other non specific class methods can go in the parent class... I think*/
 public class Generator {
     /**
      * <p>The function creates a mapping from the names in the teacher HashMap to the respective
