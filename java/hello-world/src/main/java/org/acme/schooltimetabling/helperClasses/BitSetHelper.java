@@ -22,7 +22,7 @@ public class BitSetHelper {
         int dayOffset = 0;
 
         dayOffset = switch (startTime.getHour()) {
-            case 7 -> 0;
+            case 7 -> 0; // 7 AM
             case 8 -> 2;
             case 9 -> 4;
             case 10 -> 6;
@@ -36,26 +36,26 @@ public class BitSetHelper {
             case 18 -> 22;
             case 19 -> 24;
             case 20 -> 26;
-            case 21 -> 28;
+            case 21 -> 28; //9 PM
             default ->
                     throw new Exception(String.format("There was an error reading the time '%s'", startTime.toString()));
         };
 
         /* the 'to index' (the second index passed) to BitSet.set() is exclusive*/
         if(monday){
-            bitSet.set(MONDAY_OFFSET +  dayOffset, MONDAY_OFFSET + dayOffset + numberOfBlocks);
+            bitSet.set(MONDAY_OFFSET +  dayOffset, MONDAY_OFFSET + dayOffset + numberOfBlocks + 1);
         }
         if(tuesday){
-            bitSet.set(TUESDAY_OFFSET +  dayOffset, TUESDAY_OFFSET + dayOffset + numberOfBlocks);
+            bitSet.set(TUESDAY_OFFSET +  dayOffset, TUESDAY_OFFSET + dayOffset + numberOfBlocks + 1);
         }
         if(wednesday){
-            bitSet.set(WEDNESDAY_OFFSET +  dayOffset, WEDNESDAY_OFFSET + dayOffset + numberOfBlocks);
+            bitSet.set(WEDNESDAY_OFFSET +  dayOffset, WEDNESDAY_OFFSET + dayOffset + numberOfBlocks + 1);
         }
         if(thursday){
-            bitSet.set(THURSDAY_OFFSET +  dayOffset, THURSDAY_OFFSET + dayOffset + numberOfBlocks);
+            bitSet.set(THURSDAY_OFFSET +  dayOffset, THURSDAY_OFFSET + dayOffset + numberOfBlocks + 1);
         }
         if(friday){
-            bitSet.set(FRIDAY_OFFSET +  dayOffset, FRIDAY_OFFSET + dayOffset + numberOfBlocks);
+            bitSet.set(FRIDAY_OFFSET +  dayOffset, FRIDAY_OFFSET + dayOffset + numberOfBlocks + 1);
         }
 
         return bitSet;
