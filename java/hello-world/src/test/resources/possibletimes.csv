@@ -1,0 +1,5 @@
+days, time_start, time_end, lecture_hours, total_hours, days2, time_start2, time_end2, lecture_hours2, total_hours2
+MWF, 7:00AM, 9:00AM, 1, 2,,,,,
+MW, 8:00AM, 9:00AM, 1, 1, F, 8:00AM, 10:00AM, 0, 2
+MW, 8:00AM, 9:00AM, 1, 1, MTF, 9:00AM, 10:30AM, 0, 1.5
+MTWR, 7:00AM, 8:00AM, 1, 1,,,,,

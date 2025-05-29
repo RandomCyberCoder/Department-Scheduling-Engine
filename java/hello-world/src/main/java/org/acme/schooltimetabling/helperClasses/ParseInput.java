@@ -17,6 +17,7 @@ public class ParseInput {
     public static ScheduleConfig scheduleConfig;
 
     static{
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
         Yaml yaml = new Yaml();
         InputStream inputStream = null;
         try {

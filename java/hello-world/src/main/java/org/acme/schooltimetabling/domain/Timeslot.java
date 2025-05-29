@@ -18,19 +18,21 @@ public class Timeslot {
 
     /*new*/
     private int ID;
-    private LocalTime startTimeLec;
-    private LocalTime endTimeLec;
-    private BitSet lectureBitSet;
-    private boolean onlyLec;
-    private LocalTime startTimeLabAct;
-    private LocalTime endTimeLabAct;
-    private BitSet labActBitSet;
-    private BitSet allTimesBitSet;
+    public LocalTime startTimeLec;
+    public LocalTime endTimeLec;
+    public BitSet lectureBitSet;
+    public boolean onlyLec;
+    public LocalTime startTimeLabAct;
+    public LocalTime endTimeLabAct;
+    public BitSet labActBitSet;
+    public BitSet allTimesBitSet;
     /*I should make these days into a class or something*/
-    private boolean lecMonday, lecTuesday, lecWednesday, lecThursday, lecFriday;
-    private boolean nonLecMonday, nonLecTuesday, nonLecWednesday, nonLecThursday, nonLecFriday;
-    float lecHours;
-    float totalHours;
+    public boolean lecMonday, lecTuesday, lecWednesday, lecThursday, lecFriday;
+    public boolean nonLecMonday, nonLecTuesday, nonLecWednesday, nonLecThursday, nonLecFriday;
+    public float lecHours;
+    public float totalHours;
+    public float totalHours2;
+    public boolean secondSlot;
 
     private static final float FLOAT_TIME_DELTA = 0.01f;
     private static final int MINUTES_PER_HOUR = 60;
@@ -45,13 +47,14 @@ public class Timeslot {
         this.endTime = endTime;
     }
 
+    /*TODO add sanity checker here to throw an error if the second time slot overlaps with the first*/
     public Timeslot(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
                     String days2, String startTime2, String endTime2, float lecture_hours2, float total_hours2)
             throws Exception{
 
         /*this variable will be used to see if the entry has two timeslots linked,
         * used later for calculating the complete bitset representation of the timeslot*/
-        boolean secondSlot = false;
+        this.secondSlot = false;
 
         this.ID = ID;
         this.id = String.valueOf(ID);
@@ -76,6 +79,7 @@ public class Timeslot {
         this.lecHours = lecHours;
         this.totalHours = totalHours;
         /* We do the following comparison instead of lec_hours == total_hours because of floating point errors */
+        /*TODO not sure about this*/
         this.onlyLec = Math.abs(lecHours - totalHours) < FLOAT_TIME_DELTA;
 
         /*check start and end time for the lab and possibly for the lab/activity */
@@ -96,22 +100,23 @@ public class Timeslot {
                 this.startTimeLabAct = this.endTimeLabAct = this.endTimeLec;
             }
             else{
-                secondSlot = true;
+                this.secondSlot = true;
                 this.onlyLec = false;
+                this.totalHours2 = total_hours2;
                 this.nonLecMonday = this.nonLecTuesday = this.nonLecWednesday = this.nonLecThursday = this.nonLecFriday = false;
-                if(days.contains("M")){
+                if(days2.contains("M")){
                     this.nonLecMonday = true;
                 }
-                if(days.contains("T")){
+                if(days2.contains("T")){
                     this.nonLecTuesday = true;
                 }
-                if(days.contains("W")){
+                if(days2.contains("W")){
                     this.nonLecWednesday = true;
                 }
-                if(days.contains("R")){
+                if(days2.contains("R")){
                     this.nonLecThursday = true;
                 }
-                if(days.contains("F")){
+                if(days2.contains("F")){
                     this.nonLecFriday = true;
                 }
                 this.endTimeLabAct = LocalTime.parse(endTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
@@ -136,7 +141,7 @@ public class Timeslot {
         }
 
         /*we assume that the whole block will be occupied by whoever is assigned it*/
-        this.allTimesBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(lecHours * 2),
+        this.allTimesBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
                 this.lecMonday, this.lecTuesday, this.lecWednesday, this.lecThursday, this.lecFriday);
         /*if there was a second timeslot we have to join it*/
         if(secondSlot){

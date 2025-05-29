@@ -80,7 +80,7 @@ public class TimetableApp {
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-        timeslotList = TimeslotGenerator.generateTimeslots();
+        timeslotList = TimeslotGenerator.generateTimeslots(ParseInput.PATH_FROM_ROOT + "constants/possibleTimes.csv");
 
         /*Lesson class relevant stuff*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();

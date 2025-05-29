@@ -43,11 +43,16 @@ public class TimeslotGenerator extends Generator{
         return newTimeslot;
     }
 
-    /*TODO change this to take in the file name instead*/
-    public static ArrayList<Timeslot> generateTimeslots(){
+    /**
+     * <p>Generates all timeslots for the problem setup</p>
+     *
+     * @param filePath Path to the file. Path assumes you are in the org.acme.schooltimetabling package
+     * @return returns a list of TimeSlots create from the file provided
+     */
+    public static ArrayList<Timeslot> generateTimeslots(String filePath){
         int timeslotID = 0;
         //parse csv
-        String timeslotsFile = "java/hello-world/src/main/java/org/acme/schooltimetabling/constants/possibleTimes.csv";
+        String timeslotsFile = filePath;
         ArrayList<Timeslot> timeslotList = new ArrayList<>();
         ArrayList<HashMap<String, String>> timeslotCSV= null;
         try{
