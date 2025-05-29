@@ -30,7 +30,7 @@ public class TestBitset {
         LocalTime time = LocalTime.parse("9:00PM", DateTimeFormatter.ofPattern("h:mma"));
         modifyBitset.set(149);
         try{
-            checkBitset = BitSetHelper.timeSlotBitSet(time, 1, false, false,
+            checkBitset = BitSetHelper.timeSlotBitSet(time, 2, false, false,
                     false,false,true);
         }
         catch (Exception e){
