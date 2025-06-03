@@ -63,8 +63,8 @@ public class TestTeachers {
                     bitSet.and(teacher.conflict);
                     bitSet.and(teacher.preferences);
                     assertAll("Checking bitsets",
-                            () -> assertEquals(bitSet.cardinality(), 0),
-                            () -> assertEquals(bitSet.length(), 0));
+                            () -> assertEquals(0, bitSet.cardinality()),
+                            () -> assertEquals(0, bitSet.length()));
                 }).toList());
 
     }
@@ -80,8 +80,8 @@ public class TestTeachers {
                     bitSet.or(teacher.conflict);
                     bitSet.or(teacher.preferences);
                     assertAll("Checking bitsets",
-                            () -> assertEquals(bitSet.cardinality(), 150),
-                            () -> assertEquals(bitSet.length(), 150));
+                            () -> assertEquals(150, bitSet.cardinality()),
+                            () -> assertEquals(150, bitSet.length()));
                 }));
     }
 }
