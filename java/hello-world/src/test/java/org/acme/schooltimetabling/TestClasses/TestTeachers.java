@@ -55,9 +55,6 @@ public class TestTeachers {
     @Test
     @DisplayName("Checking all Teacher Objects for no overlap in bitsets")
     void noBitsetOverlap(){
-        // Example list of items to validate
-        List<String> items = List.of("apple", "banana", "cherry");
-
         // Validate each item in the list
         assertAll("Checking teacher",
                 teacherHashMap.values().stream().map(teacher -> (Executable) () -> {
@@ -70,5 +67,21 @@ public class TestTeachers {
                             () -> assertEquals(bitSet.length(), 0));
                 }).toList());
 
+    }
+
+    @Test
+    @DisplayName("Check All bits are set")
+    void allBitsSet(){
+        //Check all bits are set
+        assertAll("Checking for all bits being set",
+                teacherHashMap.values().stream().map(teacher -> (Executable) () -> {
+                    BitSet bitSet = new BitSet();
+                    bitSet.or(teacher.acceptable);
+                    bitSet.or(teacher.conflict);
+                    bitSet.or(teacher.preferences);
+                    assertAll("Checking bitsets",
+                            () -> assertEquals(bitSet.cardinality(), 150),
+                            () -> assertEquals(bitSet.length(), 150));
+                }));
     }
 }
