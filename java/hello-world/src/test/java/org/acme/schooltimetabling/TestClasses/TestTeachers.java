@@ -53,7 +53,7 @@ public class TestTeachers {
     }
 
     @Test
-    @DisplayName("Checking all teacher for no overlap in bitsets")
+    @DisplayName("Checking all Teacher Objects for no overlap in bitsets")
     void noBitsetOverlap(){
         // Example list of items to validate
         List<String> items = List.of("apple", "banana", "cherry");
@@ -66,8 +66,8 @@ public class TestTeachers {
                     bitSet.and(teacher.conflict);
                     bitSet.and(teacher.preferences);
                     assertAll("Checking bitsets",
-                            assertEquals(bitSet.cardinality(), 0),
-                            assertEquals(bitSet.length(), ));
+                            () -> assertEquals(bitSet.cardinality(), 0),
+                            () -> assertEquals(bitSet.length(), 0));
                 }).toList());
 
     }
