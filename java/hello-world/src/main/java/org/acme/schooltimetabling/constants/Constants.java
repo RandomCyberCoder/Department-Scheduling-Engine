@@ -84,7 +84,9 @@ public class Constants {
                 Map.entry("Bret Hartman", "Hartman, Bret Andrew")
                 ));
 
-        if(ParseInput.scheduleConfig.department.equals("CSC")){
+        /*Determine what rooms will be used for labs depending on department being
+        * scheduled*/
+        if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
             POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
                     "301", "302", "255", "256", "257", "20-127", "232A", "192-206",
                     "192-333", LEC_ONLY
@@ -106,7 +108,7 @@ public class Constants {
 
         try{
             /*This will throw an error if the LEC_ONLY constant is not added
-            * to the set of possible room*/
+            * to the set of possible room; lecture room is needed*/
             LEC_ROOM_ONLY_ID = ROOM_TO_ID_BIMAP.get(LEC_ONLY);
         }
         catch (Exception e){
