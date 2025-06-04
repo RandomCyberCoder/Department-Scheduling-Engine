@@ -114,4 +114,18 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Student group subject variety");
     }
 
+    //my stuff
+    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
+        return constraintFactory
+                .forEach(Lesson.class)
+                .join(Lesson.class,
+                        Joiners.equal())
+    }
+
+    //make sure no classes during the same time
+
+    //make sure that classes don't conflict with hard time constraints where thaey aren't available
+
+    /*TODO eventually add the prime time stuff*/
+
 }

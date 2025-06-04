@@ -1,5 +1,8 @@
 package org.acme.schooltimetabling;
 
+import ai.timefold.solver.core.api.solver.Solver;
+import ai.timefold.solver.core.api.solver.SolverFactory;
+import ai.timefold.solver.core.config.solver.SolverConfig;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
@@ -8,11 +11,13 @@ import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
+import org.acme.schooltimetabling.solver.TimetableConstraintProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,6 +53,7 @@ public class TimetableApp {
         ArrayList<Room> roomList;
         ArrayList<Lesson> lessonList;
         ArrayList<Timeslot> timeslotList;
+        Timetable timetable;
 
         System.out.println("does nothing");
         System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
@@ -99,6 +105,26 @@ public class TimetableApp {
         lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
         roomList = RoomGenerator.generateRooms();
+
+        /*start setup for solving*/
+
+        timetable = new Timetable("setup", timeslotList, roomList, lessonList);
+        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
+                .withSolutionClass(Timetable.class)
+                .withEntityClasses(Lesson.class)
+                .withConstraintProviderClass(TimetableConstraintProvider.class)
+                // The solver runs only for 5 seconds on this small dataset.
+                // It's recommended to run for at least 5 minutes ("5m") otherwise.
+                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+
+        // Solve the problem
+        Solver<Timetable> solver = solverFactory.buildSolver();
+        Timetable solution = solver.solve(timetable);
+
+        /*TODO make a function to save the solution to an excel file and maybe a function to print
+        *  stuff out to terminal also add justifications*/
+
+
         //their stuff
 //        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
 //                .withSolutionClass(Timetable.class)

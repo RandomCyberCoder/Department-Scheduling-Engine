@@ -3,10 +3,7 @@ package org.acme.schooltimetabling.TestClasses;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
-import org.acme.schooltimetabling.helperClasses.Generators.Generator;
-import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
-import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
-import org.acme.schooltimetabling.helperClasses.Generators.TimeslotGenerator;
+import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.helperClasses.Teacher;
@@ -95,6 +92,15 @@ public class TestLessons {
                     assertAll("",
                             () -> assertFalse(Constants.SKIP_CONFIGURATIONS.contains(courseConfigs.get(lesson.courseName))),
                             () -> assertFalse(Constants.SKIP_SCHEDULE.contains(lesson.modifiers)));
+                }));
+    }
+
+    @Test
+    @DisplayName("Check correct teacher object")
+    void checkCorrectTeacher(){
+        assertAll("Does it have the correct teacher",
+                lessonList.stream().map(lesson -> (Executable) () -> {
+                    assertEquals(lesson.teacherName, Constants.TEACHER_NAME_TO_CANON.get(lesson.teacherObj.name));
                 }));
     }
 
