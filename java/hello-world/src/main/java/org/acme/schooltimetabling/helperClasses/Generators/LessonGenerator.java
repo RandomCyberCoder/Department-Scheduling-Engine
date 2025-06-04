@@ -137,6 +137,7 @@ public class LessonGenerator extends Generator{
         String courseConfig;
         boolean hasLabOrAct;
         int sectionNumber;
+        Teacher teacher;
 
         courseInformation = course.split("-");
         /*we check if the course has any modifiers
@@ -178,10 +179,21 @@ public class LessonGenerator extends Generator{
          * number*/
         courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
 
+        /*checking if we can find the teacher; skip teacher if we can't
+        * find their teacher object*/
+        teacher = teacherHashMap.get(teacherName);
+        if(teacher == null){
+            if(Constants.DEBUG){
+                System.out.printf("Couldn't find a teacher object for '%s';" +
+                        "This might mean they don't have a survey. Skipping this teacher.\n", teacherName);
+            }
+            return null;
+        }
+
         /*create class*/
         return new Lesson(Integer.toString(lessonID), sectionNumber, courseName, teacherName,
                 courseModifier, courseConfig, courseIdMapping.get(courseName),
-                teacherHashMap.get(teacherName));
+                teacher);
     }
 
 

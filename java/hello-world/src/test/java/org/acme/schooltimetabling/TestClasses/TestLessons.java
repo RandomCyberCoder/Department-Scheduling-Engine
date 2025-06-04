@@ -94,7 +94,7 @@ public class TestLessons {
                 lessonList.stream().map(lesson -> (Executable) () -> {
                     assertAll("",
                             () -> assertFalse(Constants.SKIP_CONFIGURATIONS.contains(courseConfigs.get(lesson.courseName))),
-                            () -> assertFalse(Constants.SKIP_SCHEDULE.contains(Constants.SPECIAL_CODE_CONVERSION.get(lesson.modifiers))));
+                            () -> assertFalse(Constants.SKIP_SCHEDULE.contains(lesson.modifiers)));
                 }));
     }
 
