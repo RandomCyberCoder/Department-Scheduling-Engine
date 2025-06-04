@@ -115,12 +115,12 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
     //my stuff
-    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
-        return constraintFactory
-                .forEach(Lesson.class)
-                .join(Lesson.class,
-                        Joiners.equal())
-    }
+//    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
+//        return constraintFactory
+//                .forEachUniquePair(Lesson.class)
+//                .join(Lesson.class,
+//                        Joiners.equal());
+//    }
 
     //make sure no classes during the same time
 

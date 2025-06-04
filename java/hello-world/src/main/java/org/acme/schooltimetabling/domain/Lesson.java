@@ -139,4 +139,43 @@ public class Lesson {
         this.room = room;
     }
 
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public String getTeacherName() {
+        return teacherName;
+    }
+
+    public String getModifiers() {
+        return modifiers;
+    }
+
+    public int getCourseID() {
+        return courseID;
+    }
+
+    public int getLecSection() {
+        return lecSection;
+    }
+
+    public int getLabActSection() {
+        return labActSection;
+    }
+
+    public boolean isHasLabAct() {
+        return hasLabAct;
+    }
+
+    public int getLec_hours() {
+        return lec_hours;
+    }
+
+    public int getLab_activity_hours() {
+        return lab_activity_hours;
+    }
+
+    public Teacher getTeacherObj() {
+        return teacherObj;
+    }
 }

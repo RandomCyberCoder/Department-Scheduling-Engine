@@ -108,18 +108,18 @@ public class TimetableApp {
 
         /*start setup for solving*/
 
-        timetable = new Timetable("setup", timeslotList, roomList, lessonList);
-        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
-                .withSolutionClass(Timetable.class)
-                .withEntityClasses(Lesson.class)
-                .withConstraintProviderClass(TimetableConstraintProvider.class)
-                // The solver runs only for 5 seconds on this small dataset.
-                // It's recommended to run for at least 5 minutes ("5m") otherwise.
-                .withTerminationSpentLimit(Duration.ofSeconds(5)));
-
-        // Solve the problem
-        Solver<Timetable> solver = solverFactory.buildSolver();
-        Timetable solution = solver.solve(timetable);
+//        timetable = new Timetable("setup", timeslotList, roomList, lessonList);
+//        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
+//                .withSolutionClass(Timetable.class)
+//                .withEntityClasses(Lesson.class)
+//                .withConstraintProviderClass(TimetableConstraintProvider.class)
+//                // The solver runs only for 5 seconds on this small dataset.
+//                // It's recommended to run for at least 5 minutes ("5m") otherwise.
+//                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+//
+//        // Solve the problem
+//        Solver<Timetable> solver = solverFactory.buildSolver();
+//        Timetable solution = solver.solve(timetable);
 
         /*TODO make a function to save the solution to an excel file and maybe a function to print
         *  stuff out to terminal also add justifications*/
