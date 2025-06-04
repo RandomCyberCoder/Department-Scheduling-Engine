@@ -178,4 +178,98 @@ public class Timeslot {
         return endTime;
     }
 
+
+    public int getID() {
+        return ID;
+    }
+
+    public LocalTime getStartTimeLec() {
+        return startTimeLec;
+    }
+
+    public LocalTime getEndTimeLec() {
+        return endTimeLec;
+    }
+
+    public BitSet getLectureBitSet() {
+        return lectureBitSet;
+    }
+
+    public boolean isOnlyLec() {
+        return onlyLec;
+    }
+
+    public LocalTime getStartTimeLabAct() {
+        return startTimeLabAct;
+    }
+
+    public LocalTime getEndTimeLabAct() {
+        return endTimeLabAct;
+    }
+
+    public BitSet getLabActBitSet() {
+        return labActBitSet;
+    }
+
+    public BitSet getAllTimesBitSet() {
+        return allTimesBitSet;
+    }
+
+    public boolean isLecMonday() {
+        return lecMonday;
+    }
+
+    public boolean isLecTuesday() {
+        return lecTuesday;
+    }
+
+    public boolean isLecWednesday() {
+        return lecWednesday;
+    }
+
+    public boolean isLecThursday() {
+        return lecThursday;
+    }
+
+    public boolean isLecFriday() {
+        return lecFriday;
+    }
+
+    public boolean isNonLecMonday() {
+        return nonLecMonday;
+    }
+
+    public boolean isNonLecTuesday() {
+        return nonLecTuesday;
+    }
+
+    public boolean isNonLecWednesday() {
+        return nonLecWednesday;
+    }
+
+    public boolean isNonLecThursday() {
+        return nonLecThursday;
+    }
+
+    public boolean isNonLecFriday() {
+        return nonLecFriday;
+    }
+
+    public float getLecHours() {
+        return lecHours;
+    }
+
+    public float getTotalHours() {
+        return totalHours;
+    }
+
+    public float getTotalHours2() {
+        return totalHours2;
+    }
+
+    public boolean isSecondSlot() {
+        return secondSlot;
+    }
+
+
 }
