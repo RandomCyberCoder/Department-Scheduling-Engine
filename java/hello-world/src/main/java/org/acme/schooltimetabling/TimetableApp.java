@@ -27,7 +27,7 @@ public class TimetableApp {
         LARGE
     }
 
-    private static HashMap<String, Teacher> remapName(HashMap<String, Teacher> teacherHashMap){
+    public static HashMap<String, Teacher> remapName(HashMap<String, Teacher> teacherHashMap){
         HashMap<String, Teacher> remappedNames = new HashMap<>();
         String canonName;
         final HashMap<String, String> TEACHER_NAME_TO_CANON = Constants.TEACHER_NAME_TO_CANON;
@@ -70,7 +70,8 @@ public class TimetableApp {
 
 
 
-        /*read the current quarter survey*/
+        /*read the current quarter survey
+        * and then create Teacher objects*/
         String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
         String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
         System.out.println("Reading the current quarter teacher survey");
@@ -82,13 +83,17 @@ public class TimetableApp {
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
         timeslotList = TimeslotGenerator.generateTimeslots(ParseInput.PATH_FROM_ROOT + "constants/possibleTimes.csv");
 
-        /*Lesson class relevant stuff*/
+        /*parse schedules*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
+
         /*create mapping of all the possible names a teacher has to their cannon name*/
         Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);
+
         /*redo mapping of teacherHashMap to use canon names instead.
         *  Needed for when we create the Lessons... what a headache*/
         teacherHashMap = remapName(teacherHashMap);
+
+        /*Creating Lessons*/
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
         lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
