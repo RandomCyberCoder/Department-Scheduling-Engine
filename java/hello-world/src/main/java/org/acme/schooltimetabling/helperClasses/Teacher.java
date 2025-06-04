@@ -24,4 +24,24 @@ public class Teacher {
         this.acceptable = acceptable;
         this.conflict = conflict;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public BitSet getPreferences() {
+        return preferences;
+    }
+
+    public BitSet getAcceptable() {
+        return acceptable;
+    }
+
+    public BitSet getConflict() {
+        return conflict;
+    }
 }
