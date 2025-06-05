@@ -75,7 +75,8 @@ public class TimetableApp {
         );
 
 
-
+        /*TODO make it so teachers with no survey get assigned a generic timeslot
+        *  ....maybe add a list of the generics to constants???*/
         /*read the current quarter survey
         * and then create Teacher objects*/
         String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";

@@ -6,6 +6,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.solver.justifications.RoomConflictJustification;
 import org.acme.schooltimetabling.solver.justifications.StudentGroupConflictJustification;
 import org.acme.schooltimetabling.solver.justifications.StudentGroupSubjectVarietyJustification;
@@ -14,6 +15,7 @@ import org.acme.schooltimetabling.solver.justifications.TeacherRoomStabilityJust
 import org.acme.schooltimetabling.solver.justifications.TeacherTimeEfficiencyJustification;
 
 import java.time.Duration;
+import java.util.BitSet;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
 
@@ -115,13 +117,56 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
     //my stuff
-//    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
-//        return constraintFactory
-//                .forEachUniquePair(Lesson.class)
-//                .join(Lesson.class,
-//                        Joiners.equal());
-//    }
+    /**
+     * <p>This constraint makes sure if an instructor is teaching multiple instances of a course that
+     * they all land on the same day. This is essential because teaching different instances of a course
+     * on different schedules is a nightmare for the instructor to plan out.</p>
+     *
+     * <p>This currently doesn't take into account the possibility of labs being scheduled on different
+     * days... should it???</p>
+     *
+     * @param constraintFactory constraint factory
+     * @return constraint factory
+     */
+    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
+        return constraintFactory
+                .forEachUniquePair(Lesson.class,
+                    Joiners.equal((lesson) -> lesson.getTeacherObj().getId()),
+                    Joiners.equal(Lesson::getCourseID))
+                .filter(((lesson, lesson2) -> {
+                    return (lesson.getTimeslot().isLecMonday() != lesson2.getTimeslot().isLecMonday() ||
+                            lesson.getTimeslot().isLecTuesday() != lesson2.getTimeslot().isLecTuesday() ||
+                            lesson.getTimeslot().isLecWednesday() != lesson2.getTimeslot().isLecWednesday() ||
+                            lesson.getTimeslot().isLecThursday() != lesson2.getTimeslot().isLecThursday() ||
+                            lesson.getTimeslot().isLecFriday() != lesson2.getTimeslot().isLecFriday());
+                }))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Teacher has same course on same days");
+    }
 
+    /**
+     * <p>This constraint checks if the lesson timeslot overlaps with the instructors conflict
+     * bitset. If it does it will be penalized with ONE_HARD</p>
+     *
+     * <p>need to think about this more now that a timeslot can have space between... maybe
+     * add an xor for faculty that need the dead space that can be possible or make this constraint
+     * smarter and check the lab/lec timeslots individually; maybe or the lab&lec timeslot and the AND
+     * it with alltimeslot? ... idk</p>
+     *
+     * @param constraintFactory constraint factory
+     * @return constraint factory
+     */
+    Constraint teacherLessonConflict(ConstraintFactory constraintFactory){
+        return constraintFactory
+                .forEach(Lesson.class)
+                .filter((lesson -> {
+                    BitSet bitset = new BitSet();
+                    bitset.or(lesson.getTimeslot().allTimesBitSet);
+                    bitset.and(lesson.getTeacherObj().getConflict());
+                    return (bitset.cardinality() > 0);}))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("");
+    }
     //make sure no classes during the same time
 
     //make sure that classes don't conflict with hard time constraints where thaey aren't available
