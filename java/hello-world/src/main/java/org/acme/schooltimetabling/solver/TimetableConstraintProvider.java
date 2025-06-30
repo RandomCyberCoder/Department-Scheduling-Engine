@@ -167,6 +167,20 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("");
     }
+
+    /*make a bit mask for constraints in these next two comments*/
+
+    /*make a constraint for teachers checking if they have a conflict; each day of
+    * the week should be separate*/
+
+    /*make a constraint for room conflicts; each day should be a seperate event*/
+
+    /*make a constraint checking if course has right amount of hours*/
+
+    /*constraint: certain lab courses must be in certain rooms*/
+
+
+    /*TODO primetime constraint*/
     //make sure no classes during the same time
 
     //make sure that classes don't conflict with hard time constraints where thaey aren't available
