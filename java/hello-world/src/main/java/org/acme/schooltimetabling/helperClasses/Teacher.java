@@ -3,6 +3,8 @@ package org.acme.schooltimetabling.helperClasses;
 import java.util.List;
 import java.util.BitSet;
 
+/*TODO: make a subclass for this for faculty that will override the get Conflict methods
+*  so we end up auto making conflicts for the timeslot they must un available for*/
 public class Teacher {
     public int id;
     /*we should store canon name here*/
