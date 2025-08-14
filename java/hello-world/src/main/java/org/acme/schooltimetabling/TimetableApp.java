@@ -91,7 +91,8 @@ public class TimetableApp {
         timeslotList = TimeslotGenerator.generateTimeslots(ParseInput.PATH_FROM_ROOT + "constants/possibleTimes.csv");
 
         /*parse schedules*/
-        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
+        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"
+                ,ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.department));
 
         /*create mapping of all the possible names a teacher has to their cannon name*/
         Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);

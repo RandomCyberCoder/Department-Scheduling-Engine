@@ -49,7 +49,7 @@ public class TestLessons {
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
 
         /*parse schedules*/
-        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses();
+        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses("input/schedule-2254-CSC.json");
 
         /*create mapping of all the possible names a teacher has to their cannon name*/
         Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);

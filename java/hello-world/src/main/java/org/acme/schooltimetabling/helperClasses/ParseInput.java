@@ -3,49 +3,68 @@ package org.acme.schooltimetabling.helperClasses;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ParseInput {
+/***/
+public final class ParseInput {
     /*value for failing */
     public static final int PROGRAM_FAILURE = 1;
     public static final String PATH_FROM_ROOT = "java/hello-world/src/main/java/org/acme/schooltimetabling/";
     public static final String YAML_FILE_PATH = PATH_FROM_ROOT + "constants/config.yaml";
     public static ScheduleConfig scheduleConfig;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParseInput.class);
+
     static{
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        Yaml yaml = new Yaml();
-        InputStream inputStream = null;
-        try {
-            // Load the YAML file
-            inputStream = new FileInputStream(YAML_FILE_PATH);
-            if (inputStream == null) {
-                throw new FileNotFoundException("YAML file not found at " + YAML_FILE_PATH);
-            }
+        try(InputStream inputStream = new FileInputStream(YAML_FILE_PATH)) {
 
             // Initialize scheduleConfig with the parsed YAML content
+            Yaml yaml = new Yaml();
             scheduleConfig = yaml.loadAs(inputStream, ScheduleConfig.class);
 
         } catch (Exception e) {
+            LOGGER.error("Program is terminating. Couldn't read the yaml file");
             e.printStackTrace();
-            System.out.println("Program is terminating. Couldn't read the yaml file");
             System.exit(PROGRAM_FAILURE);
         }
 
     }
 
-    public static List<ScheduleFormat> readScheduleClasses(){
+    private ParseInput(){
+        throw new UnsupportedOperationException("This is a utility class an cannot be instantiated");
+    }
+
+    /**
+     * <p>Reads the JSON file containing information of what classes an instructor will teach </p>
+     * <p>File format: array of objects</p>
+     * <p> object format:</p>
+     * <pre><code>
+     *{"fall": ["csc103", "csc101"},
+     *"name": "Teacher Name",
+     *"spring": [&lt;class&gt;...],
+     *"winter": [&lt;class&gt;...],}
+     *</code></pre>
+     * @param path path to CSV file
+     * @return Schedule of classes
+     */
+    public static List<ScheduleFormat> readScheduleClasses(String path){
         List<ScheduleFormat> parsedSchedules = null;
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            File file = new File("java/hello-world/src/main/java/org/acme/schooltimetabling/input/schedule-2254-CSC.json");
-            parsedSchedules = objectMapper.readValue(file, new TypeReference<List<ScheduleFormat>>() {});
+
+        try (InputStream inputStream = new FileInputStream(PATH_FROM_ROOT + path)){
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            parsedSchedules = objectMapper.readValue(inputStream, new TypeReference<List<ScheduleFormat>>() {});
         } catch (Exception e) {
+            LOGGER.error("Terminating Program. Couldn't read the file containing classes that will be scheduled. ");
             e.printStackTrace();
+            System.exit(PROGRAM_FAILURE);
         }
 
         return parsedSchedules;
@@ -54,7 +73,8 @@ public class ParseInput {
     /**
      * <p>Reads a csv and maps the old headers to the new headers. Each entry in the csv will be an
      *    item in the ArrayList returned where each item in the ArrayList is a HashMap that will map
-     *    the column name, they key, to the value for entry in the csv
+     *    the column name, they key, to the value for entry in the csv. Warning will be given if error
+     *    occurs opening or reading the file.
      * </p>
      *
      * @param file file path of the current quarter's instructor survey
@@ -113,9 +133,7 @@ public class ParseInput {
                 csvRead.add(mapRow);
             }
         } catch (Exception e) {
-            System.out.println("Had trouble reading csv file: " + file);
-            e.printStackTrace();
-            System.exit(PROGRAM_FAILURE);
+            LOGGER.warn("Failed to read the csv file: " + file);
         }
 
 
@@ -134,10 +152,9 @@ public class ParseInput {
         HashMap<String, String> courseConfigs = new HashMap<>();
         String completeFilePath = PATH_FROM_ROOT + filePath;
 
-        try{
-            BufferedReader buf = new BufferedReader(new FileReader(completeFilePath));
+        try(BufferedReader buf = new BufferedReader(new FileReader(completeFilePath));){
             String lineRead = null;
-            String lineProcessed[];
+            String[] lineProcessed;
             String course;
             String configuration;
 
@@ -155,9 +172,9 @@ public class ParseInput {
 
         }
         catch (Exception e){
+            LOGGER.error(String.format("Exiting program. Critical error. Couldn't read course config file '%s'", completeFilePath));
             e.printStackTrace();
-            System.out.format("Tried to read file at path \"%s\"", completeFilePath);
-            throw new Exception("Error thrown from readCourseConfigs from ParseInput Class");
+            System.exit(PROGRAM_FAILURE);
         }
         return courseConfigs;
     }
