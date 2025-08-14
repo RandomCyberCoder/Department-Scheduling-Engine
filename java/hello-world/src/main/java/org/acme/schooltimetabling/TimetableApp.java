@@ -79,8 +79,8 @@ public class TimetableApp {
         *  ....maybe add a list of the generics to constants???*/
         /*read the current quarter survey
         * and then create Teacher objects*/
-        String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
-        String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
+        String curQuarterSurveyPath = String.format("%sinput/%s-survey.csv", ParseInput.PATH_FROM_ROOT, ParseInput.scheduleConfig.curTerm);
+        String prevQuarterSurveyPath = String.format("%sinput/%s-survey.csv", ParseInput.PATH_FROM_ROOT, ParseInput.scheduleConfig.prevTerm);
         System.out.println("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
         System.out.println("Reading the previous quarter teacher survey");
