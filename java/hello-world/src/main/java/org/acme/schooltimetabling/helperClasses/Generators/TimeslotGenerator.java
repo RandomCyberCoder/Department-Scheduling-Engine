@@ -2,12 +2,16 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
 public class TimeslotGenerator extends Generator{
+    private final static Logger LOGGER = LoggerFactory.getLogger(TimeslotGenerator.class);
+
     private static Timeslot generateTimeslot(int ID, HashMap<String, String> timeslotMap){
         Timeslot newTimeslot = null;
         String days = timeslotMap.get("days");
@@ -37,9 +41,13 @@ public class TimeslotGenerator extends Generator{
                     days2, timeStart2, timeEnd2, lecture_hours2, total_hours2);
         }
         catch (Exception e){
+            LOGGER.error("Terminating program. Failed to generate a timeslot with the following (check format):\n " +
+                    String.format("days: %s; timeStart: %s; timeEnd: %s; lecHours: %s; totalHours: %s; days2: %s"
+                            ,days, timeStart, timeEnd, lectureHours, totalHours, days2));
             e.printStackTrace();
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
+
         return newTimeslot;
     }
 
@@ -55,16 +63,13 @@ public class TimeslotGenerator extends Generator{
         String timeslotsFile = filePath;
         ArrayList<Timeslot> timeslotList = new ArrayList<>();
         ArrayList<HashMap<String, String>> timeslotCSV= null;
-        try{
-            timeslotCSV = ParseInput.readCSV(timeslotsFile, null);
-            if(timeslotCSV.isEmpty()){
-                throw new Exception("timeslot list is empty");
-            }
-        }
-        catch (Exception e){
-            e.printStackTrace();
+
+        timeslotCSV = ParseInput.readCSV(timeslotsFile, null);
+        if(timeslotCSV.isEmpty()){
+            LOGGER.error("Terminating program. Timeslot list is empty. Nothing to schedule");
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
+
         //loop through entries
         for(HashMap<String, String > timeslotMap: timeslotCSV) {
             //instantiate a timeslot instance for every entry
@@ -72,6 +77,9 @@ public class TimeslotGenerator extends Generator{
             //add the timeslot instant to our list
             timeslotList.add(newTimeslot);
         }
+
+        LOGGER.info("Finished generating timeslots");
+
         return timeslotList;
     }
 }

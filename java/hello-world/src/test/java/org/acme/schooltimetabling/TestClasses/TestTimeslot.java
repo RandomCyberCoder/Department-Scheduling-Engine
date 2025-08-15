@@ -24,7 +24,7 @@ public class TestTimeslot {
 
     @BeforeAll
     static void setUp(){
-        timeslotList = TimeslotGenerator.generateTimeslots(TestConstants.PATH_FROM_ROOT + "possibletimes.csv");
+        timeslotList = TimeslotGenerator.generateTimeslots("possibletimes.csv");
     }
 
     @Test
