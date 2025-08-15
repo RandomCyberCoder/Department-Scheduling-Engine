@@ -55,10 +55,9 @@ public class TimetableApp {
         ArrayList<Timeslot> timeslotList;
         Timetable timetable;
 
-        System.out.println("does nothing");
-        System.out.printf("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
+        LOGGER.info(String.format("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
-                ParseInput.scheduleConfig.seasonTerm);
+                ParseInput.scheduleConfig.seasonTerm));
 
         /*New headers for the survey*/
         ArrayList<String> newSurveyHeaders = new ArrayList<>(
@@ -81,9 +80,9 @@ public class TimetableApp {
         * and then create Teacher objects*/
         String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
         String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
-        System.out.println("Reading the current quarter teacher survey");
+        LOGGER.info("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
-        System.out.println("Reading the previous quarter teacher survey");
+        LOGGER.info("Reading the previous quarter teacher survey");
         /*read the prev quarter survey*/
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/

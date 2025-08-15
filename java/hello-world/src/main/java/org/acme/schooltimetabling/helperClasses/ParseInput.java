@@ -23,7 +23,6 @@ public final class ParseInput {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseInput.class);
 
     static{
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
         try(InputStream inputStream = getResourceAsStream(YAML_FILE_PATH)) {
 
             // Initialize scheduleConfig with the parsed YAML content

@@ -3,7 +3,7 @@
 
   <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{HH:mm:ss.SSS} [%-12.12t] In &lt;class&gt;.&lt;function&gt;: %logger{0}.%M - %-5p - %m%n</pattern>
+      <pattern>%d{HH:mm:ss.SSS} [%-12.12t] In %logger{0}.%M\(\) - %-5p - %m%n</pattern>
     </encoder>
   </appender>
 

@@ -6,6 +6,8 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LessonGenerator extends Generator{
+    private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
 
     /**
      * <p>Generates all lessons and filter out any lesson types specified by the Constants.SKIP_SCHEDULE
@@ -156,8 +159,8 @@ public class LessonGenerator extends Generator{
              * or do anything special*/
             if(Constants.SKIP_SCHEDULE.contains(courseModifier)){
                 if(Constants.DEBUG){
-                    System.out.printf("Skipping scheduling of course with name %s with " +
-                            "modifier %s\n", courseName, courseModifier);
+                    LOGGER.warn(String.format("Skipping scheduling of course with name %s with " +
+                            "modifier %s", courseName, courseModifier));
                 }
                 return null;
             }
@@ -169,7 +172,7 @@ public class LessonGenerator extends Generator{
 
         if(Constants.SKIP_CONFIGURATIONS.contains(courseConfig)){
             if(Constants.DEBUG){
-                System.out.printf("Skipping course '%s' with configuration %s\n", courseName, courseConfig);
+                LOGGER.warn(String.format("Skipping course '%s' with configuration %s", courseName, courseConfig));
             }
             return null;
         }
@@ -184,8 +187,8 @@ public class LessonGenerator extends Generator{
         teacher = teacherHashMap.get(teacherName);
         if(teacher == null){
             if(Constants.DEBUG){
-                System.out.printf("Couldn't find a teacher object for '%s';" +
-                        "This might mean they don't have a survey. Skipping this teacher.\n", teacherName);
+                LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
+                        "This might mean they don't have a survey. Skipping this teacher.", teacherName));
             }
             return null;
         }
@@ -210,7 +213,7 @@ public class LessonGenerator extends Generator{
      * or activity
      */
     private static boolean determineLabOrAct(String courseConfig){
-        System.out.printf("parsing course config %s\n", courseConfig);
+        LOGGER.info(String.format("parsing course config %s", courseConfig));
         final int NO_UNITS = 0;
         String[] units = courseConfig.split("-");
         int labUnits = Integer.parseInt(units[1]);

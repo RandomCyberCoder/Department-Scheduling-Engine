@@ -2,10 +2,13 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class TeacherGenerator extends Generator{
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeacherGenerator.class);
     /**
      * Generates the Teacher object for the instructor's survey entry. It
      * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
@@ -75,19 +78,21 @@ public class TeacherGenerator extends Generator{
 
             /*check if the instructor wants to bleed forward in current quarter's survey*/
             if(bleedForward.equals(surveyEntry.get("use_old"))){
-                System.out.printf("Bleeding forward %s%n", instructorName);
+                LOGGER.info(String.format("Bleeding forward %s", instructorName));
                 teacherBleed.put(instructorName, null);
-                continue;
+
+            }
+            else{
+                /*if the instructor didn't want to bleed forward create the instructor's
+                 * Teacher instance*/
+                LOGGER.info(String.format("Teacher %s did not bleed forward", instructorName));
+                Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
+
+                /*add the Teacher instance to our HashMap to be later used for creating
+                 * the lessons*/
+                teacherHashMap.put(instructorName, curTeacher);
             }
 
-            /*if the instructor didn't want to bleed forward create the instructor's
-            * Teacher instance*/
-            System.out.printf("Creating teacher object instance for %s%n", instructorName);
-            Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
-
-            /*add the Teacher instance to our HashMap to be later used for creating
-            * the lessons*/
-            teacherHashMap.put(instructorName, curTeacher);
         }
 
         /*read the previous quarter survey entries in case anyone bled forward*/
@@ -96,15 +101,16 @@ public class TeacherGenerator extends Generator{
             /*Check if the instructor wanted to bleed forward*/
             if(teacherBleed.containsKey(instructorName)){
 
-                System.out.printf("Trying to use %s old survey%n", instructorName);
+                LOGGER.info(String.format("Trying to use %s's old survey", instructorName));
                 /*If the instructor choose to bleed forward in the previous survey
                 * we will be forced to skip them :( */
                 if(bleedForward.equals(surveyEntry.get("use_old"))){
-                    System.out.printf("Previous survey also bleeds forward. Skipping %s%n", instructorName);
+                    LOGGER.warn(String.format("Previous survey also bleeds forward. SKIPPING %s", instructorName));
                     continue;
                 }
 
-                System.out.printf("Old survey found for %s, creating their teacher object instance%n", instructorName);
+                LOGGER.info(String.format("Old survey found for %s, creating their teacher object instance"
+                        , instructorName));
 
                 /*if they bled forward and we have a survey entry then we create their
                 * Teacher instance*/

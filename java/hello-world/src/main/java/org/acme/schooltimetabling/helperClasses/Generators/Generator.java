@@ -5,10 +5,14 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class Generator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Generator.class);
+
     /**
      * <p>The function creates a mapping from the names in the teacher HashMap to the respective
      * name in the schedules List. We need this so we can link the names in the teachers survey file
@@ -35,7 +39,7 @@ public class Generator {
             * it is considered. If it violates this I assume it's some generic schedule and skip it*/
             nameSplit = teacherName.split(" ");
             if(Constants.DEBUG && nameSplit.length < 2){
-                System.out.println((String.format("In createTeacherNameMapping skipping teacher key in HashMap " +
+                LOGGER.warn((String.format("In createTeacherNameMapping skipping teacher key in HashMap " +
                         "that has value %s", teacherName)));
                 continue;
             }
@@ -55,7 +59,7 @@ public class Generator {
                 }
             }
             if(Constants.DEBUG && !mappingFound){
-                System.out.printf("Couldn't find a mapping for %s\n", teacherName);
+                LOGGER.warn("Couldn't find a mapping for %s\n", teacherName);
             }
         }
     }

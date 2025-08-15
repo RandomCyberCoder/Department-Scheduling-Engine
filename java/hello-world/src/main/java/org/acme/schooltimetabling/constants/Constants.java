@@ -3,6 +3,8 @@ package org.acme.schooltimetabling.constants;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -11,6 +13,7 @@ import java.util.*;
  * fit anywhere else, like a class.
  */
 public class Constants {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Constants.class);
     /**
      * This class attribute is used for debug print statements. I kept it
      * from being constant to allow the flexibility to turn on/off debug print
@@ -112,10 +115,14 @@ public class Constants {
             LEC_ROOM_ONLY_ID = ROOM_TO_ID_BIMAP.get(LEC_ONLY);
         }
         catch (Exception e){
-            e.printStackTrace();
-            System.out.println("In Constants class include 'LEC_ONLY (variable) " +
+            LOGGER.error("Terminating Program. In Constants class include 'LEC_ONLY (variable) " +
                     "room to the LinkedHashSet exiting program until fixed");
+            e.printStackTrace();
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
+    }
+
+    private Constants(){
+        throw new UnsupportedOperationException("This class can't be instantiated");
     }
 }
