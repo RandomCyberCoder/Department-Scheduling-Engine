@@ -79,8 +79,8 @@ public class TimetableApp {
         *  ....maybe add a list of the generics to constants???*/
         /*read the current quarter survey
         * and then create Teacher objects*/
-        String curQuarterSurveyPath = String.format("%sinput/%s-survey.csv", ParseInput.PATH_FROM_ROOT, ParseInput.scheduleConfig.curTerm);
-        String prevQuarterSurveyPath = String.format("%sinput/%s-survey.csv", ParseInput.PATH_FROM_ROOT, ParseInput.scheduleConfig.prevTerm);
+        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
+        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
         System.out.println("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
         System.out.println("Reading the previous quarter teacher survey");
@@ -88,7 +88,7 @@ public class TimetableApp {
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-        timeslotList = TimeslotGenerator.generateTimeslots(ParseInput.PATH_FROM_ROOT + "constants/possibleTimes.csv");
+        timeslotList = TimeslotGenerator.generateTimeslots("constants/possibleTimes.csv");
 
         /*parse schedules*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"

@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,15 +17,14 @@ import java.util.stream.Collectors;
 public final class ParseInput {
     /*value for failing */
     public static final int PROGRAM_FAILURE = 1;
-    public static final String PATH_FROM_ROOT = "java/hello-world/src/main/java/org/acme/schooltimetabling/";
-    public static final String YAML_FILE_PATH = PATH_FROM_ROOT + "constants/config.yaml";
+    public static final String YAML_FILE_PATH = "constants/config.yaml";
     public static ScheduleConfig scheduleConfig;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseInput.class);
 
     static{
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        try(InputStream inputStream = new FileInputStream(YAML_FILE_PATH)) {
+        try(InputStream inputStream = getResourceAsStream(YAML_FILE_PATH)) {
 
             // Initialize scheduleConfig with the parsed YAML content
             Yaml yaml = new Yaml();
@@ -41,6 +42,15 @@ public final class ParseInput {
         throw new UnsupportedOperationException("This is a utility class an cannot be instantiated");
     }
 
+
+    private static InputStream getResourceAsStream(String filePath){
+        return ParseInput.class.getClassLoader().getResourceAsStream(filePath);
+    }
+
+    private static URL getResourceURL(String filePath){
+        return ParseInput.class.getClassLoader().getResource(filePath);
+    }
+
     /**
      * <p>Reads the JSON file containing information of what classes an instructor will teach </p>
      * <p>File format: array of objects</p>
@@ -51,13 +61,13 @@ public final class ParseInput {
      *"spring": [&lt;class&gt;...],
      *"winter": [&lt;class&gt;...],}
      *</code></pre>
-     * @param path path to CSV file
+     * @param filePath path to CSV file
      * @return Schedule of classes
      */
-    public static List<ScheduleFormat> readScheduleClasses(String path){
+    public static List<ScheduleFormat> readScheduleClasses(String filePath){
         List<ScheduleFormat> parsedSchedules = null;
 
-        try (InputStream inputStream = new FileInputStream(PATH_FROM_ROOT + path)){
+        try (InputStream inputStream = ParseInput.getResourceAsStream(filePath)){
 
             ObjectMapper objectMapper = new ObjectMapper();
             parsedSchedules = objectMapper.readValue(inputStream, new TypeReference<List<ScheduleFormat>>() {});
@@ -77,16 +87,16 @@ public final class ParseInput {
      *    occurs opening or reading the file.
      * </p>
      *
-     * @param file file path of the current quarter's instructor survey
+     * @param filePath file path of the current quarter's instructor survey
      * @param replacementHeaders an ArrayList<String> of headers to replace the current csv headers
      *                           if you don't want replacement headers pass <code>null</code>
      * */
-    public static ArrayList<HashMap<String, String>> readCSV(String file, ArrayList<String> replacementHeaders) throws FileNotFoundException {
+    public static ArrayList<HashMap<String, String>> readCSV(String filePath, ArrayList<String> replacementHeaders){
         ArrayList<HashMap<String, String>> csvRead = new ArrayList<>();
         boolean headerRead = false;
 
-        try (FileReader fileReader = new FileReader(file)) {
-            CSVReader csvReader = new CSVReader(fileReader);
+        try (Reader reader = new InputStreamReader(ParseInput.getResourceAsStream(filePath), StandardCharsets.UTF_8)) {
+            CSVReader csvReader = new CSVReader(reader);
             String[] nextRecord;
             ArrayList<String> headers = null;
 
@@ -133,7 +143,7 @@ public final class ParseInput {
                 csvRead.add(mapRow);
             }
         } catch (Exception e) {
-            LOGGER.warn("Failed to read the csv file: " + file);
+            LOGGER.warn("Failed to read the csv file: " + filePath);
         }
 
 
@@ -148,11 +158,11 @@ public final class ParseInput {
      * @param filePath file path assuming its read as you're in the project directory
      * @return a hashmap with the course name as the key and the configuration as the value
      */
-    public static HashMap<String, String> readCourseConfigs(String filePath) throws Exception{
+    public static HashMap<String, String> readCourseConfigs(String filePath){
         HashMap<String, String> courseConfigs = new HashMap<>();
-        String completeFilePath = PATH_FROM_ROOT + filePath;
 
-        try(BufferedReader buf = new BufferedReader(new FileReader(completeFilePath));){
+        try(BufferedReader buf = new BufferedReader(new InputStreamReader(
+                getResourceAsStream(filePath), StandardCharsets.UTF_8))){
             String lineRead = null;
             String[] lineProcessed;
             String course;
@@ -172,7 +182,8 @@ public final class ParseInput {
 
         }
         catch (Exception e){
-            LOGGER.error(String.format("Exiting program. Critical error. Couldn't read course config file '%s'", completeFilePath));
+            LOGGER.error(String.format("Exiting program. Critical error. " +
+                    "Couldn't read course config file '%s'", filePath));
             e.printStackTrace();
             System.exit(PROGRAM_FAILURE);
         }
