@@ -5,6 +5,7 @@ import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -54,6 +55,11 @@ public class TimetableApp {
         ArrayList<Lesson> lessonList;
         ArrayList<Timeslot> timeslotList;
         Timetable timetable;
+
+//        EnumSet<Days> test = EnumSet.noneOf(Days.class);
+//        test.add(Days.FRIDAY);
+//        System.out.println(test.toString());
+//        System.out.println(test.size());
 
         LOGGER.info(String.format("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,

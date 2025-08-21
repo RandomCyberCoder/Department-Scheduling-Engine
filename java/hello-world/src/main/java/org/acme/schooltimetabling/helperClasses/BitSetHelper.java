@@ -14,6 +14,28 @@ public class BitSetHelper {
     private static final int WEDNESDAY_OFFSET = 60;
     private static final int THURSDAY_OFFSET = 90;
     private static final int FRIDAY_OFFSET = 120;
+    public static final BitSet MONDAY_MASK;
+    public static final BitSet TUESDAY_MASK;
+    public static final BitSet WEDNESDAY_MASK;
+    public static final BitSet THURSDAY_MASK;
+    public static final BitSet FRIDAY_MASK;
+
+    static {
+        MONDAY_MASK = new BitSet();
+        MONDAY_MASK.set(MONDAY_OFFSET, TUESDAY_OFFSET);
+
+        TUESDAY_MASK = new BitSet();
+        TUESDAY_MASK.set(TUESDAY_OFFSET, WEDNESDAY_OFFSET);
+
+        WEDNESDAY_MASK = new BitSet();
+        WEDNESDAY_MASK.set(WEDNESDAY_OFFSET, THURSDAY_OFFSET);
+
+        THURSDAY_MASK = new BitSet();
+        THURSDAY_MASK.set(THURSDAY_OFFSET, FRIDAY_OFFSET);
+
+        FRIDAY_MASK = new BitSet();
+        FRIDAY_MASK.set(FRIDAY_OFFSET, FRIDAY_OFFSET + 30);
+    }
 
     public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, boolean monday,
                                         boolean tuesday, boolean wednesday, boolean thursday,

@@ -188,7 +188,8 @@ public class LessonGenerator extends Generator{
         if(teacher == null){
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
-                        "This might mean they don't have a survey. Skipping this teacher.", teacherName));
+                        "This might mean they don't have a survey. Skipping this teacher. " +
+                        "Skipping course '%s'", teacherName, courseName));
             }
             return null;
         }
@@ -213,7 +214,6 @@ public class LessonGenerator extends Generator{
      * or activity
      */
     private static boolean determineLabOrAct(String courseConfig){
-        LOGGER.info(String.format("parsing course config %s", courseConfig));
         final int NO_UNITS = 0;
         String[] units = courseConfig.split("-");
         int labUnits = Integer.parseInt(units[1]);

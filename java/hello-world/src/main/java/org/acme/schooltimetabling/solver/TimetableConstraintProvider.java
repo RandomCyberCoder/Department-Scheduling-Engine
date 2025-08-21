@@ -6,6 +6,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.solver.justifications.RoomConflictJustification;
 import org.acme.schooltimetabling.solver.justifications.StudentGroupConflictJustification;
@@ -18,6 +19,7 @@ import java.time.Duration;
 import java.util.BitSet;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
+    private static final float FLOAT_TIME_DELTA = 0.01f;
 
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
@@ -126,65 +128,180 @@ public class TimetableConstraintProvider implements ConstraintProvider {
      * days... should it???</p>
      *
      * @param constraintFactory constraint factory
-     * @return constraint factory
+     * @return constraint
      */
     Constraint sameClassSameDays(ConstraintFactory constraintFactory){
         return constraintFactory
                 .forEachUniquePair(Lesson.class,
-                    Joiners.equal((lesson) -> lesson.getTeacherObj().getId()),
+                    Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
                     Joiners.equal(Lesson::getCourseID))
-                .filter(((lesson, lesson2) -> {
-                    return (lesson.getTimeslot().isLecMonday() != lesson2.getTimeslot().isLecMonday() ||
-                            lesson.getTimeslot().isLecTuesday() != lesson2.getTimeslot().isLecTuesday() ||
-                            lesson.getTimeslot().isLecWednesday() != lesson2.getTimeslot().isLecWednesday() ||
-                            lesson.getTimeslot().isLecThursday() != lesson2.getTimeslot().isLecThursday() ||
-                            lesson.getTimeslot().isLecFriday() != lesson2.getTimeslot().isLecFriday());
-                }))
+                .filter((lesson, lesson2) -> (
+                        lesson.getTimeslot().isLecMonday() != lesson2.getTimeslot().isLecMonday() ||
+                        lesson.getTimeslot().isLecTuesday() != lesson2.getTimeslot().isLecTuesday() ||
+                        lesson.getTimeslot().isLecWednesday() != lesson2.getTimeslot().isLecWednesday() ||
+                        lesson.getTimeslot().isLecThursday() != lesson2.getTimeslot().isLecThursday() ||
+                        lesson.getTimeslot().isLecFriday() != lesson2.getTimeslot().isLecFriday()
+                ))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher has same course on same days");
     }
-
     /**
      * <p>This constraint checks if the lesson timeslot overlaps with the instructors conflict
      * bitset. If it does it will be penalized with ONE_HARD</p>
      *
-     * <p>need to think about this more now that a timeslot can have space between... maybe
+     * <p>NOTE: need to think about this more now that a timeslot can have space between... maybe
      * add an xor for faculty that need the dead space that can be possible or make this constraint
      * smarter and check the lab/lec timeslots individually; maybe or the lab&lec timeslot and the AND
      * it with alltimeslot? ... idk</p>
      *
      * @param constraintFactory constraint factory
-     * @return constraint factory
+     * @return constraint
      */
     Constraint teacherLessonConflict(ConstraintFactory constraintFactory){
         return constraintFactory
                 .forEach(Lesson.class)
-                .filter((lesson -> {
+                .filter(lesson -> {
                     BitSet bitset = new BitSet();
+                    /*TODO: this bitset takes into account gaps in the bitset
+                    *  that are built in. We might need a lecture and lab bitset
+                    *  instead and take into account the gap in this constraint or
+                    *  another somehow*/
                     bitset.or(lesson.getTimeslot().allTimesBitSet);
                     bitset.and(lesson.getTeacherObj().getConflict());
-                    return (bitset.cardinality() > 0);}))
+                    return (bitset.cardinality() > 0);
+                })
                 .penalize(HardSoftScore.ONE_HARD)
-                .asConstraint("");
+                .asConstraint("TimeSlot has inadequate hours");
     }
 
-    /*make a bit mask for constraints in these next two comments*/
+    /*make a bit mask for constraints in these next two comments .... might actually not be needed*/
 
-    /*make a constraint for teachers checking if they have a conflict; each day of
-    * the week should be separate*/
+    /*make a constraint for teachers checking if they have a conflict */
+
+    /**
+     * <p>The constraint checks that a teacher isn't teaching two classes at the same time.
+     * We just intersect the timeslot bitsets.</p>
+     *
+     * Personal NOTE: Currently I am checking for allTimeBitset which can include breaks. i.e
+     * lec+lab time may only be 6hrs but the timeslot has 7 hours. Imagine the hour gap on tuesdays
+     * and thursdays.
+     * Revisit this later. I'm pretty sure the way right now is okay, but good to note
+     *
+     *
+     *
+     */
+    Constraint lessonConflict(ConstraintFactory constraintFactory){
+        return constraintFactory
+                .forEachUniquePair(Lesson.class,
+                        Joiners.equal(Lesson::getTimeslot),
+                        Joiners.equal(Lesson::getTeacherObj))
+                .filter((lesson, lesson2) -> {
+                    BitSet bs1 = lesson.getTimeslot().getAllTimesBitSet();
+                    BitSet bs2 = lesson2.getTimeslot().getAllTimesBitSet();
+
+                    return bs1.intersects(bs2);
+                })
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Teacher found teaching more than one course at the same time");
+    }
+
+    /*consider making a constraint where a non lab/activity courses have the general room
+    * assigned to them OR will this be handled by the other constraints OR make a constraint
+    * where we make sure lessons are given the right room. i.e. lecture only courses have the
+    * general room and the lab/activity rooms have appropriate room*/
 
     /*make a constraint for room conflicts; each day should be a seperate event*/
 
-    /*make a constraint checking if course has right amount of hours*/
+    //problem being solved: check if two lessons are in the same room at the same time.
+        //check if on the same day. If yes check if they overlap
+
+    //what we have: a act/lab bitset
+    //question: do we need to filter out timeslots that don't hav lab
+    Constraint labActRoomConflict(ConstraintFactory constraintFactory){
+        return constraintFactory
+                //for each lesson
+                .forEachUniquePair(Lesson.class,
+                        //in the same room
+                        Joiners.equal(Lesson::getRoom),
+                        //that have a lab/activity
+                        Joiners.filtering((lesson, lesson2) -> {
+                            //make sure that the lesson requires a lab/activity room
+                            return lesson.hasLabAct && lesson2.hasLabAct;
+                        }))
+                .filter((lesson, lesson2) -> {
+                    Timeslot t1 = lesson.getTimeslot();
+                    Timeslot t2 = lesson2.getTimeslot();
+
+                    return t1.getLabActBitSet().intersects(t2.getLabActBitSet());
+                })
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Lab/Activity room conflict");
+    }
+
+
+    /*make sure that a lesson that needs a lab/activity is in the right room*/
+
+
+
+    /*CONSTRAINT check that the course is in the right room type. onlyLec -> general room
+    * and lab/act is in the right room(s)*/
+
+    /**
+     * <p>This constraint makes sure that the course a lesson represents has been given a timeslot
+     * that has the exact amount of hours for the lecture and/or lab/activity the course requires.
+     * i.e. a lesson that require 3 lecture hours and 3 lab hours should have a time slot that has
+     * no more or less than this amount of lecture and lab hours allocated.</p>
+     *
+     * <p>implicitly checks that a course with lab/activity is given a timeslot that accommodates for this</p>
+     *
+     * <p>NOTE FOR FUTURE CHANGE currently doesn't include the new time slot stuff. just working on it getting to work
+     * as if we were in the quarter system</p>
+     * @param constraintFactory constraint factory
+     * @return Constraint
+     */
+    Constraint wrongHoursAmount(ConstraintFactory constraintFactory){
+        return constraintFactory
+                .forEach(Lesson.class)
+                .filter(lesson -> {
+
+                    /* TODO currently assuming that we can only have lec and then
+                        lab/activity on the same day with the same amount of time as currently;
+                        Change after MVP is done
+                     */
+                    int numDays = 0;
+                    if(lesson.getTimeslot().lecMonday) numDays++;
+                    if(lesson.getTimeslot().lecTuesday) numDays++;
+                    if(lesson.getTimeslot().lecWednesday) numDays++;
+                    if(lesson.getTimeslot().lecThursday) numDays++;
+                    if(lesson.getTimeslot().lecFriday) numDays++;
+
+                    //ts -> timeslot
+                    float tsLecHrs = lesson.getTimeslot().getLecHours();
+                    tsLecHrs *= numDays;
+                    float tsLabActHrs = lesson.getTimeslot().onlyLec ? 0 : tsLecHrs;
+                    tsLabActHrs *= numDays;
+
+                    //return true of too many or not enough lec hours or lab/activity hours in the timeslot
+                    return !(lesson.lec_hours - FLOAT_TIME_DELTA < tsLecHrs
+                            && tsLecHrs < lesson.lec_hours + FLOAT_TIME_DELTA)
+                            || (lesson.lab_activity_hours - FLOAT_TIME_DELTA < tsLabActHrs
+                            && tsLabActHrs < lesson.lab_activity_hours + FLOAT_TIME_DELTA);
+                })
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Lesson's timeslot must have exact time needed");
+    }
 
     /*constraint: certain lab courses must be in certain rooms*/
 
 
-    /*TODO primetime constraint*/
-    //make sure no classes during the same time
+    //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching
+    //two classes at the same time.
 
-    //make sure that classes don't conflict with hard time constraints where thaey aren't available
+    //make sure that classes don't conflict with hard time constraints where they aren't available
 
     /*TODO eventually add the prime time stuff*/
+
+    /*TODO primetime constraint*/
+
 
 }
