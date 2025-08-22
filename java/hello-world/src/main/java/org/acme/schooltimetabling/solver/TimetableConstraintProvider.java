@@ -5,7 +5,9 @@ import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.solver.justifications.RoomConflictJustification;
@@ -292,6 +294,28 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
     /*constraint: certain lab courses must be in certain rooms*/
+    Constraint wrongRoomType(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    Room room = lesson.getRoom();
+                    //if lesson has a lab/act
+                    if(lesson.isHasLabAct()){
+                        /*TODO I realize that I never included what courses have to be in what rooms.
+                         * I might have to make a dummy class in case that we have a course with a lab/act that
+                         * that we haven't set up a room for or we need to setup some validation.
+                         * We need to also set up the mapping from course to room it needs to be in
+                         */
+                        return Constants.ROOM_TO_ID_BIMAP.get(Constants.LEC_ONLY) == room.getID();
+                    }
+                    //if lesson is lecture only
+                    else{
+                        //make lecture only lesson has a lecture only room
+                        return Constants.ROOM_TO_ID_BIMAP.get(Constants.LEC_ONLY) != room.getID();
+                    }
+                })
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Lesson with wrong room type");
+    }
 
 
     //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching

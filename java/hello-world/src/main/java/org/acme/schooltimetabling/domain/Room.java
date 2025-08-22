@@ -7,11 +7,11 @@ public class Room {
     @PlanningId
     public String id;
 
-    public String name;
+    private String name;
     /*I think this might be the only thing we really need in terms
     * of what is needed for scheduling. Anything else is for debugging
     * but even that could be found in the hashmaps that have been created*/
-    public int ID;
+    private int ID;
     public Room() {
     }
 

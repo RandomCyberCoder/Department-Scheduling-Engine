@@ -28,7 +28,7 @@ public class TestRooms {
     void roomName(){
         assertAll("Checking correct id",
                 roomLst.stream().map((room -> (Executable) () -> {
-                    assertEquals(Constants.ROOM_TO_ID_BIMAP.get(room.name), room.ID);
+                    assertEquals(Constants.ROOM_TO_ID_BIMAP.get(room.getName()), room.getID());
                 })));
     }
 }
