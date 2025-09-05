@@ -100,7 +100,7 @@ public class Lesson {
 
     @Override
     public String toString() {
-        return subject + "(" + id + ")";
+        return courseName + "(" + id + ")" + " instructor: " + teacherName;
     }
 
     // ************************************************************************
