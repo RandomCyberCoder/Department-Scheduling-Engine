@@ -1,5 +1,12 @@
 package org.acme.schooltimetabling;
 
+import ai.timefold.solver.core.api.score.ScoreExplanation;
+import ai.timefold.solver.core.api.score.ScoreManager;
+import ai.timefold.solver.core.api.score.analysis.MatchAnalysis;
+import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
+import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
+import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
+import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
@@ -115,18 +122,56 @@ public class TimetableApp {
 
         /*start setup for solving*/
 
-//        timetable = new Timetable("setup", timeslotList, roomList, lessonList);
-//        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
-//                .withSolutionClass(Timetable.class)
-//                .withEntityClasses(Lesson.class)
-//                .withConstraintProviderClass(TimetableConstraintProvider.class)
-//                // The solver runs only for 5 seconds on this small dataset.
-//                // It's recommended to run for at least 5 minutes ("5m") otherwise.
-//                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+        timetable = new Timetable("setup", timeslotList, roomList, lessonList);
+        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
+                .withSolutionClass(Timetable.class)
+                .withEntityClasses(Lesson.class)
+                .withConstraintProviderClass(TimetableConstraintProvider.class)
+                // The solver runs only for 5 seconds on this small dataset.
+                // It's recommended to run for at least 5 minutes ("5m") otherwise.
+                .withTerminationSpentLimit(Duration.ofSeconds(5)));
+
+        // Solve the problem
+        Solver<Timetable> solver = solverFactory.buildSolver();
+        Timetable solution = solver.solve(timetable);
+
+        //analyzing the solution
+        SolutionManager<Timetable, HardSoftLongScore> solutionManager = SolutionManager.create(solverFactory);
+        ScoreAnalysis<HardSoftLongScore> scoreAnalysis = solutionManager.analyze(solution);
+
+        //short summary of violated constraints in the solution
+        System.out.println(scoreAnalysis.summarize());
+
+        //print a detailed summary for every constraint a list of all the instances of it being violated
+        scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
+            System.out.println("Constraint: " + constraintRef.constraintId());
+            System.out.println(" Score: " + constraintAnalysis.score());
+            for (MatchAnalysis<HardSoftLongScore> match : constraintAnalysis.matches()) {
+                System.out.println("  Match score: " + match.score());
+                System.out.println("  Justification: " + match.justification());
+            }
+        });
+
+        return;
+
+//        //
+//        ScoreManager<Timetable, HardSoftScore> scoreManager =
+//                ScoreManager.create(solverFactory);
 //
-//        // Solve the problem
-//        Solver<Timetable> solver = solverFactory.buildSolver();
-//        Timetable solution = solver.solve(timetable);
+//        ScoreExplanation<Timetable, HardSoftScore> explanation =
+//                scoreManager.explainScore(solution);
+//
+//// Total score
+//        System.out.println("Score: " + explanation.getScore());
+//
+//// All constraint matches and justifications
+//        explanation.getConstraintMatchTotalMap().forEach((constraint, matchTotal) -> {
+//            System.out.println("Constraint: " + constraint);
+//            matchTotal.getConstraintMatchSet().forEach(match -> {
+//                System.out.println("  Justification: " + match.getJustification());
+//                System.out.println("  Score: " + match.getScore());
+//            });
+//        });
 
         /*TODO make a function to save the solution to an excel file and maybe a function to print
         *  stuff out to terminal also add justifications*/
