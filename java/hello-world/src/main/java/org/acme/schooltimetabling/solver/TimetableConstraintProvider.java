@@ -10,12 +10,7 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.Teacher;
-import org.acme.schooltimetabling.solver.justifications.RoomConflictJustification;
-import org.acme.schooltimetabling.solver.justifications.StudentGroupConflictJustification;
-import org.acme.schooltimetabling.solver.justifications.StudentGroupSubjectVarietyJustification;
-import org.acme.schooltimetabling.solver.justifications.TeacherConflictJustification;
-import org.acme.schooltimetabling.solver.justifications.TeacherRoomStabilityJustification;
-import org.acme.schooltimetabling.solver.justifications.TeacherTimeEfficiencyJustification;
+import org.acme.schooltimetabling.solver.justifications.*;
 
 import java.time.Duration;
 import java.util.BitSet;
@@ -23,102 +18,104 @@ import java.util.BitSet;
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final float FLOAT_TIME_DELTA = 0.01f;
 
+
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
         return new Constraint[] {
                 // Hard constraints
-                roomConflict(constraintFactory),
-                teacherConflict(constraintFactory),
-                studentGroupConflict(constraintFactory),
+                sameClassSameDays(constraintFactory),
+                teacherLessonConflict(constraintFactory),
+                lessonConflict(constraintFactory),
+                labActRoomConflict(constraintFactory),
+                wrongHoursAmount(constraintFactory),
+                wrongRoomType(constraintFactory)
+
                 // Soft constraints
-                teacherRoomStability(constraintFactory),
-                teacherTimeEfficiency(constraintFactory),
-                studentGroupSubjectVariety(constraintFactory)
         };
     }
-
-    Constraint roomConflict(ConstraintFactory constraintFactory) {
-        // A room can accommodate at most one lesson at the same time.
-        return constraintFactory
-                // Select each pair of 2 different lessons ...
-                .forEachUniquePair(Lesson.class,
-                        // ... in the same timeslot ...
-                        Joiners.equal(Lesson::getTimeslot),
-                        // ... in the same room ...
-                        Joiners.equal(Lesson::getRoom))
-                // ... and penalize each pair with a hard weight.
-                .penalize(HardSoftScore.ONE_HARD)
-                .justifyWith((lesson1, lesson2, score) -> new RoomConflictJustification(lesson1.getRoom(), lesson1, lesson2))
-                .asConstraint("Room conflict");
-    }
-
-    Constraint teacherConflict(ConstraintFactory constraintFactory) {
-        // A teacher can teach at most one lesson at the same time.
-        return constraintFactory
-                .forEachUniquePair(Lesson.class,
-                        Joiners.equal(Lesson::getTimeslot),
-                        Joiners.equal(Lesson::getTeacher))
-                .penalize(HardSoftScore.ONE_HARD)
-                .justifyWith(
-                        (lesson1, lesson2, score) -> new TeacherConflictJustification(lesson1.getTeacher(), lesson1, lesson2))
-                .asConstraint("Teacher conflict");
-    }
-
-    Constraint studentGroupConflict(ConstraintFactory constraintFactory) {
-        // A student can attend at most one lesson at the same time.
-        return constraintFactory
-                .forEachUniquePair(Lesson.class,
-                        Joiners.equal(Lesson::getTimeslot),
-                        Joiners.equal(Lesson::getStudentGroup))
-                .penalize(HardSoftScore.ONE_HARD)
-                .justifyWith((lesson1, lesson2, score) -> new StudentGroupConflictJustification(lesson1.getStudentGroup(), lesson1, lesson2))
-                .asConstraint("Student group conflict");
-    }
-
-    Constraint teacherRoomStability(ConstraintFactory constraintFactory) {
-        // A teacher prefers to teach in a single room.
-        return constraintFactory
-                .forEachUniquePair(Lesson.class,
-                        Joiners.equal(Lesson::getTeacher))
-                .filter((lesson1, lesson2) -> lesson1.getRoom() != lesson2.getRoom())
-                .penalize(HardSoftScore.ONE_SOFT)
-                .justifyWith((lesson1, lesson2, score) -> new TeacherRoomStabilityJustification(lesson1.getTeacher(), lesson1, lesson2))
-                .asConstraint("Teacher room stability");
-    }
-
-    Constraint teacherTimeEfficiency(ConstraintFactory constraintFactory) {
-        // A teacher prefers to teach sequential lessons and dislikes gaps between lessons.
-        return constraintFactory
-                .forEach(Lesson.class)
-                .join(Lesson.class, Joiners.equal(Lesson::getTeacher),
-                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
-                .filter((lesson1, lesson2) -> {
-                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
-                            lesson2.getTimeslot().getStartTime());
-                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
-                })
-                .reward(HardSoftScore.ONE_SOFT)
-                .justifyWith((lesson1, lesson2, score) -> new TeacherTimeEfficiencyJustification(lesson1.getTeacher(), lesson1, lesson2))
-                .asConstraint("Teacher time efficiency");
-    }
-
-    Constraint studentGroupSubjectVariety(ConstraintFactory constraintFactory) {
-        // A student group dislikes sequential lessons on the same subject.
-        return constraintFactory
-                .forEach(Lesson.class)
-                .join(Lesson.class,
-                        Joiners.equal(Lesson::getSubject),
-                        Joiners.equal(Lesson::getStudentGroup),
-                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
-                .filter((lesson1, lesson2) -> {
-                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
-                            lesson2.getTimeslot().getStartTime());
-                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
-                })
-                .penalize(HardSoftScore.ONE_SOFT)
-                .justifyWith((lesson1, lesson2, score) -> new StudentGroupSubjectVarietyJustification(lesson1.getStudentGroup(), lesson1, lesson2))
-                .asConstraint("Student group subject variety");
-    }
+//
+//    Constraint roomConflict(ConstraintFactory constraintFactory) {
+//        // A room can accommodate at most one lesson at the same time.
+//        return constraintFactory
+//                // Select each pair of 2 different lessons ...
+//                .forEachUniquePair(Lesson.class,
+//                        // ... in the same timeslot ...
+//                        Joiners.equal(Lesson::getTimeslot),
+//                        // ... in the same room ...
+//                        Joiners.equal(Lesson::getRoom))
+//                // ... and penalize each pair with a hard weight.
+//                .penalize(HardSoftScore.ONE_HARD)
+//                .justifyWith((lesson1, lesson2, score) -> new RoomConflictJustification(lesson1.getRoom(), lesson1, lesson2))
+//                .asConstraint("Room conflict");
+//    }
+//
+//    Constraint teacherConflict(ConstraintFactory constraintFactory) {
+//        // A teacher can teach at most one lesson at the same time.
+//        return constraintFactory
+//                .forEachUniquePair(Lesson.class,
+//                        Joiners.equal(Lesson::getTimeslot),
+//                        Joiners.equal(Lesson::getTeacher))
+//                .penalize(HardSoftScore.ONE_HARD)
+//                .justifyWith(
+//                        (lesson1, lesson2, score) -> new TeacherConflictJustification(lesson1.getTeacher(), lesson1, lesson2))
+//                .asConstraint("Teacher conflict");
+//    }
+//
+//    Constraint studentGroupConflict(ConstraintFactory constraintFactory) {
+//        // A student can attend at most one lesson at the same time.
+//        return constraintFactory
+//                .forEachUniquePair(Lesson.class,
+//                        Joiners.equal(Lesson::getTimeslot),
+//                        Joiners.equal(Lesson::getStudentGroup))
+//                .penalize(HardSoftScore.ONE_HARD)
+//                .justifyWith((lesson1, lesson2, score) -> new StudentGroupConflictJustification(lesson1.getStudentGroup(), lesson1, lesson2))
+//                .asConstraint("Student group conflict");
+//    }
+//
+//    Constraint teacherRoomStability(ConstraintFactory constraintFactory) {
+//        // A teacher prefers to teach in a single room.
+//        return constraintFactory
+//                .forEachUniquePair(Lesson.class,
+//                        Joiners.equal(Lesson::getTeacher))
+//                .filter((lesson1, lesson2) -> lesson1.getRoom() != lesson2.getRoom())
+//                .penalize(HardSoftScore.ONE_SOFT)
+//                .justifyWith((lesson1, lesson2, score) -> new TeacherRoomStabilityJustification(lesson1.getTeacher(), lesson1, lesson2))
+//                .asConstraint("Teacher room stability");
+//    }
+//
+//    Constraint teacherTimeEfficiency(ConstraintFactory constraintFactory) {
+//        // A teacher prefers to teach sequential lessons and dislikes gaps between lessons.
+//        return constraintFactory
+//                .forEach(Lesson.class)
+//                .join(Lesson.class, Joiners.equal(Lesson::getTeacher),
+//                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
+//                .filter((lesson1, lesson2) -> {
+//                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
+//                            lesson2.getTimeslot().getStartTime());
+//                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
+//                })
+//                .reward(HardSoftScore.ONE_SOFT)
+//                .justifyWith((lesson1, lesson2, score) -> new TeacherTimeEfficiencyJustification(lesson1.getTeacher(), lesson1, lesson2))
+//                .asConstraint("Teacher time efficiency");
+//    }
+//
+//    Constraint studentGroupSubjectVariety(ConstraintFactory constraintFactory) {
+//        // A student group dislikes sequential lessons on the same subject.
+//        return constraintFactory
+//                .forEach(Lesson.class)
+//                .join(Lesson.class,
+//                        Joiners.equal(Lesson::getSubject),
+//                        Joiners.equal(Lesson::getStudentGroup),
+//                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
+//                .filter((lesson1, lesson2) -> {
+//                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
+//                            lesson2.getTimeslot().getStartTime());
+//                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
+//                })
+//                .penalize(HardSoftScore.ONE_SOFT)
+//                .justifyWith((lesson1, lesson2, score) -> new StudentGroupSubjectVarietyJustification(lesson1.getStudentGroup(), lesson1, lesson2))
+//                .asConstraint("Student group subject variety");
+//    }
 
     //my stuff
     /**
@@ -237,7 +234,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     return t1.getLabActBitSet().intersects(t2.getLabActBitSet());
                 })
                 .penalize(HardSoftScore.ONE_HARD)
-                .asConstraint("Lab/Activity room conflict");
+                .asConstraint("Lab or Activity room conflict");
     }
 
 
@@ -284,12 +281,11 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     tsLabActHrs *= numDays;
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot
-                    return !(lesson.lec_hours - FLOAT_TIME_DELTA < tsLecHrs
-                            && tsLecHrs < lesson.lec_hours + FLOAT_TIME_DELTA)
-                            || (lesson.lab_activity_hours - FLOAT_TIME_DELTA < tsLabActHrs
-                            && tsLabActHrs < lesson.lab_activity_hours + FLOAT_TIME_DELTA);
+                    return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA
+                            || Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <  FLOAT_TIME_DELTA);
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardSoftScore.ONE_SOFT)
+                .justifyWith((lesson, score) -> new WrongHoursAmountJustification(lesson))
                 .asConstraint("Lesson's timeslot must have exact time needed");
     }
 
