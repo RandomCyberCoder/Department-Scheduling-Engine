@@ -277,7 +277,7 @@ public class TimetableApp {
                         .toURI()
         ).getParent().getParent();
         System.out.println(path);
-        String fileLocation = path + "/src/main/java/org/acme/schooltimetabling/output/temp.xlsx";
+        String fileLocation = path + "/src/main/java/org/acme/schooltimetabling/generated/temp.xlsx";
 
         FileOutputStream outputStream = new FileOutputStream(fileLocation);
         workbook.write(outputStream);

@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class should contain constants that are used throughout the program that don"t
@@ -45,7 +47,12 @@ public class Constants {
      * <i>LEC_ONLY</i> class attribute which is needed to
      * assign a room to lessons that are strictly lecture only
      */
-    public static final LinkedHashSet<String> POSSIBLE_ROOMS;
+    public static final Set<String> POSSIBLE_ROOMS;
+    /**
+     * This is a map that contains lab/act courses mapped to
+     * lab/act rooms those courses are allowed to be in
+     */
+    public static final Map<String, Set<String>> courseToRooms;
     /**
      * HashMap that maps the teacher name (format FIRST LAST) mapped
      * to the teacher canon name. The canon name is assumed to be the
@@ -87,19 +94,95 @@ public class Constants {
                 Map.entry("Bret Hartman", "Hartman, Bret Andrew")
                 ));
 
+        /*TODO look at the studio_style_courses from Python code */
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/
         if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
-            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
-                    "301", "302", "255", "256", "257", "20-127", "232A", "192-206",
-                    "192-333", LEC_ONLY
-            ));
+
+            List<String> introCourses = List.of("csc101", "csc202", "csc203", "csc357");
+            Set<String> introRooms = Set.of("301", "302", "232A");
+
+            List<String> graphicCourses = List.of("csc474", "csc476", "csc378", "csc582");
+            Set<String> graphicRooms = Set.of("255");
+
+            List<String> securityCourses = List.of("csc320", "csc321", "csc421", "csc521");
+            Set<String> securityRooms = Set.of("192-206", "192-333");
+
+            List<String> phoenixCourses = List.of("csc325");
+            Set<String> phoenixRooms = Set.of("192-333");
+
+            List<String> hwSecurityCourses = List.of("csc524");
+            Set<String> hwSecurityRooms = Set.of("192-206");
+
+            List<String> seCourses = List.of("csc305", "csc307", "csc309", "csc402", "csc405", "csc406");
+            Set<String> seRooms = Set.of("256");
+
+            List<String> uiCourses = List.of("csc484");
+            Set<String> uiRooms = Set.of("257");
+
+            courseToRooms = new HashMap<>();
+
+            introCourses.forEach(course -> courseToRooms.put(course, introRooms));
+            graphicCourses.forEach(course -> courseToRooms.put(course, graphicRooms));
+            securityCourses.forEach(course -> courseToRooms.put(course, securityRooms));
+            phoenixCourses.forEach(course -> courseToRooms.put(course, phoenixRooms));
+            hwSecurityCourses.forEach(course -> courseToRooms.put(course, hwSecurityRooms));
+            seCourses.forEach(course -> courseToRooms.put(course, seRooms));
+            uiCourses.forEach(course -> courseToRooms.put(course, uiRooms));
+
+            POSSIBLE_ROOMS = Stream.of(
+                            introRooms,
+                            graphicRooms,
+                            securityRooms,
+                            phoenixRooms,
+                            hwSecurityRooms,
+                            seRooms,
+                            uiRooms
+                    )
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toSet());
+
+            POSSIBLE_ROOMS.add(LEC_ONLY);
+
         }
         else{
-            /*These are the CPE lab rooms*/
-            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
-                    "20-100", "20-132", "14-303", "20-145", LEC_ONLY
-            ));
+            /*These are the CPfE lab rooms*/
+//            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
+//                    "20-100", "20-132", "14-303", "20-145", LEC_ONLY
+//            ));
+
+            courseToRooms = new HashMap<>();
+            
+            List<String> microControllerCourses = List.of("cpe316", "cpe439");
+            Set<String> microControllerRooms = Set.of("20-132");
+
+            List<String> capstoneCourses = List.of("cpe350", "cpe450");
+            Set<String> capstoneRooms = Set.of("20-145");
+
+            List<String> generalCpeCourses = List.of(
+                    "cpe133", "cpe233", "cpe333", "cpe414", "cpe416",
+                    "cpe442", "cpe446", "cpe521", "cpe522", "cpe523", "cpe542"
+            );
+            Set<String> generalCpeRooms = Set.of("20-132", "20-100", "14-303");
+
+            List<String> cscStyleCourses = List.of("cpe225", "cpe315", "cpe321", "cpe426", "cpe515");
+            Set<String> cscStyleRooms = Set.of("14-303");
+
+            microControllerCourses.forEach(course -> courseToRooms.put(course, microControllerRooms));
+            capstoneCourses.forEach(course -> courseToRooms.put(course, capstoneRooms));
+            generalCpeCourses.forEach(course -> courseToRooms.put(course, generalCpeRooms));
+            cscStyleCourses.forEach(course -> courseToRooms.put(course, cscStyleRooms));
+
+            POSSIBLE_ROOMS = Stream.of(
+                            microControllerRooms,
+                            capstoneRooms,
+                            generalCpeRooms,
+                            cscStyleRooms
+                    )
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toSet());
+
+            POSSIBLE_ROOMS.add(LEC_ONLY);
         }
 
         counter = 1;
