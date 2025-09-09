@@ -297,13 +297,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     Room room = lesson.getRoom();
                     //if lesson has a lab/act
                     if(lesson.isHasLabAct()){
-                        /*TODO Wait for beard to get back to us about this constraint to
-                            ensure that these assumptions we've made are correct. Specifically
-                            this assumption "if the course doesn't have a specific rooms its lab/act should
-                             be in then any lab/act room is valid for it"
-                         */
-
-                        /* TODO explore using ids for the rooms in the COURSE_TO_ROOMS map */
                         /*certain labs/acts can only be in certain rooms*/
                         if(Constants.COURSE_TO_ROOMS.containsKey(lesson.getCourseName())){
                             //check that the room the lesson is given is in the list of valid rooms

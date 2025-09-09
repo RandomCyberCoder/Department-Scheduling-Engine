@@ -40,19 +40,22 @@ public class Constants {
      */
     public static final String LEC_ONLY = "LECTURE_ONLY";
     /**
-     * The unique ID of the room for lecture only courses*/
-    public static int LEC_ROOM_ONLY_ID;
-    /**
      * This set should contain all lab room names plus the
      * <i>LEC_ONLY</i> class attribute which is needed to
      * assign a room to lessons that are strictly lecture only
      */
     public static final Set<String> POSSIBLE_ROOMS;
+    /* TODO explore using ids for the rooms in the COURSE_TO_ROOMS map
+     *   leave out for now. Might be bad for maintainability*/
     /**
      * This is a map that contains lab/act courses mapped to
      * lab/act rooms those courses are allowed to be in
      */
     public static final Map<String, Set<String>> COURSE_TO_ROOMS;
+    /**
+     * BiMap containing rooms mapped to their unique IDs*/
+    public static final BiMap<String, Integer> ROOM_TO_ID_BIMAP;
+
     public static final Set<String> STUDIO_STYLE_COURSES;
     /**
      * HashMap that maps the teacher name (format FIRST LAST) mapped
@@ -60,10 +63,6 @@ public class Constants {
      * one in the schedule json file and the teacher non-canon name
      * is the one found in the survey csv file*/
     public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
-    /**
-     * BiMap containing rooms mapped to their unique IDs*/
-    public static final BiMap<String, Integer> ROOM_TO_ID_BIMAP;
-
     static{
         int counter;
 
@@ -95,9 +94,11 @@ public class Constants {
                 Map.entry("Bret Hartman", "Hartman, Bret Andrew")
                 ));
 
-        /*TODO look at the studio_style_courses from Python code */
+
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/
+        COURSE_TO_ROOMS = new HashMap<>();
+
         if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
             List<String> introCourses = List.of("csc101", "csc202", "csc203", "csc357");
             Set<String> introRooms = Set.of("301", "302", "232A");
@@ -120,7 +121,6 @@ public class Constants {
             List<String> uiCourses = List.of("csc484");
             Set<String> uiRooms = Set.of("257");
 
-            COURSE_TO_ROOMS = new HashMap<>();
 
             introCourses.forEach(course -> COURSE_TO_ROOMS.put(course, introRooms));
             graphicCourses.forEach(course -> COURSE_TO_ROOMS.put(course, graphicRooms));
@@ -145,8 +145,7 @@ public class Constants {
             STUDIO_STYLE_COURSES = Set.of();
 
         }
-        else{COURSE_TO_ROOMS = new HashMap<>();
-            
+        else{
             List<String> microControllerCourses = List.of("cpe316", "cpe439");
             Set<String> microControllerRooms = Set.of("20-132");
 
