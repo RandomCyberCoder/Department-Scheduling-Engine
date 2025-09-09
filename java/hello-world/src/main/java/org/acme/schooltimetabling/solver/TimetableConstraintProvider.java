@@ -312,6 +312,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Lesson with wrong room type");
     }
 
+    /*TODO studio_style_courses need the room for who*/
     //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching
     //two classes at the same time.
 

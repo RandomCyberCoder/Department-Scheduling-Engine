@@ -52,7 +52,8 @@ public class Constants {
      * This is a map that contains lab/act courses mapped to
      * lab/act rooms those courses are allowed to be in
      */
-    public static final Map<String, Set<String>> courseToRooms;
+    public static final Map<String, Set<String>> COURSE_TO_ROOMS;
+    public static final Set<String> STUDIO_STYLE_COURSES;
     /**
      * HashMap that maps the teacher name (format FIRST LAST) mapped
      * to the teacher canon name. The canon name is assumed to be the
@@ -98,7 +99,6 @@ public class Constants {
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/
         if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
-
             List<String> introCourses = List.of("csc101", "csc202", "csc203", "csc357");
             Set<String> introRooms = Set.of("301", "302", "232A");
 
@@ -120,15 +120,15 @@ public class Constants {
             List<String> uiCourses = List.of("csc484");
             Set<String> uiRooms = Set.of("257");
 
-            courseToRooms = new HashMap<>();
+            COURSE_TO_ROOMS = new HashMap<>();
 
-            introCourses.forEach(course -> courseToRooms.put(course, introRooms));
-            graphicCourses.forEach(course -> courseToRooms.put(course, graphicRooms));
-            securityCourses.forEach(course -> courseToRooms.put(course, securityRooms));
-            phoenixCourses.forEach(course -> courseToRooms.put(course, phoenixRooms));
-            hwSecurityCourses.forEach(course -> courseToRooms.put(course, hwSecurityRooms));
-            seCourses.forEach(course -> courseToRooms.put(course, seRooms));
-            uiCourses.forEach(course -> courseToRooms.put(course, uiRooms));
+            introCourses.forEach(course -> COURSE_TO_ROOMS.put(course, introRooms));
+            graphicCourses.forEach(course -> COURSE_TO_ROOMS.put(course, graphicRooms));
+            securityCourses.forEach(course -> COURSE_TO_ROOMS.put(course, securityRooms));
+            phoenixCourses.forEach(course -> COURSE_TO_ROOMS.put(course, phoenixRooms));
+            hwSecurityCourses.forEach(course -> COURSE_TO_ROOMS.put(course, hwSecurityRooms));
+            seCourses.forEach(course -> COURSE_TO_ROOMS.put(course, seRooms));
+            uiCourses.forEach(course -> COURSE_TO_ROOMS.put(course, uiRooms));
 
             POSSIBLE_ROOMS = Stream.of(
                             introRooms,
@@ -142,16 +142,10 @@ public class Constants {
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
 
-            POSSIBLE_ROOMS.add(LEC_ONLY);
+            STUDIO_STYLE_COURSES = Set.of();
 
         }
-        else{
-            /*These are the CPfE lab rooms*/
-//            POSSIBLE_ROOMS = new LinkedHashSet<>(Set.of(
-//                    "20-100", "20-132", "14-303", "20-145", LEC_ONLY
-//            ));
-
-            courseToRooms = new HashMap<>();
+        else{COURSE_TO_ROOMS = new HashMap<>();
             
             List<String> microControllerCourses = List.of("cpe316", "cpe439");
             Set<String> microControllerRooms = Set.of("20-132");
@@ -168,10 +162,10 @@ public class Constants {
             List<String> cscStyleCourses = List.of("cpe225", "cpe315", "cpe321", "cpe426", "cpe515");
             Set<String> cscStyleRooms = Set.of("14-303");
 
-            microControllerCourses.forEach(course -> courseToRooms.put(course, microControllerRooms));
-            capstoneCourses.forEach(course -> courseToRooms.put(course, capstoneRooms));
-            generalCpeCourses.forEach(course -> courseToRooms.put(course, generalCpeRooms));
-            cscStyleCourses.forEach(course -> courseToRooms.put(course, cscStyleRooms));
+            microControllerCourses.forEach(course -> COURSE_TO_ROOMS.put(course, microControllerRooms));
+            capstoneCourses.forEach(course -> COURSE_TO_ROOMS.put(course, capstoneRooms));
+            generalCpeCourses.forEach(course -> COURSE_TO_ROOMS.put(course, generalCpeRooms));
+            cscStyleCourses.forEach(course -> COURSE_TO_ROOMS.put(course, cscStyleRooms));
 
             POSSIBLE_ROOMS = Stream.of(
                             microControllerRooms,
@@ -182,8 +176,16 @@ public class Constants {
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
 
-            POSSIBLE_ROOMS.add(LEC_ONLY);
+            STUDIO_STYLE_COURSES = Stream.of(
+                    microControllerRooms,
+                    generalCpeCourses,
+                    capstoneCourses
+                    )
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet());
         }
+
+        POSSIBLE_ROOMS.add(LEC_ONLY);
 
         counter = 1;
         ROOM_TO_ID_BIMAP = HashBiMap.create();
@@ -192,15 +194,9 @@ public class Constants {
         }
 
 
-        try{
-            /*This will throw an error if the LEC_ONLY constant is not added
-            * to the set of possible room; lecture room is needed*/
-            LEC_ROOM_ONLY_ID = ROOM_TO_ID_BIMAP.get(LEC_ONLY);
-        }
-        catch (Exception e){
-            LOGGER.error("Terminating Program. In Constants class include 'LEC_ONLY (variable) " +
-                    "room to the LinkedHashSet exiting program until fixed");
-            e.printStackTrace();
+        if(!ROOM_TO_ID_BIMAP.containsKey(LEC_ONLY)){
+            LOGGER.error("TERMINATING. In Constants class, include 'LEC_ONLY' (constant) " +
+                    "room to constant 'POSSIBLE_ROOMS'");
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
     }
