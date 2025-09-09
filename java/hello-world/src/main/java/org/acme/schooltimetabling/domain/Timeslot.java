@@ -158,6 +158,40 @@ public class Timeslot {
         return dayOfWeek + " " + startTime;
     }
 
+    public String toStringLec(){
+        StringBuilder buildLecRep = new StringBuilder();
+
+        if(lecMonday) buildLecRep.append('M');
+        if(lecTuesday) buildLecRep.append('T');
+        if(lecWednesday) buildLecRep.append('W');
+        if(lecThursday) buildLecRep.append('R');
+        if(lecFriday) buildLecRep.append('F');
+
+        buildLecRep.append(" ");
+        buildLecRep.append(startTimeLec.toString());
+        buildLecRep.append(" - ").append(endTimeLec.toString());
+
+        return buildLecRep.toString();
+    }
+
+    public String toStringLabAct(){
+        if(onlyLec) return "";
+
+        StringBuilder buildLecRep = new StringBuilder();
+
+        if(nonLecMonday) buildLecRep.append('M');
+        if(nonLecTuesday) buildLecRep.append('T');
+        if(nonLecWednesday) buildLecRep.append('W');
+        if(nonLecThursday) buildLecRep.append('R');
+        if(nonLecFriday) buildLecRep.append('F');
+
+        buildLecRep.append(" ");
+        buildLecRep.append(startTimeLabAct.toString());
+        buildLecRep.append(" - ").append(endTimeLabAct.toString());
+
+        return buildLecRep.toString();
+    }
+
     // ************************************************************************
     // Getters and setters
     // ************************************************************************
