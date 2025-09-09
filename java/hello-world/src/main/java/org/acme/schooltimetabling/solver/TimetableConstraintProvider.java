@@ -192,7 +192,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     Constraint lessonConflict(ConstraintFactory constraintFactory){
         return constraintFactory
                 .forEachUniquePair(Lesson.class,
-                        Joiners.equal(Lesson::getTimeslot),
                         Joiners.equal(Lesson::getTeacherObj))
                 .filter((lesson, lesson2) -> {
                     BitSet bs1 = lesson.getTimeslot().getAllTimesBitSet();
@@ -312,9 +311,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Lesson with wrong room type");
     }
-
-    /*TODO core constraint for checking that a teacher isn't teaching more than one class
-        at the same time */
 
     //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching
     //two classes at the same time.
