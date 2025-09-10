@@ -6,6 +6,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -14,6 +15,7 @@ import org.acme.schooltimetabling.solver.justifications.*;
 
 import java.time.Duration;
 import java.util.BitSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -136,13 +138,15 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .forEachUniquePair(Lesson.class,
                     Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
                     Joiners.equal(Lesson::getCourseID))
-                .filter((lesson, lesson2) -> (
-                        lesson.getTimeslot().isLecMonday() != lesson2.getTimeslot().isLecMonday() ||
-                        lesson.getTimeslot().isLecTuesday() != lesson2.getTimeslot().isLecTuesday() ||
-                        lesson.getTimeslot().isLecWednesday() != lesson2.getTimeslot().isLecWednesday() ||
-                        lesson.getTimeslot().isLecThursday() != lesson2.getTimeslot().isLecThursday() ||
-                        lesson.getTimeslot().isLecFriday() != lesson2.getTimeslot().isLecFriday()
-                ))
+                .filter((lesson, lesson2) -> {
+                    EnumSet<Days> l1Days = lesson.getTimeslot().getLecDays();
+                    EnumSet<Days> l2Days = lesson2.getTimeslot().getLecDays();
+                    return l1Days.contains(Days.MONDAY) != l2Days.contains(Days.MONDAY) ||
+                            l1Days.contains(Days.TUESDAY) != l2Days.contains(Days.TUESDAY) ||
+                            l1Days.contains(Days.WEDNESDAY) != l2Days.contains(Days.WEDNESDAY) ||
+                            l1Days.contains(Days.THURSDAY) != l2Days.contains(Days.THURSDAY) ||
+                            l1Days.contains(Days.FRIDAY) != l2Days.contains(Days.FRIDAY);
+                })
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher has same course on same days");
     }
@@ -263,17 +267,12 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         return constraintFactory
                 .forEach(Lesson.class)
                 .filter(lesson -> {
-
+                    EnumSet<Days> lDays = lesson.getTimeslot().getLecDays();
                     /* TODO currently assuming that we can only have lec and then
                         lab/activity on the same day with the same amount of time as currently;
                         Change after MVP is done
                      */
-                    int numDays = 0;
-                    if(lesson.getTimeslot().lecMonday) numDays++;
-                    if(lesson.getTimeslot().lecTuesday) numDays++;
-                    if(lesson.getTimeslot().lecWednesday) numDays++;
-                    if(lesson.getTimeslot().lecThursday) numDays++;
-                    if(lesson.getTimeslot().lecFriday) numDays++;
+                    int numDays = lDays.size();
 
                     //ts -> timeslot
                     float tsLecHrs = lesson.getTimeslot().getLecHours();

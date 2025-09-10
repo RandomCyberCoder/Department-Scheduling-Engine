@@ -1,4 +1,5 @@
 package org.acme.schooltimetabling.helperClasses;
+import org.acme.schooltimetabling.constants.Days;
 import org.apache.poi.hssf.record.CFHeaderRecord;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STUnsignedDecimalNumber;
 
@@ -6,6 +7,7 @@ import java.time.LocalTime;
 import java.util.BitSet;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
+import java.util.EnumSet;
 
 public class BitSetHelper {
 
@@ -37,9 +39,7 @@ public class BitSetHelper {
         FRIDAY_MASK.set(FRIDAY_OFFSET, FRIDAY_OFFSET + 30);
     }
 
-    public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, boolean monday,
-                                        boolean tuesday, boolean wednesday, boolean thursday,
-                                        boolean friday) throws Exception{
+    public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days) throws Exception{
         BitSet bitSet = new BitSet();
         int dayOffset = 0;
 
@@ -64,19 +64,19 @@ public class BitSetHelper {
         };
 
         /* the 'to index' (the second index passed) to BitSet.set() is exclusive*/
-        if(monday){
+        if(days.contains(Days.MONDAY)){
             bitSet.set(MONDAY_OFFSET +  dayOffset, MONDAY_OFFSET + dayOffset + numberOfBlocks);
         }
-        if(tuesday){
+        if(days.contains(Days.TUESDAY)){
             bitSet.set(TUESDAY_OFFSET +  dayOffset, TUESDAY_OFFSET + dayOffset + numberOfBlocks);
         }
-        if(wednesday){
+        if(days.contains(Days.WEDNESDAY)){
             bitSet.set(WEDNESDAY_OFFSET +  dayOffset, WEDNESDAY_OFFSET + dayOffset + numberOfBlocks);
         }
-        if(thursday){
+        if(days.contains(Days.THURSDAY)){
             bitSet.set(THURSDAY_OFFSET +  dayOffset, THURSDAY_OFFSET + dayOffset + numberOfBlocks);
         }
-        if(friday){
+        if(days.contains(Days.FRIDAY)){
             bitSet.set(FRIDAY_OFFSET +  dayOffset, FRIDAY_OFFSET + dayOffset + numberOfBlocks);
         }
 

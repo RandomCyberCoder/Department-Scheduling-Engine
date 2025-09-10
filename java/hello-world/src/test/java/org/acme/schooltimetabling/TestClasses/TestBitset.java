@@ -1,4 +1,5 @@
 package org.acme.schooltimetabling.TestClasses;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
+import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -31,8 +33,7 @@ public class TestBitset {
         LocalTime time = LocalTime.parse("9:00PM", DateTimeFormatter.ofPattern("h:mma"));
         modifyBitset.set(149);
         try{
-            checkBitset = BitSetHelper.timeSlotBitSet(time, 2, false, false,
-                    false,false,true);
+            checkBitset = BitSetHelper.timeSlotBitSet(time, 2, EnumSet.of(Days.FRIDAY));
         }
         catch (Exception e){
             /*Shouldn't be throwing and exception*/
@@ -107,8 +108,8 @@ public class TestBitset {
         LocalTime time = LocalTime.parse("9:00AM", DateTimeFormatter.ofPattern("h:mma"));
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.timeSlotBitSet(time, 3, true,false,
-                    true,true,false);
+            checkbitset = BitSetHelper.timeSlotBitSet(time, 3, EnumSet.of(Days.MONDAY, Days.WEDNESDAY
+                            ,Days.THURSDAY));
         }
         catch (Exception e){
             /*shouldn't error*/
@@ -124,8 +125,8 @@ public class TestBitset {
         LocalTime time = LocalTime.parse("12:00PM", DateTimeFormatter.ofPattern("h:mma"));
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.timeSlotBitSet(time, 4, true,false,
-                    false,true,true);
+            checkbitset = BitSetHelper.timeSlotBitSet(time, 4, EnumSet.of(Days.MONDAY, Days.THURSDAY
+                    ,Days.FRIDAY));
         }
         catch (Exception e){
             /*shouldn't error*/

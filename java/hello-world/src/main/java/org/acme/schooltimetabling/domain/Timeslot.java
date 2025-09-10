@@ -1,12 +1,16 @@
 package org.acme.schooltimetabling.domain;
 
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Timeslot {
 
@@ -27,8 +31,8 @@ public class Timeslot {
     public BitSet labActBitSet;
     public BitSet allTimesBitSet;
     /*I should make these days into a class or something*/
-    public boolean lecMonday, lecTuesday, lecWednesday, lecThursday, lecFriday;
-    public boolean nonLecMonday, nonLecTuesday, nonLecWednesday, nonLecThursday, nonLecFriday;
+    private EnumSet<Days> lecDays;
+    private EnumSet<Days> nonLecDays;
     public float lecHours;
     public float totalHours;
     public float totalHours2;
@@ -59,21 +63,23 @@ public class Timeslot {
         this.ID = ID;
         this.id = String.valueOf(ID);
         /*Mark what days the timeslot occupies*/
-        lecMonday = lecTuesday = lecWednesday = lecThursday = lecFriday = false;
+        lecDays = EnumSet.noneOf(Days.class);
+        nonLecDays = EnumSet.noneOf(Days.class);
+
         if(days.contains("M")){
-            lecMonday = true;
+            lecDays.add(Days.MONDAY);
         }
         if(days.contains("T")){
-            lecTuesday = true;
+            lecDays.add(Days.TUESDAY);
         }
         if(days.contains("W")){
-            lecWednesday = true;
+            lecDays.add(Days.WEDNESDAY);
         }
         if(days.contains("R")){
-            lecThursday = true;
+            lecDays.add(Days.THURSDAY);
         }
         if(days.contains("F")){
-            lecFriday = true;
+            lecDays.add(Days.FRIDAY);
         }
         /*determine if the timeslot will accommodate only lectures*/
         this.lecHours = lecHours;
@@ -88,7 +94,7 @@ public class Timeslot {
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
         /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
         this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(lecHours * 2),
-                this.lecMonday, this.lecTuesday, this.lecWednesday, this.lecThursday, this.lecFriday);
+                this.lecDays);
 
         /* initialize the lab/activity members based off if the timeslot is for
          * lectures only */
@@ -103,26 +109,25 @@ public class Timeslot {
                 this.secondSlot = true;
                 this.onlyLec = false;
                 this.totalHours2 = total_hours2;
-                this.nonLecMonday = this.nonLecTuesday = this.nonLecWednesday = this.nonLecThursday = this.nonLecFriday = false;
                 if(days2.contains("M")){
-                    this.nonLecMonday = true;
+                    this.nonLecDays.add(Days.MONDAY);
                 }
                 if(days2.contains("T")){
-                    this.nonLecTuesday = true;
+                    this.nonLecDays.add(Days.TUESDAY);
                 }
                 if(days2.contains("W")){
-                    this.nonLecWednesday = true;
+                    this.nonLecDays.add(Days.WEDNESDAY);
                 }
                 if(days2.contains("R")){
-                    this.nonLecThursday = true;
+                    this.nonLecDays.add(Days.THURSDAY);
                 }
                 if(days2.contains("F")){
-                    this.nonLecFriday = true;
+                    this.nonLecDays.add(Days.FRIDAY);
                 }
                 this.endTimeLabAct = LocalTime.parse(endTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
                 this.startTimeLabAct = LocalTime.parse(startTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
                 this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(total_hours2 * 2),
-                        this.nonLecMonday, this.nonLecTuesday, this.nonLecWednesday, this.nonLecThursday, this.nonLecFriday);
+                        this.nonLecDays);
             }
         }
         else{
@@ -131,18 +136,14 @@ public class Timeslot {
             /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.*/
             this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
             /* create BitSet for the lab/lec */
-            this.nonLecMonday = this.lecMonday;
-            this.nonLecTuesday = this.lecTuesday;
-            this.nonLecWednesday = this.lecWednesday;
-            this.nonLecThursday = this.lecThursday;
-            this.nonLecFriday = this.lecFriday;
+            this.nonLecDays = this.lecDays;
             this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lecHours * 2),
-                    this.nonLecMonday, this.nonLecTuesday, this.nonLecWednesday, this.nonLecThursday, this.nonLecFriday);
+                    this.nonLecDays);
         }
 
         /*we assume that the whole block will be occupied by whoever is assigned it*/
         this.allTimesBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
-                this.lecMonday, this.lecTuesday, this.lecWednesday, this.lecThursday, this.lecFriday);
+                this.lecDays);
         /*if there was a second timeslot we have to join it*/
         if(secondSlot){
             this.allTimesBitSet.or(this.labActBitSet);
@@ -159,35 +160,27 @@ public class Timeslot {
     }
 
     public String toStringLec(){
-        StringBuilder buildLecRep = new StringBuilder();
-
-        if(lecMonday) buildLecRep.append('M');
-        if(lecTuesday) buildLecRep.append('T');
-        if(lecWednesday) buildLecRep.append('W');
-        if(lecThursday) buildLecRep.append('R');
-        if(lecFriday) buildLecRep.append('F');
-
-        buildLecRep.append(" ");
-        buildLecRep.append(startTimeLec.toString());
-        buildLecRep.append(" - ").append(endTimeLec.toString());
-
-        return buildLecRep.toString();
+        return getString(lecDays, startTimeLec, endTimeLec);
     }
 
     public String toStringLabAct(){
         if(onlyLec) return "";
 
+        return getString(nonLecDays, startTimeLabAct, endTimeLabAct);
+    }
+
+    private String getString(EnumSet<Days> nonLecDays, LocalTime startTime, LocalTime endTime) {
         StringBuilder buildLecRep = new StringBuilder();
 
-        if(nonLecMonday) buildLecRep.append('M');
-        if(nonLecTuesday) buildLecRep.append('T');
-        if(nonLecWednesday) buildLecRep.append('W');
-        if(nonLecThursday) buildLecRep.append('R');
-        if(nonLecFriday) buildLecRep.append('F');
+        if(nonLecDays.contains(Days.MONDAY)) buildLecRep.append('M');
+        if(nonLecDays.contains(Days.TUESDAY)) buildLecRep.append('T');
+        if(nonLecDays.contains(Days.WEDNESDAY)) buildLecRep.append('W');
+        if(nonLecDays.contains(Days.THURSDAY)) buildLecRep.append('R');
+        if(nonLecDays.contains(Days.FRIDAY)) buildLecRep.append('F');
 
         buildLecRep.append(" ");
-        buildLecRep.append(startTimeLabAct.toString());
-        buildLecRep.append(" - ").append(endTimeLabAct.toString());
+        buildLecRep.append(startTime.toString());
+        buildLecRep.append(" - ").append(endTime.toString());
 
         return buildLecRep.toString();
     }
@@ -249,46 +242,6 @@ public class Timeslot {
         return allTimesBitSet;
     }
 
-    public boolean isLecMonday() {
-        return lecMonday;
-    }
-
-    public boolean isLecTuesday() {
-        return lecTuesday;
-    }
-
-    public boolean isLecWednesday() {
-        return lecWednesday;
-    }
-
-    public boolean isLecThursday() {
-        return lecThursday;
-    }
-
-    public boolean isLecFriday() {
-        return lecFriday;
-    }
-
-    public boolean isNonLecMonday() {
-        return nonLecMonday;
-    }
-
-    public boolean isNonLecTuesday() {
-        return nonLecTuesday;
-    }
-
-    public boolean isNonLecWednesday() {
-        return nonLecWednesday;
-    }
-
-    public boolean isNonLecThursday() {
-        return nonLecThursday;
-    }
-
-    public boolean isNonLecFriday() {
-        return nonLecFriday;
-    }
-
     public float getLecHours() {
         return lecHours;
     }
@@ -305,5 +258,11 @@ public class Timeslot {
         return secondSlot;
     }
 
+    public EnumSet<Days> getLecDays() {
+        return lecDays;
+    }
 
+    public EnumSet<Days> getNonLecDays() {
+        return nonLecDays;
+    }
 }
