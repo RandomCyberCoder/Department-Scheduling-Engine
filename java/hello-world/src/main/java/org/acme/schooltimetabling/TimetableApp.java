@@ -8,6 +8,7 @@ import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import ai.timefold.solver.core.config.solver.termination.TerminationConfig;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
@@ -62,18 +63,10 @@ public class TimetableApp {
     }
 
     public static void main(String[] args) throws Exception{
-        /*TODO make sure that all the list of planning variables are up here
-        *  and that they are in an ArrayList for quick access especially since
-        *  we won't have to modify them during the constraint solver*/
         ArrayList<Room> roomList;
         ArrayList<Lesson> lessonList;
         ArrayList<Timeslot> timeslotList;
         Timetable timetable;
-
-//        EnumSet<Days> test = EnumSet.noneOf(Days.class);
-//        test.add(Days.FRIDAY);
-//        System.out.println(test.toString());
-//        System.out.println(test.size());
 
         LOGGER.info(String.format("%s, %s, %s, %s\n", ParseInput.scheduleConfig.department,
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
@@ -126,19 +119,12 @@ public class TimetableApp {
         lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
 
         roomList = RoomGenerator.generateRooms();
-
-        /*start setup for solving*/
-
         timetable = new Timetable("setup", timeslotList, roomList, lessonList);
-        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
-                .withSolutionClass(Timetable.class)
-                .withEntityClasses(Lesson.class)
-                .withConstraintProviderClass(TimetableConstraintProvider.class)
-                // The solver runs only for 5 seconds on this small dataset.
-                // It's recommended to run for at least 5 minutes ("5m") otherwise.
-                .withTerminationSpentLimit(Duration.ofSeconds(5)));
 
-        // Solve the problem
+        SolverConfig solverConfig = SolverConfig.createFromXmlResource("solverConfig.xml");
+//        solverConfig.withTerminationConfig(new TerminationConfig().withSecondsSpentLimit(10L));
+
+        SolverFactory<Timetable> solverFactory = SolverFactory.create(solverConfig);
         Solver<Timetable> solver = solverFactory.buildSolver();
         Timetable solution = solver.solve(timetable);
 
@@ -183,10 +169,6 @@ public class TimetableApp {
 //                System.out.println("  Score: " + match.getScore());
 //            });
 //        });
-
-        /*TODO make a function to save the solution to an excel file and maybe a function to print
-        *  stuff out to terminal also add justifications*/
-
 
         //their stuff
 //        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
