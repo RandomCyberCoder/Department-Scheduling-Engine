@@ -176,7 +176,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     return (bitset.cardinality() > 0);
                 })
                 .penalize(HardSoftScore.ONE_HARD)
-                .asConstraint("TimeSlot has inadequate hours");
+                .asConstraint("TimeSlot conflicts with teacher's availability (hard no)");
     }
 
     /*make a bit mask for constraints in these next two comments .... might actually not be needed*/
@@ -242,14 +242,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Lab or Activity room conflict");
     }
 
-
-    /*make sure that a lesson that needs a lab/activity is in the right room*/
-
-
-
-    /*CONSTRAINT check that the course is in the right room type. onlyLec -> general room
-    * and lab/act is in the right room(s)*/
-
     /**
      * <p>This constraint makes sure that the course a lesson represents has been given a timeslot
      * that has the exact amount of hours for the lecture and/or lab/activity the course requires.
@@ -268,17 +260,12 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .forEach(Lesson.class)
                 .filter(lesson -> {
                     EnumSet<Days> lDays = lesson.getTimeslot().getLecDays();
-                    /* TODO currently assuming that we can only have lec and then
-                        lab/activity on the same day with the same amount of time as currently;
-                        Change after MVP is done
-                     */
-                    int numDays = lDays.size();
+                    EnumSet<Days> nonLDays = lesson.getTimeslot().getNonLecDays();
 
-                    //ts -> timeslot
                     float tsLecHrs = lesson.getTimeslot().getLecHours();
-                    tsLecHrs *= numDays;
+                    tsLecHrs *= lDays.size();
                     float tsLabActHrs = lesson.getTimeslot().onlyLec ? 0 : tsLecHrs;
-                    tsLabActHrs *= numDays;
+                    tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot
                     return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA
