@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<solver>
+    <randomSeed>auto</randomSeed>
+    <solutionClass>org.acme.schooltimetabling.domain.Timetable</solutionClass>
+    <entityClass>org.acme.schooltimetabling.domain.Lesson</entityClass>
+    <scoreDirectorFactory>
+        <constraintProviderClass>org.acme.schooltimetabling.solver.TimetableConstraintProvider</constraintProviderClass>
+    </scoreDirectorFactory>
+    <termination>
+        <secondsSpentLimit>10</secondsSpentLimit>
+    </termination>
+
+    <constructionHeuristic>
+        <entitySelector>
+            <entityClass>org.acme.schooltimetabling.domain.Lesson</entityClass>
+            <selectionOrder>RANDOM</selectionOrder>
+        </entitySelector>
+        <moveSelector>
+            <changeMoveSelector>
+                <valueSelector variableName="room">
+                    <selectionOrder>RANDOM</selectionOrder>
+                </valueSelector>
+            </changeMoveSelector>
+            <changeMoveSelector>
+                <valueSelector variableName="timeslot">
+                    <selectionOrder>RANDOM</selectionOrder>
+                </valueSelector>
+            </changeMoveSelector>
+        </moveSelector>
+    </constructionHeuristic>
+
+
+    <localSearch>
+        <termination>
+            <unimprovedStepCountLimit>1000</unimprovedStepCountLimit>
+        </termination>
+<!--        <acceptor>-->
+<!--            <lateAcceptanceSize>100</lateAcceptanceSize>-->
+<!--        </acceptor>-->
+        <moveSelector>
+            <changeMoveSelector>
+                <valueSelector variableName="room">
+                    <selectionOrder>ORIGINAL</selectionOrder>
+                </valueSelector>
+            </changeMoveSelector>
+        </moveSelector>
+        <moveSelector>
+            <changeMoveSelector>
+                <valueSelector variableName="timeslot">
+                    <selectionOrder>ORIGINAL</selectionOrder>
+                </valueSelector>
+            </changeMoveSelector>
+        </moveSelector>
+
+<!--        <acceptor>-->
+<!--            <entityTabuRatio>0.05</entityTabuRatio>-->
+<!--            <simulatedAnnealingStartingTemperature>2hard/20soft</simulatedAnnealingStartingTemperature>-->
+<!--        </acceptor>-->
+<!--        <forager>-->
+<!--            <acceptedCountLimit>500</acceptedCountLimit>-->
+<!--        </forager>-->
+    </localSearch>
+
+
+</solver>
