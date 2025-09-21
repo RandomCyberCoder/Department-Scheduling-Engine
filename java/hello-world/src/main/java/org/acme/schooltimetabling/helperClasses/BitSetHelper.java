@@ -16,11 +16,16 @@ public class BitSetHelper {
     private static final int WEDNESDAY_OFFSET = 60;
     private static final int THURSDAY_OFFSET = 90;
     private static final int FRIDAY_OFFSET = 120;
+    private static final int PRIME_TIME_DAY_START_OFFSET = 4;
+    private static final int PRIME_TIME_DAY_END_OFFSET = 16;
+    private static final int MAX_BITS_PER_DAY = 30;
     public static final BitSet MONDAY_MASK;
     public static final BitSet TUESDAY_MASK;
     public static final BitSet WEDNESDAY_MASK;
     public static final BitSet THURSDAY_MASK;
     public static final BitSet FRIDAY_MASK;
+    public static final BitSet NON_PRIME_TIME_MASK;
+    public static final BitSet PRIME_TIME_MASK;
 
     static {
         MONDAY_MASK = new BitSet();
@@ -37,6 +42,24 @@ public class BitSetHelper {
 
         FRIDAY_MASK = new BitSet();
         FRIDAY_MASK.set(FRIDAY_OFFSET, FRIDAY_OFFSET + 30);
+
+        PRIME_TIME_MASK = new BitSet();
+        PRIME_TIME_MASK.set(MONDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
+                , MONDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
+        PRIME_TIME_MASK.set(TUESDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
+                , TUESDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
+        PRIME_TIME_MASK.set(WEDNESDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
+                , WEDNESDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
+        PRIME_TIME_MASK.set(THURSDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
+                , THURSDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
+        PRIME_TIME_MASK.set(FRIDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
+                , FRIDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
+
+        NON_PRIME_TIME_MASK = (BitSet) PRIME_TIME_MASK.clone();
+        /* The bits not set in the prime time bitset mask should be set*/
+        NON_PRIME_TIME_MASK.flip(0, NON_PRIME_TIME_MASK.length());
+        /* Setting the rest of the bits that could not be set by simply flipping*/
+        NON_PRIME_TIME_MASK.set(FRIDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET, FRIDAY_OFFSET + MAX_BITS_PER_DAY);
     }
 
     public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days) throws Exception{

@@ -12,6 +12,7 @@ import java.util.BitSet;
 import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 public class TestBitset {
     private static final int MONDAY_OFFSET = 0;
@@ -134,6 +135,30 @@ public class TestBitset {
         }
         assertEquals(checkbitset.cardinality(), 12);
         assertEquals(checkbitset.length(), FRIDAY_OFFSET + HOUR_OFFSET * 7);
+    }
+
+    @Test
+    @DisplayName("Check that the PrimeTime masks are set correctly")
+    void primeTime_BitSet_check(){
+        final int BITS_PER_DAY = 30;
+        final int NUM_DAYS = 5;
+        final int TOTAL_BITS = BITS_PER_DAY * NUM_DAYS;
+        final int PRIME_TIME_BITS_PER_DAY = 12;
+        final int NON_PRIME_TIME_BITS_PER_DAY = 18;
+        final BitSet INTERSECTION_TEST = (BitSet) BitSetHelper.PRIME_TIME_MASK.clone();
+        INTERSECTION_TEST.and(BitSetHelper.NON_PRIME_TIME_MASK);
+
+        assertAll(
+                "Checking all prime time related bitsets",
+                () -> assertEquals(TOTAL_BITS
+                        , BitSetHelper.PRIME_TIME_MASK.cardinality()
+                                + BitSetHelper.NON_PRIME_TIME_MASK.cardinality()),
+                () -> assertEquals(INTERSECTION_TEST.cardinality(), 0),
+                () -> assertEquals(PRIME_TIME_BITS_PER_DAY * NUM_DAYS
+                        , BitSetHelper.PRIME_TIME_MASK.cardinality()),
+                () -> assertEquals(NON_PRIME_TIME_BITS_PER_DAY * NUM_DAYS
+                        , BitSetHelper.NON_PRIME_TIME_MASK.cardinality())
+        );
     }
 
 }

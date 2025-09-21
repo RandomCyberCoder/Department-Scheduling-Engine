@@ -1,5 +1,6 @@
 package org.acme.schooltimetabling.solver;
 
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
@@ -313,6 +314,28 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     /*TODO eventually add the prime time stuff*/
 
     /*TODO primetime constraint*/
+    /*for every teacher, up to 50 percent of scheduled lecture classes can be in prime time hours */
+    Constraint inPrimeTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    return true;
+                })
+                .penalize(HardMediumSoftScore.ONE_MEDIUM, lesson -> 1)
+                .asConstraint("");
+    }
+
+    /*50 percent of scheduled lecture classes should be outside Prime Time hours
+    * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf
+    * lets make this a positive score and */
+    Constraint outPrimeTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    return true;
+//                    lesson.getTimeslot().getLectureBitSet()
+                })
+                .reward(HardMediumSoftScore.ONE_MEDIUM, lesson -> 1)
+                .asConstraint("");
+    }
 
 
 }
