@@ -11,6 +11,7 @@ import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
+import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.solver.justifications.*;
 
@@ -305,23 +306,36 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Lesson with wrong room type");
     }
 
-    /*TODO studio_style_courses need the room for who*/
+    /*TODO studio_style_courses need the room for whole time straight*/
     //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching
     //two classes at the same time.
 
     //make sure that classes don't conflict with hard time constraints where they aren't available
+    //IDK what the above comment refers to tbh
 
-    /*TODO eventually add the prime time stuff*/
 
-    /*TODO primetime constraint*/
+    /*TODO primetime constraint check-in with beard*/
     /*for every teacher, up to 50 percent of scheduled lecture classes can be in prime time hours */
     Constraint inPrimeTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
-                    return true;
+                    BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                    BitSet copy = lecBitSet.get(0
+                            , lecBitSet.length());
+                    copy.and(BitSetHelper.PRIME_TIME_MASK);
+
+                    return copy.cardinality() != 0;
                 })
-                .penalize(HardMediumSoftScore.ONE_MEDIUM, lesson -> 1)
-                .asConstraint("");
+                .reward(HardMediumSoftScore.ONE_MEDIUM
+                        , lesson -> {
+                            BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                            BitSet copy = lecBitSet.get(0
+                                    , lecBitSet.length());
+                            copy.and(BitSetHelper.PRIME_TIME_MASK);
+
+                            return copy.cardinality();
+                        })
+                .asConstraint("Penalizing for being in prime time");
     }
 
     /*50 percent of scheduled lecture classes should be outside Prime Time hours
@@ -330,11 +344,23 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     Constraint outPrimeTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
-                    return true;
-//                    lesson.getTimeslot().getLectureBitSet()
+                    BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                    BitSet copy = lecBitSet.get(0
+                            , lecBitSet.length());
+                    copy.and(BitSetHelper.NON_PRIME_TIME_MASK);
+
+                    return copy.cardinality() != 0;
                 })
-                .reward(HardMediumSoftScore.ONE_MEDIUM, lesson -> 1)
-                .asConstraint("");
+                .reward(HardMediumSoftScore.ONE_MEDIUM
+                        , lesson -> {
+                            BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                            BitSet copy = lecBitSet.get(0
+                                    , lecBitSet.length());
+                            copy.and(BitSetHelper.NON_PRIME_TIME_MASK);
+
+                            return copy.cardinality();
+                        })
+                .asConstraint("Rewarding for being outside of prime time");
     }
 
 
