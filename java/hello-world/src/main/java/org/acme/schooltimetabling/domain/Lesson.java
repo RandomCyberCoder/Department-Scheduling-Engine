@@ -3,7 +3,7 @@ package org.acme.schooltimetabling.domain;
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
-import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 
 @PlanningEntity
 public class Lesson {

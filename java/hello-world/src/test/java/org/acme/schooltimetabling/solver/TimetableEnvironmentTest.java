@@ -1,6 +1,6 @@
 package org.acme.schooltimetabling.solver;
 
-import static org.acme.schooltimetabling.TimetableApp.generateDemoData;
+import static org.acme.schooltimetabling.Other.generateDemoData;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;

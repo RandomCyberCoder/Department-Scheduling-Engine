@@ -1,4 +1,4 @@
-package org.acme.schooltimetabling.helperClasses;
+package org.acme.schooltimetabling.domain.teacher;
 
 import java.util.List;
 import java.util.BitSet;

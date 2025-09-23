@@ -6,7 +6,7 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
-import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.Executable;
 import java.util.*;

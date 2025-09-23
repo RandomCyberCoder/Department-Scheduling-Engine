@@ -2,7 +2,7 @@ package org.acme.schooltimetabling.TestClasses;
 
 import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

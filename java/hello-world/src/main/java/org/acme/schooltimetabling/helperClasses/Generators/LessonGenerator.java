@@ -5,7 +5,7 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
-import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

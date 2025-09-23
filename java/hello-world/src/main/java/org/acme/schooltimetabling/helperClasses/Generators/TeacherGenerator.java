@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.Teacher;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

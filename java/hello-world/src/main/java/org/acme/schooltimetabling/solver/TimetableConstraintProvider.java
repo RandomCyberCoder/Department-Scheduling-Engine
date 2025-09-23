@@ -12,13 +12,10 @@ import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.Teacher;
 import org.acme.schooltimetabling.solver.justifications.*;
 
-import java.time.Duration;
 import java.util.BitSet;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
