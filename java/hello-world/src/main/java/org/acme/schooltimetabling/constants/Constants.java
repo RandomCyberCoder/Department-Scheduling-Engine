@@ -63,6 +63,11 @@ public class Constants {
      * one in the schedule json file and the teacher non-canon name
      * is the one found in the survey csv file*/
     public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
+
+    /**
+     * A set of the last names of faculty members*/
+    public static Set<String> FACULTY_LAST_NAMES;
+
     static{
         int counter;
 
@@ -198,6 +203,8 @@ public class Constants {
                     "room to constant 'POSSIBLE_ROOMS'");
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
+
+        FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
     }
 
     private Constants(){
