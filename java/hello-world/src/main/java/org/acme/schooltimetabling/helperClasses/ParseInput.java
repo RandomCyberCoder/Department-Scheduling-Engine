@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -187,5 +188,46 @@ public final class ParseInput {
             System.exit(PROGRAM_FAILURE);
         }
         return courseConfigs;
+    }
+
+    /***
+     * Assumes the file has a header. Assumes the file is a TSV. Reruns a set of faculty names.
+     * @param file Path to file in the {@code resources} directory.
+     * @return A set of faculty (tenure track) last names
+     */
+    public static Set<String> getFaculty(String file) {
+        Set<String> faculty = new HashSet<>();
+        final int NAME_POSITION = 0;
+        final int TITLE_POSITION = 1;
+        final int EMAIL_POSITION = 2;
+
+        try (InputStream inputStream = getResourceAsStream(file);
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));) {
+            String line;
+            boolean headerRead = false;
+            while ((line = bufferedReader.readLine()) != null) {
+                List<String> parsedLine = Arrays.asList(line.split("\t"));
+                if(headerRead
+                    && parsedLine.get(TITLE_POSITION).toLowerCase().contains("professor")){
+                    String[] nameSplit = parsedLine.get(NAME_POSITION).split(" ");
+                    faculty.add(nameSplit[nameSplit.length - 1]);
+                }
+                else{
+                    headerRead = true;
+                }
+            }
+        } catch (Exception e) {
+            ParseInput.LOGGER.error("Error reading file with potential faculty names");
+            ParseInput.LOGGER.error(String.format("Error trying read file \"%s\".... Terminating program until" +
+                    " error is fixed", file));
+            System.exit(ParseInput.PROGRAM_FAILURE);
+        }
+
+        /*Adding in names that aren't included in the file*/
+        faculty.add("da Silva");
+        faculty.add("DeBruhl II");
+        faculty.add("De Moura Canaan");
+
+        return faculty;
     }
 }
