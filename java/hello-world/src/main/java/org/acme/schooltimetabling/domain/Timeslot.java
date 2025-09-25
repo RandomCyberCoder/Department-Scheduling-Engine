@@ -145,7 +145,7 @@ public class Timeslot {
         this.allTimesBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
                 this.lecDays);
         /*if there was a second timeslot we have to join it*/
-        if(secondSlot){
+        if(!onlyLec){
             this.allTimesBitSet.or(this.labActBitSet);
         }
     }
