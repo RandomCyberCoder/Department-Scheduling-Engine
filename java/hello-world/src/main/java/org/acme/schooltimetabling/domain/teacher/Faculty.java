@@ -15,7 +15,8 @@ import java.util.List;
 
 public class Faculty extends Teacher{
     private static final Logger LOGGER = LoggerFactory.getLogger(Faculty.class);
-    static final BitSet FACULTY_CONFLICT;
+    private static final BitSet FACULTY_CONFLICT;
+
     static {
         /*enter here the bitsets needed for faculty time*/
         FACULTY_CONFLICT = new BitSet();
@@ -44,7 +45,7 @@ public class Faculty extends Teacher{
             for(LocalTime localTime: facultyTimes) {
                 /*The tw*/
                 BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, FACULTY_DAYS);
-                FACULTY_CONFLICT.and(temp);
+                FACULTY_CONFLICT.or(temp);
             }
         }
         catch (Exception e){
@@ -64,5 +65,9 @@ public class Faculty extends Teacher{
         BitSet facultyConflictCopy = conflict.get(0, conflict.size());
         facultyConflictCopy.or(FACULTY_CONFLICT);
         return facultyConflictCopy;
+    }
+
+    public static BitSet getFacultyConflict() {
+        return (BitSet) FACULTY_CONFLICT.clone();
     }
 }

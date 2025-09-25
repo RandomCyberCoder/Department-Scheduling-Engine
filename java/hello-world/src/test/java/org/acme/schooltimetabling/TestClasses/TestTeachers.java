@@ -1,5 +1,8 @@
 package org.acme.schooltimetabling.TestClasses;
 
+import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.domain.teacher.Faculty;
+import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -34,8 +37,8 @@ public class TestTeachers {
 
 
             /*read the current quarter survey*/
-            String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
-            String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
+            String curQuarterSurveyPath = "input/2254-survey.csv";
+            String prevQuarterSurveyPath = "input/2252-survey.csv";
             System.out.println("Reading the current quarter teacher survey");
             ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
             System.out.println("Reading the previous quarter teacher survey");
@@ -83,5 +86,31 @@ public class TestTeachers {
                             () -> assertEquals(150, bitSet.cardinality()),
                             () -> assertEquals(150, bitSet.length()));
                 }));
+    }
+
+    @Test
+    @DisplayName("Check for faculty")
+    void checkForFaculty(){
+        boolean atLeastOneFacultyFound = false;
+
+        for(Teacher teacher: teacherHashMap.values()){
+            if (teacher instanceof Faculty) {
+                atLeastOneFacultyFound = true;
+                break;
+            }
+        }
+
+        assertTrue(atLeastOneFacultyFound);
+    }
+
+    @Test
+    @DisplayName("Check tenure time slots are conflict for faculty")
+    void checkTenureConflict(){
+        System.out.println(Faculty.getFacultyConflict());
+        Teacher dummyFaculty = new Faculty(0, "", new BitSet(), new BitSet(), new BitSet());
+        BitSet tenureMask = Faculty.getFacultyConflict();
+        tenureMask.and(dummyFaculty.getConflict());
+
+        assertNotEquals(tenureMask.cardinality(), 0);
     }
 }
