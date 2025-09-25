@@ -188,7 +188,7 @@ public class LessonGenerator extends Generator{
         if(teacher == null){
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
-                        "This might mean they don't have a survey. Skipping this teacher. " +
+                        "This might mean they don't have a survey. Skipping this teacher or canon mapping is wrong. " +
                         "Skipping course '%s'", teacherName, courseName));
             }
             return null;

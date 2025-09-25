@@ -62,7 +62,7 @@ public class Faculty extends Teacher{
     public BitSet getConflict() {
         BitSet conflict = super.getConflict();
         BitSet facultyConflictCopy = conflict.get(0, conflict.size());
-        facultyConflictCopy.and(FACULTY_CONFLICT);
+        facultyConflictCopy.or(FACULTY_CONFLICT);
         return facultyConflictCopy;
     }
 }

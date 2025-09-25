@@ -39,20 +39,6 @@ public class TimetableApp {
         LARGE
     }
 
-    public static HashMap<String, Teacher> remapName(HashMap<String, Teacher> teacherHashMap){
-        HashMap<String, Teacher> remappedNames = new HashMap<>();
-        String canonName;
-        final HashMap<String, String> TEACHER_NAME_TO_CANON = Constants.TEACHER_NAME_TO_CANON;
-
-        for(String teacherName: teacherHashMap.keySet()){
-            Teacher teacherObj = teacherHashMap.get(teacherName);
-            canonName = TEACHER_NAME_TO_CANON.get(teacherName);
-            remappedNames.put(canonName, teacherObj);
-        }
-
-        return  remappedNames;
-    }
-
     public static void main(String[] args) throws Exception{
         ArrayList<Room> roomList;
         ArrayList<Lesson> lessonList;
@@ -92,17 +78,10 @@ public class TimetableApp {
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
         timeslotList = TimeslotGenerator.generateTimeslots("constants/possibleTimes.csv");
-
         /*parse schedules*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"
                 ,ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.department));
 
-        /*create mapping of all the possible names a teacher has to their cannon name*/
-        Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);
-
-        /*redo mapping of teacherHashMap to use canon names instead.
-        *  Needed for when we create the Lessons... what a headache*/
-        teacherHashMap = remapName(teacherHashMap);
 
         /*Creating Lessons*/
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");

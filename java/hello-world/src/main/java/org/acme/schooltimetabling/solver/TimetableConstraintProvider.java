@@ -183,8 +183,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     /*make a constraint for teachers checking if they have a conflict */
 
     /**
-     * <p>The constraint checks that a teacher isn't teaching two classes at the same time.
-     * We just intersect the timeslot bitsets.</p>
+     * <p>Checks that a teacher isn't teaching two classes at the same time.</p>
      *
      * Personal NOTE: Currently I am checking for allTimeBitset which can include breaks. i.e
      * lec+lab time may only be 6hrs but the timeslot has 7 hours. Imagine the hour gap on tuesdays
@@ -229,7 +228,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                         //that have a lab/activity
                         Joiners.filtering((lesson, lesson2) -> {
                             //make sure that the lesson requires a lab/activity room
-                            return lesson.hasLabAct && lesson2.hasLabAct;
+                            return lesson.isHasLabAct() && lesson2.isHasLabAct();
                         }))
                 .filter((lesson, lesson2) -> {
                     Timeslot t1 = lesson.getTimeslot();

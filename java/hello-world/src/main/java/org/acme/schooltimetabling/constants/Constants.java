@@ -3,9 +3,16 @@ package org.acme.schooltimetabling.constants;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,7 +69,7 @@ public class Constants {
      * to the teacher canon name. The canon name is assumed to be the
      * one in the schedule json file and the teacher non-canon name
      * is the one found in the survey csv file*/
-    public static final HashMap<String, String> TEACHER_NAME_TO_CANON;
+    public static final BiMap<String, String> NEW_TEACHER_NAME_TO_CANON;
 
     /**
      * A set of the last names of faculty members*/
@@ -85,20 +92,6 @@ public class Constants {
                 "Double", "Triple");
 
         SKIP_CONFIGURATIONS = Set.of("various", "non-standard", "0-0-2");
-        /*These are the starter mapping we have but have to create more later*/
-        /*Ideally all the mapping should be here or in some file that can be read from*/
-        /*TODO beard just sent me a excel file with this data so ideally this should
-        *  no longer be needed.... ideally*/
-        TEACHER_NAME_TO_CANON = new HashMap<>(Map.ofEntries(
-                Map.entry("BJ Klingenberg", "Klingenberg, Bernhard J."),
-                Map.entry("James Mealy", "Mealy, Bryan J."),
-                Map.entry("John Fox", "Fox, J. Kristofer"),
-                Map.entry("Dave Parkinson", "Parkinson, David Shawn"),
-                Map.entry("Lucas Pierce", "Pierce, Lucas Shane"),
-                Map.entry("Kirk Duran", "Duran, Kirk Alberto"),
-                Map.entry("Bret Hartman", "Hartman, Bret Andrew")
-                ));
-
 
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/
@@ -205,9 +198,54 @@ public class Constants {
         }
 
         FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
+
+        NEW_TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_use.xlsx");
     }
 
     private Constants(){
         throw new UnsupportedOperationException("This class can't be instantiated");
+    }
+
+
+    private static InputStream getResourceAsStream(String filePath){
+        return ParseInput.class.getClassLoader().getResourceAsStream(filePath);
+    }
+
+    /**
+     * <p>Assumes there is a header and that the second cell in a row is the "name" and that
+     * the third name is the "canon" name.</p>
+     * <p>BiMap returned is in the format non-canon -> canon. Meaning the reverse BiMap
+     * is in the format canon -> non-canon</p>
+     * @param resourceFilePath
+     * @return BiMap of instructor's names, non-canon -> canon.
+     */
+    static private BiMap<String, String> getInstructorNameMapping(String resourceFilePath){
+        BiMap<String, String> instructorNameMapping = HashBiMap.create();
+//        resourceFilePath = "constants/faculty_names_use.xlsx";
+        //zero indexed
+        final int NAME_CELL_POS = 1;
+        final int CANON_CELL_POS = 2;
+        boolean headerRead = false;
+
+        try(InputStream inputStream = getResourceAsStream(resourceFilePath);){
+            XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet) {
+                if(!headerRead){
+                    headerRead = true;
+                    continue;
+                }
+                String nonCanonName = row.getCell(NAME_CELL_POS).getStringCellValue().strip();
+                String canonName = row.getCell(CANON_CELL_POS).getStringCellValue().strip();
+                instructorNameMapping.put(nonCanonName, canonName);
+            }
+        }
+        catch (Exception e){
+            Constants.LOGGER.error("Critical issue reading file containing mapping of instructor names");
+            Constants.LOGGER.error(String.format("Error reading the file %s", resourceFilePath));
+            System.exit(ParseInput.PROGRAM_FAILURE);
+        }
+
+        return instructorNameMapping;
     }
 }

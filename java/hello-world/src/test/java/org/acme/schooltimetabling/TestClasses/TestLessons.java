@@ -10,8 +10,6 @@ import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.Executable;
 import java.util.*;
-
-import static org.acme.schooltimetabling.TimetableApp.remapName;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestLessons {
@@ -51,15 +49,6 @@ public class TestLessons {
         /*parse schedules*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses("input/schedule-2254-CSC.json");
 
-        /*create mapping of all the possible names a teacher has to their cannon name*/
-        Generator.createTeacherNameMapping(teacherHashMap, parsedSchedules);
-
-        /*redo mapping of teacherHashMap to use canon names instead.
-         *  Needed for when we create the Lessons... what a headache*/
-        teacherHashMap = remapName(teacherHashMap);
-
-
-
         /*Creating Lessons*/
         courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
@@ -94,14 +83,4 @@ public class TestLessons {
                             () -> assertFalse(Constants.SKIP_SCHEDULE.contains(lesson.modifiers)));
                 }));
     }
-
-    @Test
-    @DisplayName("Check correct teacher object")
-    void checkCorrectTeacher(){
-        assertAll("Does it have the correct teacher",
-                lessonList.stream().map(lesson -> (Executable) () -> {
-                    assertEquals(lesson.teacherName, Constants.TEACHER_NAME_TO_CANON.get(lesson.teacherObj.name));
-                }));
-    }
-
 }

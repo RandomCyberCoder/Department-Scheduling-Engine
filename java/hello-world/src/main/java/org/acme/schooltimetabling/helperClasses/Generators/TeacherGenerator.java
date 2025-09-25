@@ -1,5 +1,7 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
+import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.slf4j.Logger;
@@ -21,9 +23,16 @@ public class TeacherGenerator extends Generator{
     private static Teacher generateTeacher(HashMap<String, String> surveyEntry, List<String> times,
                                            int instructorID) throws Exception{
         String instructorName = surveyEntry.get("name");
+        String canonName = Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName);
         BitSet preferred = new BitSet();
         BitSet acceptable = new BitSet();
         BitSet conflicts = new BitSet();
+
+
+        if(canonName == null){
+            TeacherGenerator.LOGGER.error(String.format("Couldn't find canon name for %s. SKIPPING", instructorName));
+            return null;
+        }
 
         for(String time : times){
             /*lower case for future-proof*/
@@ -40,7 +49,14 @@ public class TeacherGenerator extends Generator{
             }
         }
 
-        return new Teacher(instructorID, instructorName, preferred, acceptable, conflicts);
+        String[] splitName = canonName.split(",");
+//        System.out.println(Constants.FACULTY_LAST_NAMES);
+//        System.out.println(splitName[0].toLowerCase().strip());
+        if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
+            TeacherGenerator.LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
+            return new Faculty(instructorID, instructorName, preferred, acceptable, conflicts);
+        }
+        return new Teacher(instructorID, canonName, preferred, acceptable, conflicts);
     }
 
     /**
@@ -88,16 +104,18 @@ public class TeacherGenerator extends Generator{
                 LOGGER.info(String.format("Teacher %s did not bleed forward", instructorName));
                 Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
 
+                if(curTeacher == null) continue;
+
                 /*add the Teacher instance to our HashMap to be later used for creating
                  * the lessons*/
-                teacherHashMap.put(instructorName, curTeacher);
+                teacherHashMap.put(Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
             }
 
         }
 
         /*read the previous quarter survey entries in case anyone bled forward*/
         for(HashMap<String, String> surveyEntry : prevQuarterSurvey){
-            String instructorName = surveyEntry.get("name");
+            String instructorName = surveyEntry.get("name").strip();
             /*Check if the instructor wanted to bleed forward*/
             if(teacherBleed.containsKey(instructorName)){
 
@@ -115,7 +133,8 @@ public class TeacherGenerator extends Generator{
                 /*if they bled forward and we have a survey entry then we create their
                 * Teacher instance*/
                 Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
-                teacherHashMap.put(instructorName, curTeacher);
+                if(curTeacher == null) continue;
+                teacherHashMap.put(Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
             }
         }
 
