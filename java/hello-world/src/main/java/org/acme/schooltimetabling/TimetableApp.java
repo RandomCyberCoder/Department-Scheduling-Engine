@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-/*TODO make a debug wrapper or something to turn intermediately*/
 public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);

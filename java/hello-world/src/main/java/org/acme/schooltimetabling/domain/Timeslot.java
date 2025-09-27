@@ -4,6 +4,7 @@ import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 
+import java.sql.Time;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +42,7 @@ public class Timeslot {
     private static final float FLOAT_TIME_DELTA = 0.01f;
     private static final int MINUTES_PER_HOUR = 60;
 
-    public Timeslot() {
+    private Timeslot() {
     }
 
     public Timeslot(String id, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
@@ -49,6 +50,51 @@ public class Timeslot {
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+
+    /* Test factory method lesson builders */
+
+    public static Timeslot test_CreateWithDaysOnly(int ID, EnumSet<Days> lecDays, EnumSet<Days> labDays){
+        return new Timeslot(ID, lecDays, labDays);
+    }
+
+    public static Timeslot test_lacLabBitAndDays(int ID, BitSet lecBitSet, BitSet labActBitSet
+            , EnumSet<Days> lecDays , EnumSet<Days> labDays){
+        return new Timeslot(ID, lecBitSet, labActBitSet, lecDays, labDays);
+    }
+
+    public static Timeslot test_minSetUp(String id){
+        return new Timeslot(id);
+    }
+
+
+    /*Private constructors for test factory methods*/
+
+    private Timeslot(int ID, EnumSet<Days> lecDays, EnumSet<Days> labDays){
+        this.id = Integer.toString(ID);
+        this.lecDays = lecDays.clone();
+        this.nonLecDays = labDays.clone();
+    }
+
+    private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labDays){
+        this.id = Integer.toString(ID);
+        this.ID = ID;
+        this.onlyLec = labActBitSet.cardinality() == 0;
+        this.lectureBitSet = (BitSet) lecBitSet.clone();
+        this.labActBitSet = (BitSet) labActBitSet.clone();
+        this.lecDays = lecDays.clone();
+        this.nonLecDays = labDays.clone();
+        BitSet allBitSet = new BitSet();
+        allBitSet.or(this.lectureBitSet);
+        allBitSet.or(this.labActBitSet);
+        this.allTimesBitSet = allBitSet;
+        this.lecHours = lecBitSet.cardinality() /(float)lecDays.size() / 2f;
+        this.totalHours = labActBitSet.cardinality() /(float)labDays.size() /2f + this.lecHours;
+    }
+
+    private Timeslot(String id){
+        this.id = id;
     }
 
     /*TODO add sanity checker here to throw an error if the second time slot overlaps with the first*/

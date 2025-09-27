@@ -14,6 +14,7 @@ import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.solver.justifications.*;
 
+import java.time.Duration;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Set;
@@ -149,6 +150,8 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher has same course on same days");
     }
+
+
     /**
      * <p>This constraint checks if the lesson timeslot overlaps with the instructors conflict
      * bitset. If it does it will be penalized with ONE_HARD</p>
@@ -262,12 +265,13 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     float tsLecHrs = lesson.getTimeslot().getLecHours();
                     tsLecHrs *= lDays.size();
-                    float tsLabActHrs = lesson.getTimeslot().onlyLec ? 0 : tsLecHrs;
+                    float tsLabActHrs = lesson.getTimeslot().onlyLec ? 0 :
+                            lesson.getTimeslot().getTotalHours() - lesson.getTimeslot().getLecHours();
                     tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot
-                    return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA
-                            || Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <  FLOAT_TIME_DELTA);
+                    return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA)
+                            || !(Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <  FLOAT_TIME_DELTA);
                 })
                 .penalize(HardSoftScore.ONE_HARD)
                 .justifyWith((lesson, score) -> new WrongHoursAmountJustification(lesson))

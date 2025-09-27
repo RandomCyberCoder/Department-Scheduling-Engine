@@ -86,6 +86,11 @@ public class BitSetHelper {
                     throw new Exception(String.format("There was an error reading the time '%s'", startTime.toString()));
         };
 
+        /*I'm not adding the possiblity for 30 minute localtime here. I don't think this was an issue during the
+        * nomral planning but we should add it here for the testing*/
+        /* Move offset forward one bit for offset if the time starts 30 minutes after the hour*/
+        dayOffset += startTime.getMinute() == 30 ? 1 : 0;
+
         /* the 'to index' (the second index passed) to BitSet.set() is exclusive*/
         if(days.contains(Days.MONDAY)){
             bitSet.set(MONDAY_OFFSET +  dayOffset, MONDAY_OFFSET + dayOffset + numberOfBlocks);

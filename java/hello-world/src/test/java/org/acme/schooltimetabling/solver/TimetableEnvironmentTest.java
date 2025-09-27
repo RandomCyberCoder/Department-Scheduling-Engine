@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 @EnabledIfSystemProperty(named = "slowly", matches = "true")
-class TimetableEnvironmentTest {
+class  TimetableEnvironmentTest {
 
     @Test
     void solveFullAssert() {

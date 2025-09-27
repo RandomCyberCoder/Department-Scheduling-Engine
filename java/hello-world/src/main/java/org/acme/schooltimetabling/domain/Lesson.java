@@ -47,8 +47,31 @@ public class Lesson {
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
 
+    /* Test factory methods */
+    public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+                            String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
+        return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
+                , timeslot, room);
+    }
+
+    /* Test constructor(s)*/
+    public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+                  String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
+        /*calling normal constructor used during setup*/
+        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj);
+
+        /*Populate planning variables*/
+        this.timeslot = timeslot;
+        this.room = room;
+    }
+
     /**
      * Class constructor
+     * <p>
+     * the courseConfig stream is assumed to come in the format
+     * E-L-A where E is the number of lecture units, L is the number of
+     * lab units, and A is the number of activity units
+     * </p>
      *
      * @param Id unique ID for the lesson
      * @param lecSection unique section number for the lecture

@@ -1,6 +1,5 @@
 package org.acme.schooltimetabling.TestClasses;
 
-import org.acme.schooltimetabling.TestConstants;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.Generators.TimeslotGenerator;
 import org.junit.jupiter.api.BeforeAll;
