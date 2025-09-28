@@ -1,3 +1,30 @@
-create backend
+networks:
+  scheduling:
 
-create database
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # if vars are not in .env file use defaults
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-scheduling}
+    ports:
+      - "5432:5432"
+    networks:
+      - scheduling
+    volumes:
+      - pgdata:/var/lib/postgresql/data 
+ 
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - scheduling
+    ports:
+      - 8080:8080
+
+# volume for storing postgres data 
+volumes:
+  pgdata:
