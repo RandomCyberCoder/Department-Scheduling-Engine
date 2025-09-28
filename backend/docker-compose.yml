@@ -32,6 +32,19 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
 
+  django_service:
+    container_name: django_service
+    image: django_custom:latest
+    build: 
+      context: ./django_backend
+      dockerfile: ./django_backend/Dockerfile
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./django_backend/workspace:/app/workspace
+
+
+
 # volumes for postgres and pgadmin
 volumes:
   pgdata:
