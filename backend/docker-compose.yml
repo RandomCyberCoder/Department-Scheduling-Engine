@@ -1,10 +1,12 @@
 networks:
   scheduling:
+    name: scheduling
 
 services:
   db:
     image: postgres
     restart: always
+    container_name: postgres-service
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       # if vars are not in .env file use defaults
@@ -17,14 +19,20 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data 
  
-  adminer:
-    image: adminer
-    restart: always
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_service
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-example@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "15432:80"
     networks:
       - scheduling
-    ports:
-      - 8080:8080
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
 
-# volume for storing postgres data 
+# volumes for postgres and pgadmin
 volumes:
   pgdata:
+  pgadmin-data:
