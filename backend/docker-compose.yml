@@ -41,7 +41,7 @@ services:
     ports:
       - "8002:8000"
     volumes:
-      - ./django_backend/workspace:/app/workspace
+      - ./django_backend/scheduling_backend:/app/scheduling_backend
 
 
 

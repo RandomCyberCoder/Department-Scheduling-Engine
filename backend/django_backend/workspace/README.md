@@ -1,1 +1,0 @@
-this is the directory that will be mounted in the django container
