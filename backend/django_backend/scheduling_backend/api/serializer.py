@@ -6,3 +6,6 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = '__all__'
+
+class TeacherFileUpload(serializers.Serializer):
+    file = serializers.FileField()
