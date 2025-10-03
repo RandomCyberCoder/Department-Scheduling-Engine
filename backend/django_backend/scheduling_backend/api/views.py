@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
 from .models import Teacher
 from .serializer import TeacherSerializer, TeacherFileUpload
@@ -82,23 +82,42 @@ def users_file_upload(request):
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
 
 
-@api_view(['PUT', 'PATCH', 'DELETE'])
+def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int):
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"success": "teacher obj has been updated"},
+                        successStatusCode)
+    return Response({"error": f"{serializer.errors}",
+                     "msg" :"Couldn't update the object"},
+                     status.HTTP_406_NOT_ACCEPTABLE)
+
+
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@parser_classes([JSONParser])
 def update_teacher(request, pk):
     try:
         teacher = Teacher.objects.get(pk=pk)
         print(teacher)
-    except teacher.DoesNotExist:
-        return Response({"error": f"Couldn't find teacher object with primary key {pk}"},
+    except Exception as e:
+        print(type(status.HTTP_404_NOT_FOUND))
+        return Response({"error": f"{e}",
+                         "msg": f"Couldn't find teacher object with primary key {pk}"},
                         status.HTTP_404_NOT_FOUND)
     
-    if request.method == 'PUT':
+    if request.method == 'GET':
+        print("get endpoint")
+        serializer = TeacherSerializer(teacher)
+        return Response({"success": "Teacher object retrieved",
+                         "data": serializer.data},
+                         status.HTTP_200_OK)
+    elif request.method == 'PUT':
         print("put endpoint")
-        return Response({"success": "implement "},
-                        status.HTTP_200_OK)
+        serializer = TeacherSerializer(teacher, data=request.data)
+        return update_teacher_helper(serializer, status.HTTP_200_OK)
     elif request.method == 'PATCH':
+        serializer = TeacherSerializer(teacher, data=request.data, partial=True)
         print("patch endpoint")
-        return Response({"success": "implement "},
-                        status.HTTP_200_OK)
+        return update_teacher_helper(serializer, status.HTTP_200_OK)
     elif request.method == 'DELETE':
         print("deleting endpoint")
         teacher.delete()
