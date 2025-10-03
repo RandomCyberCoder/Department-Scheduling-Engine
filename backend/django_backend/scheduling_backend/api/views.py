@@ -16,8 +16,11 @@ def get_users(request):
 
 @api_view(['POST'])
 def create_user(request):
+    # check if upload is in bulk or single instance
+    is_list = isinstance(request.data, list)
+
     # serialize data
-    serializer = TeacherSerializer(data=request.data)
+    serializer = TeacherSerializer(data=request.data, many=is_list)
     # check if its valid
     if serializer.is_valid():
         # if so then save it
@@ -58,7 +61,8 @@ def users_file_upload(request):
             for index, row in df.iterrows():
                 data = {"canon": row["canon"], "non_canon": row["name"]}
                 entries.append(data)
-                
+
+            # TODO update to serialize individual to check which are valid and which aren't and return this information in the response    
             teacher_serializer = TeacherSerializer(data=entries, many=True)
 
             try:
@@ -76,3 +80,31 @@ def users_file_upload(request):
             return Response({"error": f"problem reading the file {file.name}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
+
+
+@api_view(['PUT', 'PATCH', 'DELETE'])
+def update_teacher(request, pk):
+    try:
+        teacher = Teacher.objects.get(pk=pk)
+        print(teacher)
+    except teacher.DoesNotExist:
+        return Response({"error": f"Couldn't find teacher object with primary key {pk}"},
+                        status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'PUT':
+        print("put endpoint")
+        return Response({"success": "implement "},
+                        status.HTTP_200_OK)
+    elif request.method == 'PATCH':
+        print("patch endpoint")
+        return Response({"success": "implement "},
+                        status.HTTP_200_OK)
+    elif request.method == 'DELETE':
+        print("deleting endpoint")
+        teacher.delete()
+        return Response({"success": f"teacher object with pk '{pk}' has been deleted"},
+                        status=status.HTTP_204_NO_CONTENT)
+    else:
+        print("illegal method")
+        return Response({"error": "Unsupported method for endpoint"},
+                        status.HTTP_405_METHOD_NOT_ALLOWED)
