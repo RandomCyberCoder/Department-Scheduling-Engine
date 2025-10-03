@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
 from .models import Teacher
-from .serializer import TeacherSerializer, TeacherFileUpload
+from .serializer import TeacherSerializer, FileUpload
 from django.shortcuts import render
 import pandas as pd
 
@@ -34,7 +34,7 @@ def create_user(request):
 def users_file_upload(request):
     #we allow for csv files or excel files; various different excel extensions
     valid_extensions = ['csv', 'xlsx', 'xlsm', 'xlsb']
-    serializer = TeacherFileUpload(data=request.data)
+    serializer = FileUpload(data=request.data)
     if serializer.is_valid():
         print("valid payload")
         try:

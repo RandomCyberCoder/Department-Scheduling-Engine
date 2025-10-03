@@ -7,5 +7,10 @@ class TeacherSerializer(serializers.ModelSerializer):
         model = Teacher
         fields = '__all__'
 
-class TeacherFileUpload(serializers.Serializer):
+class FileUpload(serializers.Serializer):
     file = serializers.FileField()
+
+class DepartmentFileUpload(serializers.Serializer):
+    file = serializers.FileField()
+    department = serializers.CharField(max_length=3)
+
