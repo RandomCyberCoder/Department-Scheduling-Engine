@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (
+from .views.teacher_views import (
     get_users, 
     create_user,
     users_file_upload,
