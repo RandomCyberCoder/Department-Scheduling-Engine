@@ -29,14 +29,14 @@ def valid_file_extension(file_name: str, extensions: list) -> bool:
 
 # view functions
 @api_view(['GET'])
-def get_users(request):
+def get_teachers(request):
     # return serialized data
     teachers = Teacher.objects.all()
     serializer = TeacherSerializer(teachers, many=True)
     return Response(serializer.data)
 
 @api_view(['POST'])
-def create_user(request):
+def create_teacher(request):
     # check if upload is in bulk or single instance
     is_list = isinstance(request.data, list)
 
@@ -53,7 +53,7 @@ def create_user(request):
 
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
-def users_file_upload(request):
+def teachers_file_upload(request):
     #we allow for csv files or excel files; various different excel extensions
     valid_extensions = ['csv', 'xlsx', 'xlsm', 'xlsb']
     serializer = FileUploadSerializer(data=request.data)
