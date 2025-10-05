@@ -1,12 +1,14 @@
 URL examples
 
 curl -X PATCH http://localhost:8000/api/teachers/1/ -H "Content-Type: application/json" -d '{"faculty": "True"}'
-curl -X PATCH http://localhost:8000/api/teachers/3/ -H "Content-Type: application/json" -d '{"email": "akeen@calpoly.edu"}'
+
 
 curl -X PUT http://localhost:8000/api/teachers/1/ -H "Content-Type: application/json" -d '{"canon": "eman", "non_canon": "edog"}'
 
 
 curl http://localhost:8000/api/teachers/1/
+
+curl http://localhost:8000/api/teachers/?department=csc
 
 
 curl -X DELETE http://localhost:8000/api/teachers/1/

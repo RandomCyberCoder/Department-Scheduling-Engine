@@ -31,8 +31,20 @@ def valid_file_extension(file_name: str, extensions: list) -> bool:
 @api_view(['GET'])
 def get_teachers(request):
     # return serialized data
-    teachers = Teacher.objects.all()
+    VALID_DEPARTMENTS = ["csc", "cpe"]
+    department = request.query_params.get("department")
+    if department is not None:
+        if department.lower() not in VALID_DEPARTMENTS:
+            return Response({"error": f"valid departments are: {VALID_DEPARTMENTS}"},
+                            status.HTTP_400_BAD_REQUEST)
+        
+        filter_obj = Q(csc="True") if department == "csc" else Q(cpe="True")
+        teachers = Teacher.objects.filter(filter_obj)
+    else: 
+        teachers = Teacher.objects.all()
+        
     serializer = TeacherSerializer(teachers, many=True)
+
     return Response(serializer.data)
 
 @api_view(['POST'])
