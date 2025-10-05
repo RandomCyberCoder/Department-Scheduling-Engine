@@ -18,3 +18,6 @@ curl -X POST http://localhost:8000/api/teachers/file/   -F "file=@faculty_names_
 
 
 curl -X POST http://localhost:8000/api/teachers/create/ -H "Content-Type: application/json" -d '{"canon": "newUser", "non_canon": "ghost"}'
+
+
+curl -X PATCH http://localhost:8000/api/teachers/update/bulk/ -H "Content-Type: application/json" -d '[{"lookup": {"pk": 5}, "update_data": {"csc": "True"}}, {"lookup": {"non_canon_name": "bad", "canon_name": "Migler, Andrew Carl"}, "update_data": {"csc": "True"}}]'

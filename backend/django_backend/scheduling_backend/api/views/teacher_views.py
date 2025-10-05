@@ -6,20 +6,14 @@ from django.shortcuts import render
 from django.db.models import Q
 from ..models import Teacher
 from ..serializer import TeacherSerializer, FileUploadSerializer
+from typing import List, Tuple
 import pandas as pd
+import traceback
 
+
+VALID_DEPARTMENTS = ["csc", "cpe"]
 
 # helper classes 
-def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int) -> Response:
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"success": "teacher obj has been updated"},
-                        successStatusCode)
-    return Response({"error": f"{serializer.errors}",
-                     "msg" :"Couldn't update the object"},
-                     status.HTTP_406_NOT_ACCEPTABLE)
-
-
 def valid_file_extension(file_name: str, extensions: list) -> bool:
     extension = file_name.split(".")[-1]
     if extension  in extensions:
@@ -30,8 +24,6 @@ def valid_file_extension(file_name: str, extensions: list) -> bool:
 # view functions
 @api_view(['GET'])
 def get_teachers(request):
-    # return serialized data
-    VALID_DEPARTMENTS = ["csc", "cpe"]
     department = request.query_params.get("department")
     if department is not None:
         if department.lower() not in VALID_DEPARTMENTS:
@@ -42,7 +34,7 @@ def get_teachers(request):
         teachers = Teacher.objects.filter(filter_obj)
     else: 
         teachers = Teacher.objects.all()
-        
+
     serializer = TeacherSerializer(teachers, many=True)
 
     return Response(serializer.data)
@@ -121,6 +113,16 @@ def teachers_file_upload(request):
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @parser_classes([JSONParser])
 def update_teacher(request, pk):
+
+    def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int) -> Response:
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": "teacher obj has been updated"},
+                            successStatusCode)
+        return Response({"error": f"{serializer.errors}",
+                        "msg" :"Couldn't update the object"},
+                        status.HTTP_406_NOT_ACCEPTABLE)
+
     try:
         teacher = Teacher.objects.get(pk=pk)
         print(teacher)
@@ -257,3 +259,111 @@ def set_faculty(request):
 
     return Response({"error": "Unsupported HTTP method for endpoint"}, 
                 status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(["PATCH"])
+@parser_classes([JSONParser])
+def teacher_bulk_update(request):
+
+    '''
+    Validates if the structure of the request is valid
+    '''
+    def validate_req(data: any) -> Tuple[bool, str]:
+        #valid keys for nested dictionaries
+        teacher_fields = {f.name for f in Teacher._meta.get_fields()}
+        lookup_options = {"email", "canon_name", "non_canon_name", "pk"}
+
+        if not isinstance(data, list):
+            return False, "data must given a list"
+
+        for index, update_obj in enumerate(data):
+            if not isinstance(update_obj, dict):
+                return False, "list elements must be in a dictionary"
+
+            print(update_obj)
+            if "lookup" not in update_obj or "update_data" not in update_obj:
+                return False, f"update payload at index '{index}' must include the fields 'lookup' and 'update_data'"
+            
+            lookup_keys = set(update_obj["lookup"].keys())
+            update_data_keys = set(update_obj["update_data"].keys()) 
+
+            #check for invalid keys in respective dictionaries
+            lookup_diff = lookup_keys.difference(lookup_options)
+            update_data_diff = update_data_keys.difference(teacher_fields)
+
+            if lookup_diff or update_data_diff or len(lookup_keys) == 0:
+                return False, (f"no lookup option found or invalid key(s) found in 'lookup' or 'update_data' for object at index {index}. "
+                                f"Valid keys for objects respectively are {lookup_options} and {teacher_fields}. ")
+
+        return True, "all data valid"
+    
+
+    def generate_Q_objects(lookup_obj: dict) -> Q:
+        cur_Q = None
+
+        for k, v in lookup_obj.items():
+            if k == "email":
+                Q_to_add = Q(email=v)
+            elif k == "canon_name":
+                Q_to_add = Q(canon=v)
+            elif k == "non_canon_name":
+                Q_to_add = Q(non_canon=v)
+            elif k == "pk":
+                Q_to_add = Q(id=v)
+
+            if cur_Q is None:
+                cur_Q = Q_to_add
+            else: 
+                cur_Q |= Q_to_add
+
+        return cur_Q
+
+
+    req_data = request.data
+    valid, msg = validate_req(req_data)
+    
+    if not valid:
+        return Response({"error": msg},
+                        status.HTTP_400_BAD_REQUEST)
+    
+    success = []
+    failed = []
+    for update_obj in req_data:
+        try:
+            teacher = Teacher.objects.get(generate_Q_objects(update_obj["lookup"]))
+            serializer = TeacherSerializer(teacher, data=update_obj["update_data"], partial=True)
+            if serializer.is_valid():
+                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}"})
+                serializer.save()
+            else:
+                failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
+                        "error": f"{serializer.errors}"})
+        except Exception as e:
+            print("--------------------------------------------------------------------------------")
+            print(traceback.format_exc())
+            failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
+                        "error": f"{e}"})
+
+    return Response({"msg": "finished trying to update teachers",
+                "success": success,
+                "failed": failed},
+                status.HTTP_200_OK)
+        
+    
+    
+    # [
+    #     {
+    #         "lookup": {
+    #             #options but at least one should be present
+    #             "email": "example@example.com",
+    #             "canon_name": "Eman",
+    #             "non_canon_name": "Edog",
+    #             "pk": <int>
+    #         },
+    #         #this is the data that will be passed in
+    #         "update_data":{ 
+    #             "csc": "True"
+    #         }
+    #     }
+    # ]
+    
