@@ -2,11 +2,32 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
-from ..models import Teacher
-from ..serializer import TeacherSerializer, FileUpload
 from django.shortcuts import render
+from django.db.models import Q
+from ..models import Teacher
+from ..serializer import TeacherSerializer, FileUploadSerializer
 import pandas as pd
 
+
+# helper classes 
+def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int) -> Response:
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"success": "teacher obj has been updated"},
+                        successStatusCode)
+    return Response({"error": f"{serializer.errors}",
+                     "msg" :"Couldn't update the object"},
+                     status.HTTP_406_NOT_ACCEPTABLE)
+
+
+def valid_file_extension(file_name: str, extensions: list) -> bool:
+    extension = file_name.split(".")[-1]
+    if extension  in extensions:
+        return True
+    return False
+
+
+# view functions
 @api_view(['GET'])
 def get_users(request):
     # return serialized data
@@ -29,22 +50,25 @@ def create_user(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
 def users_file_upload(request):
     #we allow for csv files or excel files; various different excel extensions
     valid_extensions = ['csv', 'xlsx', 'xlsm', 'xlsb']
-    serializer = FileUpload(data=request.data)
+    serializer = FileUploadSerializer(data=request.data)
     if serializer.is_valid():
         print("valid payload")
         try:
-            file = serializer.validated_data['file']
-            extension = file.name.split(".")[-1]
-            if not extension in valid_extensions:
+            file = serializer.validated_data["file"]
+
+            if not valid_file_extension(file.name, valid_extensions):
                 return Response(
                     {"error": f"Invalid file type. Allowed file types are: {valid_extensions}"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            extension = file.name.split(".")[-1]
             if extension == "CSV":
                 df = pd.read_csv(file)
             else:
@@ -82,16 +106,6 @@ def users_file_upload(request):
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
 
 
-def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int):
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"success": "teacher obj has been updated"},
-                        successStatusCode)
-    return Response({"error": f"{serializer.errors}",
-                     "msg" :"Couldn't update the object"},
-                     status.HTTP_406_NOT_ACCEPTABLE)
-
-
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @parser_classes([JSONParser])
 def update_teacher(request, pk):
@@ -125,5 +139,109 @@ def update_teacher(request, pk):
                         status=status.HTTP_204_NO_CONTENT)
     else:
         print("illegal method")
-        return Response({"error": "Unsupported method for endpoint"},
+        return Response({"error": "Unsupported HTTP method for endpoint"},
                         status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+'''
+Endpoint function for uploading a file to update teachers
+It will scan for what teachers are faculty members. Try to find their teacher object
+int the DB and update them if they could be find.
+
+TODO if we set up a history of names for a person we could also pull from that which could help
+'''
+@api_view(["PATCH"])
+@parser_classes([FormParser, MultiPartParser])
+def set_faculty(request):
+    MINIMUM_EXPECTED_COLUMNS = ["name", "title", "email"]
+
+    def tsv_to_df(file) -> pd.DataFrame:
+        captured_header = False
+        parsed_lines = []
+
+        for line in file:
+            parsed_line = line.decode("utf-8").split("\t")
+            normalized_line = [value.strip() for value in parsed_line]
+
+            if not captured_header:
+                header = [value.lower() for value in normalized_line]
+                captured_header = True
+                continue
+
+            parsed_lines.append(parsed_line)
+
+        df = pd.DataFrame(data=parsed_lines, columns=header)
+     
+        return df
+    
+
+    def invalid_df(df: pd.DataFrame) -> bool:
+        columns = df.columns.to_list()
+        for column in MINIMUM_EXPECTED_COLUMNS:
+            if column not in columns:
+                return True
+        
+        return False
+        
+
+
+    valid_extensions = ["csv", "tsv"]
+    serializer = FileUploadSerializer(data=request.data)
+
+    if not serializer.is_valid():
+            Response({"error": f"{serializer.errors}",
+                    "msg": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'PATCH':
+        file = serializer.validated_data["file"]
+ 
+        if not valid_file_extension(file.name, valid_extensions):
+            return Response({"error": f"Invalid file type. Allowed file types are: {valid_extensions}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        extension = file.name.split(".")[-1]        
+        updates = []
+        updates_teacher = []
+        failed = []
+
+        if extension == "csv":
+            faculty_df = pd.read_csv(file)
+        elif extension == "tsv":
+            faculty_df = tsv_to_df(file)
+
+        if invalid_df(faculty_df):
+            return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
+                                status.HTTP_406_NOT_ACCEPTABLE) 
+
+        for index, row in faculty_df.iterrows():
+            try:
+                if "professor" in row["title"].lower():
+                    non_canon_name = row["name"]
+                    email = row["email"]
+                    teacher = Teacher.objects.get(Q(non_canon=non_canon_name) | Q(email=email))
+                    updates.append(teacher.non_canon)
+                    updates_teacher.append(teacher)
+            
+            except Exception as _:
+                failed.append(non_canon_name) 
+
+        update_faculty_dict = {"faculty": "True"}
+        for teacher in updates_teacher:                
+            serializer = TeacherSerializer(teacher, data=update_faculty_dict, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                # I don't think we should ever be able to get here but leaving it here just in case
+                print(f"log we failed to update, but this shouldn't be possible {teacher.non_canon}")
+                failed.append(teacher.non_canon)
+                updates.remove(teacher.non_canon)
+
+        return Response({"msg": "updated teachers",
+                "updated": updates,
+                "failed": failed
+                },
+                status.HTTP_202_ACCEPTED)
+
+
+    return Response({"error": "Unsupported HTTP method for endpoint"}, 
+                status.HTTP_405_METHOD_NOT_ALLOWED)
