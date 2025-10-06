@@ -11,7 +11,12 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.canon
-    
+
+class History(models.Model):
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
+    is_canon = models.BooleanField()
+    name = models.CharField(max_length=100, unique=True)
+
 class Survey(models.Model):
     AVAILABILITY_CHOICES = {
         "Preferred": "Preferred",
@@ -28,7 +33,7 @@ class Survey(models.Model):
     }
     #add an id in the serializer
     #start
-    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
+
     complete = models.CharField(max_length=100) # models.DateTimeField(db_default=Now())
     name = models.CharField(max_length=50)
     bleed_forward = models.CharField(max_length=150)
