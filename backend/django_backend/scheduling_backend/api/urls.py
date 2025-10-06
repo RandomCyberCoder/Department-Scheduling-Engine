@@ -7,6 +7,9 @@ from .views.teacher_views import (
     set_faculty,
     teacher_bulk_update,
 )
+from .views.survey_views import (
+    survey_file_upload
+)
 
 urlpatterns = [
     #route for api
@@ -16,4 +19,6 @@ urlpatterns = [
     path('teachers/file/', teachers_file_upload, name='users_file_upload'),
     path('teachers/faculty/file/', set_faculty, name='set_faculty'),
     path('teachers/update/bulk/', teacher_bulk_update, name="teacher_bulk_update"),
+    # still waiting on being implemented
+    path('surveys/file/', survey_file_upload, name="survey_file_upload"),
 ]
