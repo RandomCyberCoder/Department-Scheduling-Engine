@@ -32,7 +32,11 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 lessonConflict(constraintFactory),
                 labActRoomConflict(constraintFactory),
                 wrongHoursAmount(constraintFactory),
-                wrongRoomType(constraintFactory)
+                wrongRoomType(constraintFactory),
+
+                // Medium Constraints
+                outPrimeTime(constraintFactory),
+                inPrimeTime(constraintFactory)
 
                 // Soft constraints
         };
@@ -314,33 +318,9 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     //IDK what the above comment refers to tbh
 
 
-    /*TODO primetime constraint check-in with beard*/
-    /*for every teacher, up to 50 percent of scheduled lecture classes can be in prime time hours */
-    Constraint inPrimeTime(ConstraintFactory constraintFactory){
-        return constraintFactory.forEach(Lesson.class)
-                .filter(lesson -> {
-                    BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
-                    BitSet copy = lecBitSet.get(0
-                            , lecBitSet.length());
-                    copy.and(BitSetHelper.PRIME_TIME_MASK);
-
-                    return copy.cardinality() != 0;
-                })
-                .reward(HardMediumSoftScore.ONE_MEDIUM
-                        , lesson -> {
-                            BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
-                            BitSet copy = lecBitSet.get(0
-                                    , lecBitSet.length());
-                            copy.and(BitSetHelper.PRIME_TIME_MASK);
-
-                            return copy.cardinality();
-                        })
-                .asConstraint("Penalizing for being in prime time");
-    }
-
-    /*50 percent of scheduled lecture classes should be outside Prime Time hours
-    * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf
-    * lets make this a positive score and */
+    /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours
+     * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf
+     * lets make this a positive score and */
     Constraint outPrimeTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
@@ -351,7 +331,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return copy.cardinality() != 0;
                 })
-                .reward(HardMediumSoftScore.ONE_MEDIUM
+                .reward(HardSoftScore.ONE_SOFT
                         , lesson -> {
                             BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
                             BitSet copy = lecBitSet.get(0
@@ -364,4 +344,25 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
 
+    Constraint inPrimeTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                    BitSet copy = lecBitSet.get(0
+                            , lecBitSet.length());
+                    copy.and(BitSetHelper.PRIME_TIME_MASK);
+
+                    return copy.cardinality() != 0;
+                })
+                .penalize(HardSoftScore.ONE_SOFT
+                        , lesson -> {
+                            BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
+                            BitSet copy = lecBitSet.get(0
+                                    , lecBitSet.length());
+                            copy.and(BitSetHelper.PRIME_TIME_MASK);
+
+                            return copy.cardinality();
+                        })
+                .asConstraint("Penalizing for being in prime time");
+    }
 }

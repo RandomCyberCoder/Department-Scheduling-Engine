@@ -44,6 +44,7 @@ public class TestConstraints {
                 "3-1-0", 1, teacher, timeslot3, room);
         constraintVerifier.verifyThat(TimetableConstraintProvider::sameClassSameDays)
                 .given(lesson1, lesson2, lesson3)
+                /*Note this takes into account weight of rewards*/
                 .penalizesBy(2);
 
     }
@@ -270,5 +271,62 @@ public class TestConstraints {
         constraintVerifier.verifyThat(TimetableConstraintProvider::wrongRoomType)
                 .given(lesson1, lesson2, lesson3, lesson4, lesson5)
                 .penalizesBy(3);
+    }
+
+    @Test
+    @DisplayName("PrimeTime reward")
+    void primeTimeReward() throws Exception{
+        Room room = new Room("1", "UNKNOWN", 1);
+        EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY,Days.FRIDAY);
+        Teacher teacher = new Teacher(1, "noName", new BitSet(), new BitSet(), new BitSet());
+        /*8-9 MWF; Lecture time completely in prime time*/
+        BitSet bitSet1 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter)
+                , 2, days);
+        /*10-11 MWF*/
+        BitSet bitSet2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter),
+                2, days);
+        /*8-9:30 MWF; Lecture time partially outside of prime time*/
+        BitSet bitSet3 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter)
+                , 3, days);
+        Timeslot timeslot = Timeslot.test_lacLabBitAndDays(1, bitSet1, bitSet2, days, days);
+        Lesson lesson = Lesson.test_buildLesson("1", 1, "someCourse", "noName", "",
+                "0-0-0", 1, teacher, timeslot, room);
+
+        Timeslot timeslot2 = Timeslot.test_lacLabBitAndDays(1, bitSet3, bitSet2, days, days);
+        Lesson lesson2 = Lesson.test_buildLesson("1", 1, "someCourse", "noName", "",
+                "0-0-0", 1, teacher, timeslot2, room);
+        constraintVerifier.verifyThat(TimetableConstraintProvider::outPrimeTime)
+                .given(lesson, lesson2)
+                /*Note this takes into account weight of rewards*/
+                .rewardsWith(12);
+    }
+
+    @Test
+    @DisplayName("PrimeTime penalty")
+    void primeTimePenalty() throws Exception{
+        Room room = new Room("1", "UNKNOWN", 1);
+        EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
+        EnumSet<Days> days2 = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        Teacher teacher = new Teacher(1, "noName", new BitSet(), new BitSet(), new BitSet());
+        /*7-9:30 MW; Lecture time completely in prime time*/
+        BitSet bitSet1 = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter)
+                , 5, days);
+        /*10-11 MW*/
+        BitSet bitSet2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter),
+                2, days);
+        /*8:30-10:00 MWF; Lecture time partially outside of prime time*/
+        BitSet bitSet3 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:30AM", formatter)
+                , 3, days2);
+        Timeslot timeslot = Timeslot.test_lacLabBitAndDays(1, bitSet1, bitSet2, days, days);
+        Lesson lesson = Lesson.test_buildLesson("1", 1, "someCourse", "noName", "",
+                "0-0-0", 1, teacher, timeslot, room);
+
+        Timeslot timeslot2 = Timeslot.test_lacLabBitAndDays(1, bitSet3, bitSet2, days2, days);
+        Lesson lesson2 = Lesson.test_buildLesson("1", 1, "someCourse", "noName", "",
+                "0-0-0", 1, teacher, timeslot2, room);
+        constraintVerifier.verifyThat(TimetableConstraintProvider::inPrimeTime)
+                .given(lesson, lesson2)
+                /*Note this takes into account weight of rewards*/
+                .penalizesBy(  2 + 6);
     }
 }

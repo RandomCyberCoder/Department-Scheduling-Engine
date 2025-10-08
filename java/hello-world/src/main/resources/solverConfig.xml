@@ -8,7 +8,7 @@
         <constraintProviderClass>org.acme.schooltimetabling.solver.TimetableConstraintProvider</constraintProviderClass>
     </scoreDirectorFactory>
     <termination>
-        <secondsSpentLimit>10</secondsSpentLimit>
+        <secondsSpentLimit>15</secondsSpentLimit>
     </termination>
 
     <constructionHeuristic>
@@ -33,11 +33,13 @@
 
     <localSearch>
         <termination>
-            <unimprovedStepCountLimit>1000</unimprovedStepCountLimit>
+<!--            <unimprovedStepCountLimit>3000</unimprovedStepCountLimit>-->
         </termination>
-<!--        <acceptor>-->
+        <acceptor>
 <!--            <lateAcceptanceSize>100</lateAcceptanceSize>-->
-<!--        </acceptor>-->
+<!--                <entityTabuRatio>0.05</entityTabuRatio>-->
+                <simulatedAnnealingStartingTemperature>5hard/20soft</simulatedAnnealingStartingTemperature>
+        </acceptor>
         <moveSelector>
             <changeMoveSelector>
                 <valueSelector variableName="room">

@@ -33,6 +33,8 @@ public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
 
+    private static final boolean PRINT_DETAILED_SUMMARY = false;
+
     public enum DemoData {
         SMALL,
         LARGE
@@ -105,15 +107,16 @@ public class TimetableApp {
         System.out.println(scoreAnalysis.summarize());
 
         //print a detailed summary for every constraint a list of all the instances of it being violated
-        scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
-            System.out.println("Constraint: " + constraintRef.constraintId());
-            System.out.println(" Score: " + constraintAnalysis.score());
-            for (MatchAnalysis<HardSoftLongScore> match : constraintAnalysis.matches()) {
-                System.out.println("  Match score: " + match.score());
-                System.out.println("  Justification: " + match.justification());
-            }
-        });
-
+        if(PRINT_DETAILED_SUMMARY){
+            scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
+                System.out.println("Constraint: " + constraintRef.constraintId());
+                System.out.println(" Score: " + constraintAnalysis.score());
+                for (MatchAnalysis<HardSoftLongScore> match : constraintAnalysis.matches()) {
+                    System.out.println("  Match score: " + match.score());
+                    System.out.println("  Justification: " + match.justification());
+                }
+            });
+        }
         storeResults(solution);
 
 
