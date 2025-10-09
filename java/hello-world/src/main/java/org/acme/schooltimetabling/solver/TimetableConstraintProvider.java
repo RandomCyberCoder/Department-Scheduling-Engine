@@ -33,6 +33,8 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 labActRoomConflict(constraintFactory),
                 wrongHoursAmount(constraintFactory),
                 wrongRoomType(constraintFactory),
+                //implementing this one
+                studioSpace(constraintFactory),
 
                 // Medium Constraints
                 outPrimeTime(constraintFactory),
@@ -364,5 +366,29 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                             return copy.cardinality();
                         })
                 .asConstraint("Penalizing for being in prime time");
+    }
+
+
+    Constraint studioSpace(ConstraintFactory constraintFactory){
+        return  constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) &&
+                    !Constants.TESTING) return false;
+
+                    if(!lesson.isHasLabAct()) return false;
+
+                    if(lesson.getTimeslot().getNonLecDays().size() != 1) return true;
+
+                    BitSet labActBitSet = lesson.getTimeslot().getLabActBitSet();
+                    int indexFirstBit = labActBitSet.nextSetBit(0);
+                    int cardinality = labActBitSet.cardinality();
+                    BitSet mask = new BitSet();
+                    mask.set(indexFirstBit, indexFirstBit + cardinality);
+                    mask.and(labActBitSet);
+
+                    return mask.cardinality() != cardinality;
+                })
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Studio space must be consecutive");
     }
 }

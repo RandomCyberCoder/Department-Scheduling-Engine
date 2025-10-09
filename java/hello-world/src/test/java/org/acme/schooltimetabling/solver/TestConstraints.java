@@ -9,6 +9,8 @@ import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
@@ -22,6 +24,12 @@ public class TestConstraints {
             new TimetableConstraintProvider(), Timetable.class, Lesson.class);
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
+
+    @BeforeAll
+    static void setUp(){
+        /*This is set for special behavior needed for testing*/
+        Constants.TESTING = true;
+    }
 
     @Test
     @DisplayName("Testing same teacher same course constraint")
@@ -328,5 +336,43 @@ public class TestConstraints {
                 .given(lesson, lesson2)
                 /*Note this takes into account weight of rewards*/
                 .penalizesBy(  2 + 6);
+    }
+
+    @Test
+    @DisplayName("Studio Space test")
+    void studioSpace() throws Exception{
+        Room room = new Room("1", "UNKNOWN", 1);
+        EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
+        EnumSet<Days> days2 = EnumSet.of(Days.FRIDAY);
+        EnumSet<Days> days3 = EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY);
+        Teacher teacher = new Teacher(1, "noName", new BitSet(), new BitSet(), new BitSet());
+        /*7-9:30 MW*/
+        BitSet bitSet1 = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter)
+                , 5, days);
+        /*10-11 MW*/
+        BitSet bitSet2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter),
+                2, days);
+        /*8:30-10:00 F*/
+        BitSet bitSet3 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:30AM", formatter)
+                , 3, days2);
+        /*9-10 MTWR*/
+        BitSet bitSet4 = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter)
+                , 1, days3);
+
+        Timeslot timeslot1 = Timeslot.test_lacLabBitAndDays(1, bitSet1, bitSet2, days, days);
+        Timeslot timeslot2 = Timeslot.test_lacLabBitAndDays(1, bitSet1, bitSet3, days, days2);
+        Timeslot timeslot3 = Timeslot.test_lacLabBitAndDays(1, bitSet4, new BitSet(), days3, EnumSet.noneOf(Days.class));
+
+        Lesson lesson = Lesson.test_buildLesson("1", 1, "TestCourse", "noName", "",
+                "3-0-1", 1, teacher, timeslot1, room);
+        Lesson lesson2 = Lesson.test_buildLesson("2", 1, "TestCourse", "noName", "",
+                "2-1-0", 1, teacher, timeslot2, room);
+        Lesson lesson3 = Lesson.test_buildLesson("3", 1, "TestCourse", "noName", "",
+                "4-0-0", 1, teacher, timeslot3, room);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::studioSpace)
+                .given(lesson, lesson2, lesson3)
+                /*Note this takes into account weight of rewards*/
+                .penalizesBy(  1);
     }
 }

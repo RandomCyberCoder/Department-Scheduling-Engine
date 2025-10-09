@@ -22,6 +22,7 @@ import java.util.stream.Stream;
  * fit anywhere else, like a class.
  */
 public class Constants {
+    public static boolean TESTING = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(Constants.class);
     /**
      * This class attribute is used for debug print statements. I kept it
