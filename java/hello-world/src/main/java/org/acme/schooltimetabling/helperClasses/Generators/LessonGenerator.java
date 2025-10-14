@@ -3,6 +3,7 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,15 +23,12 @@ public class LessonGenerator extends Generator{
      * <p>Generates all lessons and filter out any lesson types specified by the Constants.SKIP_SCHEDULE
      * variable given</p>
      *
-     * @param courseConfigs HashMap of course names to their configurations
-     * @param courseIdMapping a bimap of course names to their unique ID
      * @param schedules a list of ScheduleFormat objects containing courses that
      *                  will be taught by a teacher
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      * @return an ArrayList of all courses that a valid object could be made for
      */
-    public static ArrayList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
-                                                    List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
+    public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
         final int STARTING_SECTION_NUMBER = 1;
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
@@ -43,7 +42,7 @@ public class LessonGenerator extends Generator{
         /*create a list of courses to section number and remove courses not in the department we
         * are scheduling*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
-        for(String course: courseConfigs.keySet()){
+        for(String course: Constants.COURSE_CONFIGS.keySet()){
             if(!course.contains(DEPARTMENT)){
                 continue;
             }
@@ -67,7 +66,7 @@ public class LessonGenerator extends Generator{
 
             /*schedule selected courses*/
             for(String course: coursesToSchedule){
-                newLesson = generateLesson(courseConfigs, courseIdMapping, teacherHashMap, courseSectionCounter,
+                newLesson = generateLesson(teacherHashMap, courseSectionCounter,
                         course, teacherName, lessonID);
 
                 /*If new lesson wasn't created for whatever reason skip modifying the following structures
@@ -111,17 +110,17 @@ public class LessonGenerator extends Generator{
      * <p>If the course has a modifier {@link Constants#SKIP_SCHEDULE Constants.SKIP_SCHEDULE} or configuration
      * {@link Constants#SKIP_CONFIGURATIONS Constants.SKIP_CONFIGURATIONS} contains it will not be scheduled</p>
      *
-     * @param courseConfigs HashMap of a course name mapped to its course configuration
-     * @param courseIdMapping BiMap of a course name mapped to its unique ID
      * @param teacherHashMap Hashmap of teacher's <i>canon name</i> mapped to its respective <i>Teacher</i> object
      * @param courseSectionCounter HashMap of a course name mapped to its next available section number
      * @param course name of the course whose lesson will be created for
      * @param teacherName name of the teacher who will teach the lesson
      * @param lessonID unique ID of the lesson
      * @return returns a new lesson to be scheduled or null if the lesson will be skipped
+     *
+     * @see Constants#COURSE_CONFIGS
+     * @see Constants#COURSE_ID_BIMAP
      */
-    private static Lesson generateLesson(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
-                                         HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
+    private static Lesson generateLesson(HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
                                          String course, String teacherName, int lessonID){
         final String DUMMY_COURSE_MODIFIER = "";
         String[] courseInformation;
@@ -156,7 +155,7 @@ public class LessonGenerator extends Generator{
             }
         }
 
-        courseConfig = courseConfigs.get(courseName);
+        courseConfig = Constants.COURSE_CONFIGS.get(courseName);
         hasLabOrAct = determineLabOrAct(courseConfig);
         sectionNumber = courseSectionCounter.get(courseName);
 
@@ -179,18 +178,43 @@ public class LessonGenerator extends Generator{
         if(teacher == null){
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
-                        "This might mean they don't have a survey. Skipping this teacher or canon mapping is wrong. " +
-                        "Skipping course '%s'", teacherName, courseName));
+                        "Creating one for them with now.", teacherName));
             }
-            return null;
+
+            //create teacher object
+            teacher = noSurveyTeacher(teacherName);
+
+            teacherHashMap.put(teacherName, teacher);
         }
 
         /*create class*/
         return new Lesson(Integer.toString(lessonID), sectionNumber, courseName, teacherName,
-                courseModifier, courseConfig, courseIdMapping.get(courseName),
+                courseModifier, courseConfig, Constants.COURSE_ID_BIMAP.get(courseName),
                 teacher);
     }
 
+    /**
+     * This function is used to create a teacher object during lesson creation if a teacher object can't be found
+     * for the name. It will return a faculty object if the person is found to be a faculty member. Note that the object
+     * returned will have empty conflict, preferences, and acceptable BitSets.
+     *
+     * @param name name of teacher. Assumes it's in canon name format (i.e. &lt;last name&gt, &lt;rest of name&gt;)
+     * @return a teacher object; or faculty if found to be a faculty member
+     * @see Teacher
+     * @see Faculty
+     */
+    private static Teacher noSurveyTeacher(String name){
+        final int LAST_NAME_POS = 0;
+        String[] nameFragments = name.split(",");
+
+        if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
+            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
+                    , name));
+            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+        }
+
+        return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+    }
 
     /**
      * <p>The function determines if the giving course configuration has

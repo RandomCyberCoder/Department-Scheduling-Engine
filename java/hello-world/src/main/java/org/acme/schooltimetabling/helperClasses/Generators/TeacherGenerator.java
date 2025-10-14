@@ -11,6 +11,7 @@ import java.util.*;
 
 public class TeacherGenerator extends Generator{
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherGenerator.class);
+    private static int nextTeacherID = 0;
     /**
      * Generates the Teacher/Faculty object for the instructor's survey entry. It
      * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
@@ -19,12 +20,11 @@ public class TeacherGenerator extends Generator{
      * @param surveyEntry The HashMap representation of the instructor's survey entry
      * @param times The name of the keys in the <code>surveyEntry</code> parameter
      * that corresponds to times
-     * @param instructorID the unique ID for the instructor
      * @return Faculty object if teacher is found to be a faculty member; otherwise a
      * Teacher object is returned
-     * @throws */
-    private static Teacher generateTeacher(HashMap<String, String> surveyEntry, List<String> times,
-                                           int instructorID) throws Exception{
+     * @throws
+     * @see #nextTeacherID*/
+    private static Teacher generateTeacher(HashMap<String, String> surveyEntry, List<String> times) throws Exception{
         String instructorName = surveyEntry.get("name");
         String canonName = Constants.TEACHER_NAME_TO_CANON.get(instructorName);
         BitSet preferred = new BitSet();
@@ -56,9 +56,9 @@ public class TeacherGenerator extends Generator{
 
         if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
             TeacherGenerator.LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
-            return new Faculty(instructorID, instructorName, preferred, acceptable, conflicts);
+            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
         }
-        return new Teacher(instructorID, canonName, preferred, acceptable, conflicts);
+        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);
     }
 
     /**
@@ -76,8 +76,6 @@ public class TeacherGenerator extends Generator{
     {
         /* This Hash map will map the teacher's name to the teacher's object */
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
-        /*ID for a teacher. Will increment everytime */
-        int teacherId = 0;
         final String bleedForward = "Yes, use the same as last term";
         /*List of the time headers that are key's in the survey
         * entry HashMaps*/
@@ -107,7 +105,7 @@ public class TeacherGenerator extends Generator{
                 /*if the instructor didn't want to bleed forward create the instructor's
                  * Teacher instance*/
                 LOGGER.info(String.format("Teacher %s did not bleed forward", instructorName));
-                Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
+                Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes);
 
                 if(curTeacher == null) continue;
 
@@ -137,12 +135,22 @@ public class TeacherGenerator extends Generator{
 
                 /*if they bled forward, and we have a survey entry then we create their
                 * Teacher instance*/
-                Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
+                Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes);
                 if(curTeacher == null) continue;
                 teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
             }
         }
 
         return teacherHashMap;
+    }
+
+    /**
+     * The class keeps an internal counter for the next available teacher ID. The next valid teacher ID
+     * is what should be used for a newly created teacher object
+     * @return valid teacher ID
+     * @see Teacher
+     */
+    static int getNextTeacherID(){
+        return nextTeacherID++;
     }
 }

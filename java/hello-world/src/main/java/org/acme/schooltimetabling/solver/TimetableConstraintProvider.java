@@ -33,101 +33,17 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 labActRoomConflict(constraintFactory),
                 wrongHoursAmount(constraintFactory),
                 wrongRoomType(constraintFactory),
-                //implementing this one
                 studioSpace(constraintFactory),
 
                 // Medium Constraints
-                outPrimeTime(constraintFactory),
-                inPrimeTime(constraintFactory)
 
                 // Soft constraints
+                outPrimeTime(constraintFactory),
+                inPrimeTime(constraintFactory)
         };
     }
-//
-//    Constraint roomConflict(ConstraintFactory constraintFactory) {
-//        // A room can accommodate at most one lesson at the same time.
-//        return constraintFactory
-//                // Select each pair of 2 different lessons ...
-//                .forEachUniquePair(Lesson.class,
-//                        // ... in the same timeslot ...
-//                        Joiners.equal(Lesson::getTimeslot),
-//                        // ... in the same room ...
-//                        Joiners.equal(Lesson::getRoom))
-//                // ... and penalize each pair with a hard weight.
-//                .penalize(HardSoftScore.ONE_HARD)
-//                .justifyWith((lesson1, lesson2, score) -> new RoomConflictJustification(lesson1.getRoom(), lesson1, lesson2))
-//                .asConstraint("Room conflict");
-//    }
-//
-//    Constraint teacherConflict(ConstraintFactory constraintFactory) {
-//        // A teacher can teach at most one lesson at the same time.
-//        return constraintFactory
-//                .forEachUniquePair(Lesson.class,
-//                        Joiners.equal(Lesson::getTimeslot),
-//                        Joiners.equal(Lesson::getTeacher))
-//                .penalize(HardSoftScore.ONE_HARD)
-//                .justifyWith(
-//                        (lesson1, lesson2, score) -> new TeacherConflictJustification(lesson1.getTeacher(), lesson1, lesson2))
-//                .asConstraint("Teacher conflict");
-//    }
-//
-//    Constraint studentGroupConflict(ConstraintFactory constraintFactory) {
-//        // A student can attend at most one lesson at the same time.
-//        return constraintFactory
-//                .forEachUniquePair(Lesson.class,
-//                        Joiners.equal(Lesson::getTimeslot),
-//                        Joiners.equal(Lesson::getStudentGroup))
-//                .penalize(HardSoftScore.ONE_HARD)
-//                .justifyWith((lesson1, lesson2, score) -> new StudentGroupConflictJustification(lesson1.getStudentGroup(), lesson1, lesson2))
-//                .asConstraint("Student group conflict");
-//    }
-//
-//    Constraint teacherRoomStability(ConstraintFactory constraintFactory) {
-//        // A teacher prefers to teach in a single room.
-//        return constraintFactory
-//                .forEachUniquePair(Lesson.class,
-//                        Joiners.equal(Lesson::getTeacher))
-//                .filter((lesson1, lesson2) -> lesson1.getRoom() != lesson2.getRoom())
-//                .penalize(HardSoftScore.ONE_SOFT)
-//                .justifyWith((lesson1, lesson2, score) -> new TeacherRoomStabilityJustification(lesson1.getTeacher(), lesson1, lesson2))
-//                .asConstraint("Teacher room stability");
-//    }
-//
-//    Constraint teacherTimeEfficiency(ConstraintFactory constraintFactory) {
-//        // A teacher prefers to teach sequential lessons and dislikes gaps between lessons.
-//        return constraintFactory
-//                .forEach(Lesson.class)
-//                .join(Lesson.class, Joiners.equal(Lesson::getTeacher),
-//                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
-//                .filter((lesson1, lesson2) -> {
-//                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
-//                            lesson2.getTimeslot().getStartTime());
-//                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
-//                })
-//                .reward(HardSoftScore.ONE_SOFT)
-//                .justifyWith((lesson1, lesson2, score) -> new TeacherTimeEfficiencyJustification(lesson1.getTeacher(), lesson1, lesson2))
-//                .asConstraint("Teacher time efficiency");
-//    }
-//
-//    Constraint studentGroupSubjectVariety(ConstraintFactory constraintFactory) {
-//        // A student group dislikes sequential lessons on the same subject.
-//        return constraintFactory
-//                .forEach(Lesson.class)
-//                .join(Lesson.class,
-//                        Joiners.equal(Lesson::getSubject),
-//                        Joiners.equal(Lesson::getStudentGroup),
-//                        Joiners.equal((lesson) -> lesson.getTimeslot().getDayOfWeek()))
-//                .filter((lesson1, lesson2) -> {
-//                    Duration between = Duration.between(lesson1.getTimeslot().getEndTime(),
-//                            lesson2.getTimeslot().getStartTime());
-//                    return !between.isNegative() && between.compareTo(Duration.ofMinutes(30)) <= 0;
-//                })
-//                .penalize(HardSoftScore.ONE_SOFT)
-//                .justifyWith((lesson1, lesson2, score) -> new StudentGroupSubjectVarietyJustification(lesson1.getStudentGroup(), lesson1, lesson2))
-//                .asConstraint("Student group subject variety");
-//    }
 
-    //my stuff
+
     /**
      * <p>This constraint makes sure if an instructor is teaching multiple instances of a course that
      * they all land on the same day. This is essential because teaching different instances of a course
@@ -311,14 +227,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Lesson with wrong room type");
     }
-
-    /*TODO studio_style_courses need the room for whole time straight*/
-    //constraint: make sure no classes during the same time. i.e. checking that an instructor isn't teaching
-    //two classes at the same time.
-
-    //make sure that classes don't conflict with hard time constraints where they aren't available
-    //IDK what the above comment refers to tbh
-
 
     /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours
      * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf

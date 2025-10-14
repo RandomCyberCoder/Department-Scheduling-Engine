@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.constants;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.acme.schooltimetabling.helperClasses.Generators.Generator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -33,6 +34,15 @@ public class Constants {
      * statements as needed.
      */
     public static boolean DEBUG = true;
+    /**
+     * Course names mapped to their respective course configuration
+     * @see ParseInput#readCourseConfigs(String)
+     */
+    public static final HashMap<String, String> COURSE_CONFIGS;
+    /**
+     *
+     */
+    public static final BiMap<String, Integer> COURSE_ID_BIMAP;
     /**
      * Map of abbreviated course modifiers mapped to non-abbreviated course
      * modifiers
@@ -84,6 +94,10 @@ public class Constants {
 
     static{
         int counter;
+
+        COURSE_CONFIGS = ParseInput.readCourseConfigs("constants/configurations.tsv");
+
+        COURSE_ID_BIMAP = Generator.genCourseToIdMapping(COURSE_CONFIGS.keySet().iterator());
 
         SPECIAL_CODE_CONVERSION = Map.ofEntries(
                 Map.entry("",""),

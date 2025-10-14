@@ -36,8 +36,8 @@ public class TestLessons {
 
         /*read the current quarter survey
          * and then create Teacher objects*/
-        String curQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2254-survey.csv";
-        String prevQuarterSurveyPath = "java/hello-world/src/main/java/org/acme/schooltimetabling/input/2252-survey.csv";
+        String curQuarterSurveyPath = "input/2254-survey.csv";
+        String prevQuarterSurveyPath = "input/2252-survey.csv";
         System.out.println("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
         System.out.println("Reading the previous quarter teacher survey");
@@ -50,9 +50,7 @@ public class TestLessons {
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses("input/schedule-2254-CSC.json");
 
         /*Creating Lessons*/
-        courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
-        courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
+        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
     }
 
     @Test
@@ -60,7 +58,7 @@ public class TestLessons {
     void checkCourseID(){
         assertAll("checking course IDs",
                 lessonList.stream().map(lesson -> (Executable) () -> {
-                    assertEquals(courseIdMapping.get(lesson.courseName), lesson.courseID);
+                    assertEquals(Constants.COURSE_ID_BIMAP.get(lesson.courseName), lesson.courseID);
                 }));
     }
 
@@ -79,7 +77,7 @@ public class TestLessons {
         assertAll("Checking Lessons to make sure they are skipped",
                 lessonList.stream().map(lesson -> (Executable) () -> {
                     assertAll("",
-                            () -> assertFalse(Constants.SKIP_CONFIGURATIONS.contains(courseConfigs.get(lesson.courseName))),
+                            () -> assertFalse(Constants.SKIP_CONFIGURATIONS.contains(Constants.COURSE_CONFIGS.get(lesson.courseName))),
                             () -> assertFalse(Constants.SKIP_SCHEDULE.contains(lesson.modifiers)));
                 }));
     }

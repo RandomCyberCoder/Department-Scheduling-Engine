@@ -85,11 +85,7 @@ public class TimetableApp {
 
         LOGGER.info("Creating lesson objects");
         /*Creating Lessons*/
-        /*TODO: migrate this next line into the Constants class and this can change the lesson class creation for
-        *  courseID member*/
-        HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
-        BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
-        lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
+        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
 
         roomList = RoomGenerator.generateRooms();
         timetable = new Timetable("setup", timeslotList, roomList, lessonList);
@@ -105,16 +101,16 @@ public class TimetableApp {
         ScoreAnalysis<HardSoftLongScore> scoreAnalysis = solutionManager.analyze(solution);
 
         //short summary of violated constraints in the solution
-        System.out.println(scoreAnalysis.summarize());
+        LOGGER.info(scoreAnalysis.summarize());
 
         //print a detailed summary for every constraint a list of all the instances of it being violated
         if(PRINT_DETAILED_SUMMARY){
             scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
-                System.out.println("Constraint: " + constraintRef.constraintId());
-                System.out.println(" Score: " + constraintAnalysis.score());
+                LOGGER.info("Constraint: " + constraintRef.constraintId());
+                LOGGER.info(" Score: " + constraintAnalysis.score());
                 for (MatchAnalysis<HardSoftLongScore> match : constraintAnalysis.matches()) {
-                    System.out.println("  Match score: " + match.score());
-                    System.out.println("  Justification: " + match.justification());
+                    LOGGER.info("  Match score: " + match.score());
+                    LOGGER.info("  Justification: " + match.justification());
                 }
             });
         }
