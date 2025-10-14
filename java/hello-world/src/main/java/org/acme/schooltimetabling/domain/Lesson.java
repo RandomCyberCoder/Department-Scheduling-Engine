@@ -9,10 +9,6 @@ import org.acme.schooltimetabling.domain.teacher.Teacher;
 public class Lesson {
     @PlanningId
     private String id;
-
-    private String subject;
-    private String teacher;
-    private String studentGroup;
     public String courseName, teacherName, modifiers;
     public int courseID, lecSection, labActSection;
     public boolean hasLabAct;
@@ -26,23 +22,10 @@ public class Lesson {
     @PlanningVariable
     private Room room;
 
-    // No-arg constructor required for Timefold
-    public Lesson() {
+    /**Don't for default constructor use*/
+    private Lesson() {
     }
 
-    /*stuff from starter code*/
-    public Lesson(String id, String subject, String teacher, String studentGroup) {
-        this.id = id;
-        this.subject = subject;
-        this.teacher = teacher;
-        this.studentGroup = studentGroup;
-    }
-    /*stuff from starter code*/
-    public Lesson(String id, String subject, String teacher, String studentGroup, Timeslot timeslot, Room room) {
-        this(id, subject, teacher, studentGroup);
-        this.timeslot = timeslot;
-        this.room = room;
-    }
 
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
@@ -87,7 +70,7 @@ public class Lesson {
         /*One unit of lecture is equal to one hour in class*/
         final int LEC_UNITS_TO_HOURS = 1;
         /*One unit of Activity is equal to two hours in the activity*/
-        int ACTIVITY_UNITS_TO_HOURS = 2;
+        final int ACTIVITY_UNITS_TO_HOURS = 2;
         /*One unit of Lab is equal to three hours in lab*/
         final int LAB_UNITS_TO_HOURS = 3;
         final int NO_HOURS = 0;
@@ -101,13 +84,11 @@ public class Lesson {
         int actUnits = Integer.parseInt(units[2]);
         lec_hours = lecUnits * LEC_UNITS_TO_HOURS;
         /*Note that I don't actually consider a scenario where a course has both a
-        * lab and an activity, but I do this, so I don't have to check for a lab/activity specifically*/
+        * lab and an activity, not sure if that's possible. I do this, so I don't have to check for a
+        * lab/activity specifically*/
         lab_activity_hours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
-        if(lab_activity_hours == NO_HOURS){
-            hasLabAct = false;
-        }
         /*mark true if there is a lab/activity; false otherwise*/
-        this.hasLabAct = !(lab_activity_hours == NO_HOURS);
+        this.hasLabAct = lab_activity_hours != NO_HOURS;
         this.id = Id;
         this.lecSection = lecSection;
         this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
@@ -133,19 +114,6 @@ public class Lesson {
     public String getId() {
         return id;
     }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public String getTeacher() {
-        return teacher;
-    }
-
-    public String getStudentGroup() {
-        return studentGroup;
-    }
-
     public Timeslot getTimeslot() {
         return timeslot;
     }

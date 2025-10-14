@@ -35,11 +35,6 @@ public class TimetableApp {
 
     private static final boolean PRINT_DETAILED_SUMMARY = false;
 
-    public enum DemoData {
-        SMALL,
-        LARGE
-    }
-
     public static void main(String[] args) throws Exception{
         ArrayList<Room> roomList;
         ArrayList<Lesson> lessonList;
@@ -67,8 +62,7 @@ public class TimetableApp {
 
         /*TODO make it so teachers with no survey get assigned a generic timeslot
         *  ....maybe add a list of the generics to constants???*/
-        /*read the current quarter survey
-        * and then create Teacher objects*/
+        /*read the cur & prev quarter survey and then create Teacher objects*/
         String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
         String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
         LOGGER.info("Reading the current quarter teacher survey");
@@ -76,15 +70,23 @@ public class TimetableApp {
         LOGGER.info("Reading the previous quarter teacher survey");
         /*read the prev quarter survey*/
         ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
+        LOGGER.info("Creating teacher objects");
         /*teacher name -> teacher object*/
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+
+        /*generate timeslots*/
+        LOGGER.info("Creating timeslot objects");
         timeslotList = TimeslotGenerator.generateTimeslots("constants/possibleTimes.csv");
+
         /*parse schedules*/
+        /*read from the file who will be teaching what for this quarter*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"
-                ,ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.department));
+                , ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.department));
 
-
+        LOGGER.info("Creating lesson objects");
         /*Creating Lessons*/
+        /*TODO: migrate this next line into the Constants class and this can change the lesson class creation for
+        *  courseID member*/
         HashMap<String, String> courseConfigs = ParseInput.readCourseConfigs("constants/configurations.tsv");
         BiMap<String, Integer> courseIdMapping = Generator.genCourseToIdMapping(courseConfigs.keySet().iterator());
         lessonList = LessonGenerator.generateLessons(courseConfigs, courseIdMapping, parsedSchedules, teacherHashMap);
@@ -93,7 +95,6 @@ public class TimetableApp {
         timetable = new Timetable("setup", timeslotList, roomList, lessonList);
 
         SolverConfig solverConfig = SolverConfig.createFromXmlResource("solverConfig.xml");
-//        solverConfig.withTerminationConfig(new TerminationConfig().withSecondsSpentLimit(10L));
 
         SolverFactory<Timetable> solverFactory = SolverFactory.create(solverConfig);
         Solver<Timetable> solver = solverFactory.buildSolver();
@@ -117,49 +118,8 @@ public class TimetableApp {
                 }
             });
         }
+
         storeResults(solution);
-
-
-
-        return;
-
-//        //
-//        ScoreManager<Timetable, HardSoftScore> scoreManager =
-//                ScoreManager.create(solverFactory);
-//
-//        ScoreExplanation<Timetable, HardSoftScore> explanation =
-//                scoreManager.explainScore(solution);
-//
-//// Total score
-//        System.out.println("Score: " + explanation.getScore());
-//
-//// All constraint matches and justifications
-//        explanation.getConstraintMatchTotalMap().forEach((constraint, matchTotal) -> {
-//            System.out.println("Constraint: " + constraint);
-//            matchTotal.getConstraintMatchSet().forEach(match -> {
-//                System.out.println("  Justification: " + match.getJustification());
-//                System.out.println("  Score: " + match.getScore());
-//            });
-//        });
-
-        //their stuff
-//        SolverFactory<Timetable> solverFactory = SolverFactory.create(new SolverConfig()
-//                .withSolutionClass(Timetable.class)
-//                .withEntityClasses(Lesson.class)
-//                .withConstraintProviderClass(TimetableConstraintProvider.class)
-//                // The solver runs only for 5 seconds on this small dataset.
-//                // It's recommended to run for at least 5 minutes ("5m") otherwise.
-//                .withTerminationSpentLimit(Duration.ofSeconds(5)));
-//
-//        // Load the problem
-//        Timetable problem = generateDemoData(DemoData.SMALL);
-//
-//        // Solve the problem
-//        Solver<Timetable> solver = solverFactory.buildSolver();
-//        Timetable solution = solver.solve(problem);
-//
-//        // Visualize the solution
-//        printTimetable(solution);
     }
 
     public static void storeResults(Timetable solution) throws Exception{

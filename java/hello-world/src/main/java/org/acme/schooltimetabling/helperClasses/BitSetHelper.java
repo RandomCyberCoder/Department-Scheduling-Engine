@@ -19,30 +19,10 @@ public class BitSetHelper {
     private static final int PRIME_TIME_DAY_START_OFFSET = 4;
     private static final int PRIME_TIME_DAY_END_OFFSET = 16;
     private static final int MAX_BITS_PER_DAY = 30;
-    public static final BitSet MONDAY_MASK;
-    public static final BitSet TUESDAY_MASK;
-    public static final BitSet WEDNESDAY_MASK;
-    public static final BitSet THURSDAY_MASK;
-    public static final BitSet FRIDAY_MASK;
     public static final BitSet NON_PRIME_TIME_MASK;
     public static final BitSet PRIME_TIME_MASK;
 
     static {
-        MONDAY_MASK = new BitSet();
-        MONDAY_MASK.set(MONDAY_OFFSET, TUESDAY_OFFSET);
-
-        TUESDAY_MASK = new BitSet();
-        TUESDAY_MASK.set(TUESDAY_OFFSET, WEDNESDAY_OFFSET);
-
-        WEDNESDAY_MASK = new BitSet();
-        WEDNESDAY_MASK.set(WEDNESDAY_OFFSET, THURSDAY_OFFSET);
-
-        THURSDAY_MASK = new BitSet();
-        THURSDAY_MASK.set(THURSDAY_OFFSET, FRIDAY_OFFSET);
-
-        FRIDAY_MASK = new BitSet();
-        FRIDAY_MASK.set(FRIDAY_OFFSET, FRIDAY_OFFSET + 30);
-
         PRIME_TIME_MASK = new BitSet();
         PRIME_TIME_MASK.set(MONDAY_OFFSET + PRIME_TIME_DAY_START_OFFSET
                 , MONDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET);
@@ -62,11 +42,17 @@ public class BitSetHelper {
         NON_PRIME_TIME_MASK.set(FRIDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET, FRIDAY_OFFSET + MAX_BITS_PER_DAY);
     }
 
+    /**
+     * Returns a BitSet with the appropriate bits set specified by the parameters
+     * @param startTime Start time bits will be set
+     * @param numberOfBlocks Amount of 30 minute blocks wanted from start time
+     * @param days Days bits should be set for
+     * @return BitSet with <i>n</i> bits set starting from <i>startTime</i> for given days
+     * @throws Exception
+     */
     public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days) throws Exception{
         BitSet bitSet = new BitSet();
-        int dayOffset = 0;
-
-        dayOffset = switch (startTime.getHour()) {
+        int dayOffset = switch (startTime.getHour()) {
             case 7 -> 0; // 7 AM
             case 8 -> 2;
             case 9 -> 4;
@@ -86,8 +72,7 @@ public class BitSetHelper {
                     throw new Exception(String.format("There was an error reading the time '%s'", startTime.toString()));
         };
 
-        /*I'm not adding the possiblity for 30 minute localtime here. I don't think this was an issue during the
-        * nomral planning but we should add it here for the testing*/
+        /* This offset is used mostly for testing*/
         /* Move offset forward one bit for offset if the time starts 30 minutes after the hour*/
         dayOffset += startTime.getMinute() == 30 ? 1 : 0;
 
@@ -111,21 +96,25 @@ public class BitSetHelper {
         return bitSet;
     }
 
+    /**
+     * Returns a bitset with one hour worth of bits set starting from the time
+     * in the <i>header</i> parameter. Format for header is '&lt;time&gt; &lt;PM/AM&gt;'.
+     * If the header is in the format specified it's assumed the time is for Monday, Wednesday,
+     * and Friday. If the header is meant for Tuesday and Thursday append a 2 to the end. This format
+     * is due to the current survey setup.
+     * @param header Header name for the timeslot in the survey
+     * @return A BitSet with one hour worth of bits set starting from the time of <i>header</i>
+     * @throws Exception
+     */
     public static BitSet surveyBitset(String header) throws Exception{
         /*bitset for a day is broken into 30min blocks starting from
         * 7:00 AM - 10:00 PM for a total of 30 30-minute blocks per day*/
         BitSet bitset = new BitSet();
-        int mondayOffset = 0;
-        int tuesdayOffset = 30;
-        int wednesdayOffset = 60;
-        int thursdayOffset = 90;
-        int fridayOffset = 120;
-        int dayOffset = 0;
         boolean timeTR = "2".equals(header.substring(header.length() -1));
         /*truncate the 2 if this is a TR time*/
         String time = timeTR ? header.substring(0, header.length()-1) : header;
 
-        dayOffset = switch (time) {
+        int dayOffset = switch (time) {
             case "7 AM" -> 0;
             case "8 AM" -> 2;
             case "9 AM" -> 4;
@@ -146,27 +135,23 @@ public class BitSetHelper {
         };
         
         /*check if the time is for TR or MWF*/
-        /*Note that we set <dayOffWeek>Offset + dayOffset for first
-        * 30 minutes of the hour then add one for the second 30 minutes
-        * of the hour*/
+        /*Set one hour worth of bits for each day needed*/
         if(timeTR){
-            /*set Tuesday bits*/
-            bitset.set(tuesdayOffset + dayOffset);
-            bitset.set(tuesdayOffset + dayOffset + 1);
-            /*set Thursday bits*/
-            bitset.set(thursdayOffset + dayOffset);
-            bitset.set(thursdayOffset + dayOffset + 1);
+            bitset.set(TUESDAY_OFFSET + dayOffset);
+            bitset.set(TUESDAY_OFFSET + dayOffset + 1);
+
+            bitset.set(THURSDAY_OFFSET + dayOffset);
+            bitset.set(THURSDAY_OFFSET + dayOffset + 1);
         }
         else{
-            /*set Monday bits*/
-            bitset.set(mondayOffset + dayOffset);
-            bitset.set(mondayOffset + dayOffset + 1);
-            /*set Wednesday bits*/
-            bitset.set(wednesdayOffset + dayOffset);
-            bitset.set(wednesdayOffset + dayOffset + 1);
-            /*set Friday bits */
-            bitset.set(fridayOffset + dayOffset);
-            bitset.set(fridayOffset + dayOffset + 1);
+            bitset.set(MONDAY_OFFSET + dayOffset);
+            bitset.set(MONDAY_OFFSET + dayOffset + 1);
+
+            bitset.set(WEDNESDAY_OFFSET + dayOffset);
+            bitset.set(WEDNESDAY_OFFSET + dayOffset + 1);
+
+            bitset.set(FRIDAY_OFFSET + dayOffset);
+            bitset.set(FRIDAY_OFFSET + dayOffset + 1);
         }
 
         return bitset;

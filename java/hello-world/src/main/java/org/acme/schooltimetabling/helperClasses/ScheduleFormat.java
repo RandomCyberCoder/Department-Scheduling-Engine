@@ -14,18 +14,34 @@ public class ScheduleFormat {
 
     }
 
+    /**
+     * Get list of courses the teacher is scheduled for the fall
+     * @return course list for teacher in this term
+     */
     public List<String> getFall() {
         return fall;
     }
 
+    /**
+     * Name of the teacher. Assume this is the canon name
+     * @return teacher name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Get list of courses the teacher is scheduled for the spring
+     * @return course list for teacher in this term
+     */
     public List<String> getSpring() {
         return spring;
     }
 
+    /**
+     * Get list of courses the teacher is scheduled for the winter
+     * @return course list for teacher in this term
+     */
     public List<String> getWinter() {
         return winter;
     }

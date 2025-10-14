@@ -1,5 +1,6 @@
 package org.acme.schooltimetabling.domain.teacher;
 
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
@@ -13,10 +14,18 @@ import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.List;
 
+/**
+ * The Faculty object represents a teacher that is a faculty member. It extends the Teacher object and overrides the
+ * {@link #getConflict()}  getConflict}
+ */
 public class Faculty extends Teacher{
     private static final Logger LOGGER = LoggerFactory.getLogger(Faculty.class);
+    /**
+     * BitSet representation of the time faculty members can't be scheduled during
+     */
     private static final BitSet FACULTY_CONFLICT;
 
+    /*static block for setting up times faculty members can't be scheduled during*/
     static {
         /*enter here the bitsets needed for faculty time*/
         FACULTY_CONFLICT = new BitSet();
@@ -26,7 +35,7 @@ public class Faculty extends Teacher{
         final EnumSet<Days> FACULTY_DAYS = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
 
         try{
-
+            /*CSC faculty times*/
             if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
                 facultyTimes = List.of(
                         LocalTime.parse("1:00PM", formatter),
@@ -34,7 +43,7 @@ public class Faculty extends Teacher{
                 );
             }
             else{
-                /*CPE*/
+                /*CPE faculty times*/
                 facultyTimes = List.of(
                         LocalTime.parse("12:00PM", formatter),
                         LocalTime.parse("1:00PM", formatter),
@@ -42,8 +51,8 @@ public class Faculty extends Teacher{
                 );
             }
 
+            /*create the BitSet for faculty conflict*/
             for(LocalTime localTime: facultyTimes) {
-                /*The tw*/
                 BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, FACULTY_DAYS);
                 FACULTY_CONFLICT.or(temp);
             }
@@ -59,6 +68,13 @@ public class Faculty extends Teacher{
         super(id, name, preferences, acceptable, conflict);
     }
 
+    /**
+     * Needs to be overridden, faculty can't be scheduled during a certain time. Faculty's {@link Teacher#conflict conflict BitSet}
+     * is combined with {@link Faculty#FACULTY_CONFLICT BitSet facutly restriction}. Needed for the
+     * {@link org.acme.schooltimetabling.solver.TimetableConstraintProvider#teacherLessonConflict teacherLessonConflict}
+     * constraint
+     * @return BitSet representing faculty's conflict preferences and faculty conflict
+     */
     @Override
     public BitSet getConflict() {
         BitSet conflict = super.getConflict();

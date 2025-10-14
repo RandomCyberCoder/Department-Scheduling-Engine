@@ -28,12 +28,12 @@ public class TimeslotGenerator extends Generator{
         float lecture_hours2 = Float.parseFloat(
                 Optional.ofNullable(timeslotMap.get("lecture_hours2"))
                         .filter(s -> !s.isBlank())
-                        .orElse(String.valueOf(Math.random() * 10))
+                        .orElse(String.valueOf(-1))
         );
         float total_hours2 = Float.parseFloat(
                 Optional.ofNullable(timeslotMap.get("total_hours2"))
                         .filter(s -> !s.isBlank())
-                        .orElse(String.valueOf(Math.random() * 10))
+                        .orElse(String.valueOf(-1))
         );
 
         try {
@@ -54,24 +54,23 @@ public class TimeslotGenerator extends Generator{
     /**
      * <p>Generates all timeslots for the problem setup</p>
      *
-     * @param filePath Path to the file. Path assumes you are in the org.acme.schooltimetabling package
+     * @param filePath Path to the file. Assumes the file is in the resources directory
      * @return returns a list of TimeSlots create from the file provided
      */
     public static ArrayList<Timeslot> generateTimeslots(String filePath){
         int timeslotID = 0;
         //parse csv
-        String timeslotsFile = filePath;
         ArrayList<Timeslot> timeslotList = new ArrayList<>();
         ArrayList<HashMap<String, String>> timeslotCSV= null;
 
-        timeslotCSV = ParseInput.readCSV(timeslotsFile, null);
+        timeslotCSV = ParseInput.readCSV(filePath, null);
         if(timeslotCSV.isEmpty()){
             LOGGER.error("Terminating program. Timeslot list is empty. Nothing to schedule");
             System.exit(ParseInput.PROGRAM_FAILURE);
         }
 
         //loop through entries
-        for(HashMap<String, String > timeslotMap: timeslotCSV) {
+        for(HashMap<String, String> timeslotMap: timeslotCSV) {
             //instantiate a timeslot instance for every entry
             Timeslot newTimeslot = generateTimeslot(timeslotID++, timeslotMap);
             //add the timeslot instant to our list

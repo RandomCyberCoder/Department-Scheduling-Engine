@@ -12,18 +12,21 @@ import java.util.*;
 public class TeacherGenerator extends Generator{
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherGenerator.class);
     /**
-     * Generates the Teacher object for the instructor's survey entry. It
+     * Generates the Teacher/Faculty object for the instructor's survey entry. It
      * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
      * for the instructor
      *
      * @param surveyEntry The HashMap representation of the instructor's survey entry
      * @param times The name of the keys in the <code>surveyEntry</code> parameter
      * that corresponds to times
-     * @param instructorID the unique ID for the instructor*/
+     * @param instructorID the unique ID for the instructor
+     * @return Faculty object if teacher is found to be a faculty member; otherwise a
+     * Teacher object is returned
+     * @throws */
     private static Teacher generateTeacher(HashMap<String, String> surveyEntry, List<String> times,
                                            int instructorID) throws Exception{
         String instructorName = surveyEntry.get("name");
-        String canonName = Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName);
+        String canonName = Constants.TEACHER_NAME_TO_CANON.get(instructorName);
         BitSet preferred = new BitSet();
         BitSet acceptable = new BitSet();
         BitSet conflicts = new BitSet();
@@ -50,8 +53,7 @@ public class TeacherGenerator extends Generator{
         }
 
         String[] splitName = canonName.split(",");
-//        System.out.println(Constants.FACULTY_LAST_NAMES);
-//        System.out.println(splitName[0].toLowerCase().strip());
+
         if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
             TeacherGenerator.LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
             return new Faculty(instructorID, instructorName, preferred, acceptable, conflicts);
@@ -60,14 +62,17 @@ public class TeacherGenerator extends Generator{
     }
 
     /**
-     * Returns a hashmap of the teachers name mapped to their teacher's object. The
-     * object contains members such as a unique teacher id, availability, and their
-     * name
+     * Returns a hashmap of the teacher's canon name mapped to their teacher's object. If the person is a faculty
+     * member the teacher object will actually be a <i>Faculty</i> object.  The function will try to bleed an old survey
+     * if the professor chooses. If a professor bleeds forward in the old survey, the teacher is skipped
      *
      * @param curQuarterSurvey current quarter survey file path assuming it's in src directory
-     * @param prevQuarterSurvey prev quarter survey file path assuming it's in src directory*/
+     * @param prevQuarterSurvey prev quarter survey file path assuming it's in src directory
+     * @return Hashmap mapping a teacher's canon name to their teacher object
+     * @throws
+     * */
     public static HashMap<String, Teacher> generateTeachers(List<HashMap<String, String>> curQuarterSurvey,
-                                                     ArrayList<HashMap<String, String>> prevQuarterSurvey) throws Exception
+                                                     List<HashMap<String, String>> prevQuarterSurvey) throws Exception
     {
         /* This Hash map will map the teacher's name to the teacher's object */
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
@@ -108,7 +113,7 @@ public class TeacherGenerator extends Generator{
 
                 /*add the Teacher instance to our HashMap to be later used for creating
                  * the lessons*/
-                teacherHashMap.put(Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
+                teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
             }
 
         }
@@ -130,11 +135,11 @@ public class TeacherGenerator extends Generator{
                 LOGGER.info(String.format("Old survey found for %s, creating their teacher object instance"
                         , instructorName));
 
-                /*if they bled forward and we have a survey entry then we create their
+                /*if they bled forward, and we have a survey entry then we create their
                 * Teacher instance*/
                 Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes, teacherId++);
                 if(curTeacher == null) continue;
-                teacherHashMap.put(Constants.NEW_TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
+                teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
             }
         }
 

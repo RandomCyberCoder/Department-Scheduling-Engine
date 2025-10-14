@@ -7,20 +7,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import java.awt.*;
 import java.io.*;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
-/***/
+/**
+ * This is a utility class used to mainly parse input files*/
 public final class ParseInput {
-    /*value for failing */
+    /**Program failure value */
     public static final int PROGRAM_FAILURE = 1;
-    public static final String YAML_FILE_PATH = "constants/config.yaml";
+    /**Configuration for scheduling*/
     public static ScheduleConfig scheduleConfig;
-
+    /**
+     * File path within the resources directory the YAML configuration file
+     * is expected to be located
+     */
+    private static final String YAML_FILE_PATH = "constants/config.yaml";
+    /**
+     * Needed for logging information
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseInput.class);
 
     static{
@@ -32,7 +42,8 @@ public final class ParseInput {
 
         } catch (Exception e) {
             LOGGER.error("Program is terminating. Couldn't read the yaml file");
-            e.printStackTrace();
+            LOGGER.error(String.format("Program assumes yaml file is located at '%s' int the resources directory",
+                    YAML_FILE_PATH));
             System.exit(PROGRAM_FAILURE);
         }
 
@@ -43,13 +54,16 @@ public final class ParseInput {
     }
 
 
+    /**
+     * Returns the file at the given path relative to the resources directory as a stream.
+     * @param filePath Path to a file in the resources' directory. The path should be relative to the
+     *                 resources directory
+     * @return File as a stream; null if the file can't be returned as a stream
+     */
     private static InputStream getResourceAsStream(String filePath){
         return ParseInput.class.getClassLoader().getResourceAsStream(filePath);
     }
 
-    private static URL getResourceURL(String filePath){
-        return ParseInput.class.getClassLoader().getResource(filePath);
-    }
 
     /**
      * <p>Reads the JSON file containing information of what classes an instructor will teach </p>
@@ -70,7 +84,8 @@ public final class ParseInput {
         try (InputStream inputStream = ParseInput.getResourceAsStream(filePath)){
 
             ObjectMapper objectMapper = new ObjectMapper();
-            parsedSchedules = objectMapper.readValue(inputStream, new TypeReference<List<ScheduleFormat>>() {});
+            parsedSchedules = objectMapper.readValue(inputStream, new TypeReference<>() {
+            });
         } catch (Exception e) {
             LOGGER.error("Terminating Program. Couldn't read the file containing classes that will be scheduled. ");
             e.printStackTrace();
@@ -80,16 +95,19 @@ public final class ParseInput {
         return parsedSchedules;
     }
 
+
     /**
      * <p>Reads a csv and maps the old headers to the new headers. Each entry in the csv will be an
      *    item in the ArrayList returned where each item in the ArrayList is a HashMap that will map
      *    the column name, they key, to the value for entry in the csv. Warning will be given if error
-     *    occurs opening or reading the file.
+     *    occurs opening or reading the file. If to many headers are given a empty value will be given.
+     *    If an insufficient amount of headers are given, one will be given.
      * </p>
      *
      * @param filePath file path of the current quarter's instructor survey
      * @param replacementHeaders an ArrayList<String> of headers to replace the current csv headers
      *                           if you don't want replacement headers pass <code>null</code>
+     * return An ArrayList where each element is a row in the CSV
      * */
     public static ArrayList<HashMap<String, String>> readCSV(String filePath, ArrayList<String> replacementHeaders){
         ArrayList<HashMap<String, String>> csvRead = new ArrayList<>();
@@ -115,9 +133,7 @@ public final class ParseInput {
                     continue;
                 }
 
-                //System.out.println("----------- Reading a record -----------");
                 Queue<String> headerStack = new LinkedList<>(headers);
-                //headerStack.addAll(headers);
                 int overFlow = 1;
                 for (String cell : nextRecord) {
                     /*if we run out of headers we create sum for excess data to prevent
@@ -130,7 +146,6 @@ public final class ParseInput {
                         String nextHeaderKey = headerStack.remove();
                         mapRow.put(nextHeaderKey, cell);
                     }
-                    //System.out.println(cell + "\t");
                 }
                 /*if the queue of headers is not empty we assign those headers an empty string
                 value for the key-value mapping*/
@@ -139,27 +154,29 @@ public final class ParseInput {
                         mapRow.put(header, "");
                     }
                 }
-                //System.out.println();
                 csvRead.add(mapRow);
             }
         } catch (Exception e) {
-            LOGGER.warn("Failed to read the csv file: " + filePath);
+            LOGGER.error("Failed to read the csv file: " + filePath);
+            System.exit(PROGRAM_FAILURE);
         }
-
-
 
         return csvRead;
     }
 
     /**
      * Reads the course configuration file given and returns the courses mapped
-     * to their configurations. Both key and values will be strings
+     * to their configurations. Both key and values will be strings. Assumes file is a TSV file
+     * in the <i>resources</i> directory with course name (i.e. csc101) in the first columns and the
+     * configuration (i.e. 3-1-0) in the second column
      *
-     * @param filePath file path assuming its read as you're in the project directory
+     * @param filePath path to TSV file, should be relative to the <i>resources</i> directory
      * @return a hashmap with the course name as the key and the configuration as the value
      */
     public static HashMap<String, String> readCourseConfigs(String filePath){
         HashMap<String, String> courseConfigs = new HashMap<>();
+        final int COURSE_NAME_COLUMN = 0;
+        final int COURSE_CONFIG_COLUMN = 1;
 
         try(BufferedReader buf = new BufferedReader(new InputStreamReader(
                 getResourceAsStream(filePath), StandardCharsets.UTF_8))){
@@ -168,18 +185,12 @@ public final class ParseInput {
             String course;
             String configuration;
 
-            while(true){
-                lineRead = buf.readLine();
-                if(lineRead == null){
-                    break;
-                }
+            while((lineRead = buf.readLine()) != null){
                 lineProcessed = lineRead.split("\t");
-                course = lineProcessed[0];
-                configuration = lineProcessed[1];
+                course = lineProcessed[COURSE_NAME_COLUMN].toLowerCase();
+                configuration = lineProcessed[COURSE_CONFIG_COLUMN];
                 courseConfigs.put(course, configuration);
             }
-
-
         }
         catch (Exception e){
             LOGGER.error(String.format("Exiting program. Critical error. " +
@@ -187,11 +198,13 @@ public final class ParseInput {
             e.printStackTrace();
             System.exit(PROGRAM_FAILURE);
         }
+
         return courseConfigs;
     }
 
     /***
-     * Assumes the file has a header. Assumes the file is a TSV. Reruns a set of faculty names.
+     * Assumes the file has a header. Assumes the file is a TSV. The file's header should
+     * start with name, title of person and email. In that order. Returns a set of faculty names.
      * @param file Path to file in the {@code resources} directory.
      * @return A set of faculty (tenure track) last names
      */

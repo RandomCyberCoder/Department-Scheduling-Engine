@@ -1,21 +1,15 @@
 package org.acme.schooltimetabling.domain.teacher;
 
-import java.util.List;
 import java.util.BitSet;
 
-/*TODO: make a subclass for this for faculty that will override the get Conflict methods
-*  so we end up auto making conflicts for the timeslot they must un available for*/
 public class Teacher {
     public int id;
-    /*we should store canon name here*/
+    /*canon name*/
     public String name;
-
-    /*timeslot preferences*/
-    public BitSet preferences;
-
     /*acceptable timeslots*/
     public BitSet acceptable;
-
+    /*timeslot preferences*/
+    public BitSet preferences;
     /*impossible timeslots*/
     public BitSet conflict;
 
@@ -35,12 +29,12 @@ public class Teacher {
         return name;
     }
 
-    public BitSet getPreferences() {
-        return preferences;
-    }
-
     public BitSet getAcceptable() {
         return acceptable;
+    }
+
+    public BitSet getPreferences() {
+        return preferences;
     }
 
     public BitSet getConflict() {

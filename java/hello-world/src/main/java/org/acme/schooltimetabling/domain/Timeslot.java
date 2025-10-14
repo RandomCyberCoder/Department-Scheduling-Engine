@@ -17,11 +17,6 @@ public class Timeslot {
 
     @PlanningId
     private String id;
-    private DayOfWeek dayOfWeek;
-    private LocalTime startTime;
-    private LocalTime endTime;
-
-    /*new*/
     private int ID;
     public LocalTime startTimeLec;
     public LocalTime endTimeLec;
@@ -38,32 +33,48 @@ public class Timeslot {
     public float totalHours;
     public float totalHours2;
     public boolean secondSlot;
-
     private static final float FLOAT_TIME_DELTA = 0.01f;
     private static final int MINUTES_PER_HOUR = 60;
 
+    /**
+     * Default constructor shouldn't be accessed
+     * */
     private Timeslot() {
-    }
-
-    public Timeslot(String id, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
-        this.id = id;
-        this.dayOfWeek = dayOfWeek;
-        this.startTime = startTime;
-        this.endTime = endTime;
     }
 
 
     /* Test factory method lesson builders */
 
+    /**
+     * test factory method
+     * @param ID
+     * @param lecDays
+     * @param labDays
+     * @return
+     */
     public static Timeslot test_CreateWithDaysOnly(int ID, EnumSet<Days> lecDays, EnumSet<Days> labDays){
         return new Timeslot(ID, lecDays, labDays);
     }
 
+    /**
+     * test factory method
+     * @param ID
+     * @param lecBitSet
+     * @param labActBitSet
+     * @param lecDays
+     * @param labDays
+     * @return
+     */
     public static Timeslot test_lacLabBitAndDays(int ID, BitSet lecBitSet, BitSet labActBitSet
             , EnumSet<Days> lecDays , EnumSet<Days> labDays){
         return new Timeslot(ID, lecBitSet, labActBitSet, lecDays, labDays);
     }
 
+    /**
+     * test factory method
+     * @param id
+     * @return
+     */
     public static Timeslot test_minSetUp(String id){
         return new Timeslot(id);
     }
@@ -71,12 +82,26 @@ public class Timeslot {
 
     /*Private constructors for test factory methods*/
 
+    /**
+     * test constructor
+     * @param ID
+     * @param lecDays
+     * @param labDays
+     */
     private Timeslot(int ID, EnumSet<Days> lecDays, EnumSet<Days> labDays){
         this.id = Integer.toString(ID);
         this.lecDays = lecDays.clone();
         this.nonLecDays = labDays.clone();
     }
 
+    /**
+     * test constructor
+     * @param ID
+     * @param lecBitSet
+     * @param labActBitSet
+     * @param lecDays
+     * @param labDays
+     */
     private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labDays){
         this.id = Integer.toString(ID);
         this.ID = ID;
@@ -93,14 +118,22 @@ public class Timeslot {
         this.totalHours = labActBitSet.cardinality() /(float)labDays.size() /2f + this.lecHours;
     }
 
+    /**
+     * test constructor
+     * @param id
+     */
     private Timeslot(String id){
         this.id = id;
     }
+
+
 
     /*TODO add sanity checker here to throw an error if the second time slot overlaps with the first*/
     public Timeslot(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
                     String days2, String startTime2, String endTime2, float lecture_hours2, float total_hours2)
             throws Exception{
+
+        final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("h:mma");
 
         /*this variable will be used to see if the entry has two timeslots linked,
         * used later for calculating the complete bitset representation of the timeslot*/
@@ -131,11 +164,10 @@ public class Timeslot {
         this.lecHours = lecHours;
         this.totalHours = totalHours;
         /* We do the following comparison instead of lec_hours == total_hours because of floating point errors */
-        /*TODO not sure about this*/
         this.onlyLec = Math.abs(lecHours - totalHours) < FLOAT_TIME_DELTA;
 
         /*check start and end time for the lab and possibly for the lab/activity */
-        this.startTimeLec = LocalTime.parse(startTime.trim(), DateTimeFormatter.ofPattern("h:mma"));
+        this.startTimeLec = LocalTime.parse(startTime.trim(), FORMATTER);
         /*LocalTime is immutable so doing this won't modify startTimeLec*/
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
         /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
@@ -170,16 +202,19 @@ public class Timeslot {
                 if(days2.contains("F")){
                     this.nonLecDays.add(Days.FRIDAY);
                 }
-                this.endTimeLabAct = LocalTime.parse(endTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
-                this.startTimeLabAct = LocalTime.parse(startTime2.trim(), DateTimeFormatter.ofPattern("h:mma"));
+
+                this.startTimeLabAct = LocalTime.parse(startTime2.trim(), FORMATTER);
+                this.endTimeLabAct = LocalTime.parse(endTime2.trim(), FORMATTER);
                 this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(total_hours2 * 2),
                         this.nonLecDays);
             }
         }
         else{
             /* end time of the timeslot is when the lab will end */
-            this.endTimeLabAct = LocalTime.parse(endTime.trim(), DateTimeFormatter.ofPattern("h:mma"));
-            /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.*/
+            this.endTimeLabAct = LocalTime.parse(endTime.trim(), FORMATTER);
+            /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.
+            * This doesn't necessarily start right after the time the lecture ends. We could have a gap (i.e. like during
+            * Tuesday and Thursday)*/
             this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
             /* create BitSet for the lab/lec */
             this.nonLecDays = this.lecDays;
@@ -196,13 +231,13 @@ public class Timeslot {
         }
     }
 
-    public Timeslot(String id, DayOfWeek dayOfWeek, LocalTime startTime) {
-        this(id, dayOfWeek, startTime, startTime.plusMinutes(50));
-    }
 
     @Override
     public String toString() {
-        return dayOfWeek + " " + startTime;
+        String lecStr = "lecture: " + lecDays.toString() + " " + startTimeLec.toString();
+        String labActStr = this.onlyLec ? "" :
+                (" ---- " + "lab: " + nonLecDays.toString() + startTimeLabAct.toString());
+        return lecStr + labActStr;
     }
 
     public String toStringLec(){
@@ -238,19 +273,6 @@ public class Timeslot {
     public String getId() {
         return id;
     }
-
-    public DayOfWeek getDayOfWeek() {
-        return dayOfWeek;
-    }
-
-    public LocalTime getStartTime() {
-        return startTime;
-    }
-
-    public LocalTime getEndTime() {
-        return endTime;
-    }
-
 
     public int getID() {
         return ID;

@@ -3,15 +3,12 @@ package org.acme.schooltimetabling.constants;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,7 +19,13 @@ import java.util.stream.Stream;
  * fit anywhere else, like a class.
  */
 public class Constants {
+    /**
+    * Set to True for testing. Helps by pass some checks
+    * */
     public static boolean TESTING = false;
+    /**
+     * Needed for logging
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(Constants.class);
     /**
      * This class attribute is used for debug print statements. I kept it
@@ -43,8 +46,7 @@ public class Constants {
      */
     public static final Set<String> SKIP_CONFIGURATIONS;
     /**
-     * name of room that will be used for courses with that only
-     * have a lecture
+     * Lecture only room name
      */
     public static final String LEC_ONLY = "LECTURE_ONLY";
     /**
@@ -53,27 +55,31 @@ public class Constants {
      * assign a room to lessons that are strictly lecture only
      */
     public static final Set<String> POSSIBLE_ROOMS;
-    /* TODO explore using ids for the rooms in the COURSE_TO_ROOMS map
-     *   leave out for now. Might be bad for maintainability*/
     /**
-     * This is a map that contains lab/act courses mapped to
-     * lab/act rooms those courses are allowed to be in
+     * Contains lab/act course names mapped to
+     * lab/act rooms those courses are allowed to be in. Courses
+     * included should be those that have lab/act room restrictions
      */
     public static final Map<String, Set<String>> COURSE_TO_ROOMS;
     /**
-     * BiMap containing rooms mapped to their unique IDs*/
+     * BiMap containing room names mapped to their unique IDs
+     * */
     public static final BiMap<String, Integer> ROOM_TO_ID_BIMAP;
-
+    /**
+     * Set of studio style course names
+     * */
     public static final Set<String> STUDIO_STYLE_COURSES;
     /**
-     * HashMap that maps the teacher name (format FIRST LAST) mapped
+     * HashMap that maps the teacher name (ex. format FIRST LAST) mapped
      * to the teacher canon name. The canon name is assumed to be the
      * one in the schedule json file and the teacher non-canon name
-     * is the one found in the survey csv file*/
-    public static final BiMap<String, String> NEW_TEACHER_NAME_TO_CANON;
+     * is the one found in the survey csv file
+     * */
+    public static final BiMap<String, String> TEACHER_NAME_TO_CANON;
 
     /**
-     * A set of the last names of faculty members*/
+     * A set of the last names of faculty members
+     * */
     public static Set<String> FACULTY_LAST_NAMES;
 
     static{
@@ -200,14 +206,18 @@ public class Constants {
 
         FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
 
-        NEW_TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_use.xlsx");
+        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_use.xlsx");
     }
 
     private Constants(){
         throw new UnsupportedOperationException("This class can't be instantiated");
     }
 
-
+    /**
+     *
+     * @param filePath path to file in the <i>resources</i> directory
+     * @return A stream for the given file
+     */
     private static InputStream getResourceAsStream(String filePath){
         return ParseInput.class.getClassLoader().getResourceAsStream(filePath);
     }
@@ -222,8 +232,7 @@ public class Constants {
      */
     static private BiMap<String, String> getInstructorNameMapping(String resourceFilePath){
         BiMap<String, String> instructorNameMapping = HashBiMap.create();
-//        resourceFilePath = "constants/faculty_names_use.xlsx";
-        //zero indexed
+
         final int NAME_CELL_POS = 1;
         final int CANON_CELL_POS = 2;
         boolean headerRead = false;

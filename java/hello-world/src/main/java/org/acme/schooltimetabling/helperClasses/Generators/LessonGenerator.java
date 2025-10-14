@@ -26,6 +26,7 @@ public class LessonGenerator extends Generator{
      * @param schedules a list of ScheduleFormat objects containing courses that
      *                  will be taught by a teacher
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
+     * @return an ArrayList of all courses that a valid object could be made for
      */
     public static ArrayList<Lesson> generateLessons(HashMap<String, String> courseConfigs, BiMap<String, Integer> courseIdMapping,
                                                     List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
@@ -49,15 +50,13 @@ public class LessonGenerator extends Generator{
             courseSectionCounter.put(course, STARTING_SECTION_NUMBER);
         }
 
-        /*loop through what schedule (list of courses) a teacher is planned
+        /*loop through the schedule (list of courses) a teacher is planned
         * to teach*/
         for(ScheduleFormat schedule: schedules){
             teacherName = schedule.getName();
             /*This is a list courses that will be scheduled*/
             List<String> coursesToSchedule;
 
-            /*Get courses instructor will teach this term. Some instructors might teach in multiple departments, so we
-            * will have to filter out courses that are not in the department we are concerned about*/
             List<String> potentialCourses = getPotentialCourses(schedule, CURRENT_TERM);
 
             /*filter out the courses that aren't currently in the department we
@@ -66,7 +65,7 @@ public class LessonGenerator extends Generator{
                     .filter(course -> course.contains(DEPARTMENT))
                     .collect(Collectors.toCollection(ArrayList::new));
 
-            /*once list has been made schedule */
+            /*schedule selected courses*/
             for(String course: coursesToSchedule){
                 newLesson = generateLesson(courseConfigs, courseIdMapping, teacherHashMap, courseSectionCounter,
                         course, teacherName, lessonID);
@@ -78,11 +77,6 @@ public class LessonGenerator extends Generator{
                 }
 
                 lessonID++;
-                /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
-                 * and its lab/act and a lab/act section number is separate from its respective lecture section
-                 * number*/
-                courseSectionCounter.replace(newLesson.courseName, (newLesson.hasLabAct ?
-                        newLesson.courseID + 2 : newLesson.courseID + 1) );
 
                 lessons.add(newLesson);
             }
@@ -92,20 +86,18 @@ public class LessonGenerator extends Generator{
     }
 
 
-
-
     /**
-     * <p>Extracts the list of courses that need to will be potential scheduled</p>
+     * <p>Extracts the list of courses that will be potentially scheduled</p>
      *
      * @param schedule ScheduleFormat object that contains instructor name and courses they will teach
      * @param CURRENT_TERM term to schedule for
-     * @return List of potential courses that will be scheduled
+     * @return List of potential courses to be scheduled
      */
     private static List<String> getPotentialCourses(ScheduleFormat schedule, String CURRENT_TERM) {
-        if("fall".equals(CURRENT_TERM)){
+        if("fall".equalsIgnoreCase(CURRENT_TERM)){
             return schedule.getFall();
         }
-        else if("winter".equals(CURRENT_TERM)){
+        else if("winter".equalsIgnoreCase(CURRENT_TERM)){
             return schedule.getWinter();
         }
         else{
@@ -114,12 +106,10 @@ public class LessonGenerator extends Generator{
     }
 
 
-
-
     /**
      * <p>Generates a new lesson for the course that a teacher will teach.</p>
-     * <p>If the course has a modifier that <i>Constants.SKIP_SCHEDULE</i> or configuration that
-     * <i>Constants.SKIP_CONFIGURATIONS</i> contains it will not be scheduled</p>
+     * <p>If the course has a modifier {@link Constants#SKIP_SCHEDULE Constants.SKIP_SCHEDULE} or configuration
+     * {@link Constants#SKIP_CONFIGURATIONS Constants.SKIP_CONFIGURATIONS} contains it will not be scheduled</p>
      *
      * @param courseConfigs HashMap of a course name mapped to its course configuration
      * @param courseIdMapping BiMap of a course name mapped to its unique ID
@@ -172,12 +162,13 @@ public class LessonGenerator extends Generator{
 
         if(Constants.SKIP_CONFIGURATIONS.contains(courseConfig)){
             if(Constants.DEBUG){
-                LOGGER.warn(String.format("Skipping course '%s' with configuration %s", courseName, courseConfig));
+                LOGGER.warn(String.format("Skipping course '%s' with configuration %s for %s", courseName, courseConfig
+                        , teacherName));
             }
             return null;
         }
 
-        /*We increase the section counter by two if it has a lab because a lesson consists of it lecture
+        /*We increase the section counter by two if it has a lab because a lesson consists of its lecture
          * and its lab/act and a lab/act section number is separate from its respective lecture section
          * number*/
         courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
@@ -199,8 +190,6 @@ public class LessonGenerator extends Generator{
                 courseModifier, courseConfig, courseIdMapping.get(courseName),
                 teacher);
     }
-
-
 
 
     /**
