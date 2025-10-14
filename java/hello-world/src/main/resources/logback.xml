@@ -7,10 +7,24 @@
     </encoder>
   </appender>
 
+  <timestamp key="startTime" datePattern="yyyy-MM-dd_HH-mm-ss"/>
+  <property name="LOG_FILE" value="run-${startTime}.log" />
+  <property name="LOG_DIR" value="logs" />
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${LOG_DIR}/${LOG_FILE}</file>
+    <append>false</append> <!-- Overwrite if file exists (unlikely with timestamp) -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%-12.12t] In %logger{0}.%M\(\) - %-5p - %m%n</pattern>
+    </encoder>
+  </appender>
+
+
+  <!--change level to "debug" for verbose solver output-->
   <logger name="ai.timefold.solver" level="info"/>
 
   <root level="info">
     <appender-ref ref="consoleAppender" />
+    <appender-ref ref="FILE"/>
   </root>
 
 </configuration>
