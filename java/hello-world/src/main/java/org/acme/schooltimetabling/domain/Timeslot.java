@@ -101,22 +101,23 @@ public class Timeslot {
      * @param lecBitSet
      * @param labActBitSet
      * @param lecDays
-     * @param labDays
+     * @param labActDays
      */
-    private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labDays){
+    private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labActDays){
         this.id = Integer.toString(ID);
         this.ID = ID;
         this.onlyLec = labActBitSet.cardinality() == 0;
         this.lectureBitSet = (BitSet) lecBitSet.clone();
         this.labActBitSet = (BitSet) labActBitSet.clone();
         this.lecDays = lecDays.clone();
-        this.nonLecDays = labDays.clone();
+        this.nonLecDays = labActDays.clone();
         BitSet allBitSet = new BitSet();
         allBitSet.or(this.lectureBitSet);
         allBitSet.or(this.labActBitSet);
         this.allTimesBitSet = allBitSet;
         this.lecHours = lecBitSet.cardinality() /(float)lecDays.size() / 2f;
-        this.totalHours = labActBitSet.cardinality() /(float)labDays.size() /2f + this.lecHours;
+        this.labActHours = labActBitSet.cardinality() /(float)labActDays.size() /2f;
+        this.totalHours = this.labActHours + this.lecHours;
     }
 
     /**
