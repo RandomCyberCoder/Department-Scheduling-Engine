@@ -184,11 +184,11 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .filter(lesson -> {
                     EnumSet<Days> lDays = lesson.getTimeslot().getLecDays();
                     EnumSet<Days> nonLDays = lesson.getTimeslot().getNonLecDays();
+                    final Timeslot ts = lesson.getTimeslot();
 
-                    float tsLecHrs = lesson.getTimeslot().getLecHours();
+                    float tsLecHrs = ts.getLecHours();
                     tsLecHrs *= lDays.size();
-                    float tsLabActHrs = lesson.getTimeslot().onlyLec ? 0 :
-                            lesson.getTimeslot().getTotalHours() - lesson.getTimeslot().getLecHours();
+                    float tsLabActHrs = ts.onlyLec ? 0 : ts.getLabActHours();
                     tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot

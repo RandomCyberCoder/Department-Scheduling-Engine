@@ -156,8 +156,6 @@ public class LessonGenerator extends Generator{
         }
 
         courseConfig = Constants.COURSE_CONFIGS.get(courseName);
-        hasLabOrAct = determineLabOrAct(courseConfig);
-        sectionNumber = courseSectionCounter.get(courseName);
 
         if(Constants.SKIP_CONFIGURATIONS.contains(courseConfig)){
             if(Constants.DEBUG){
@@ -166,6 +164,10 @@ public class LessonGenerator extends Generator{
             }
             return null;
         }
+
+        hasLabOrAct = determineLabOrAct(courseConfig);
+        sectionNumber = courseSectionCounter.get(courseName);
+
 
         /*We increase the section counter by two if it has a lab because a lesson consists of its lecture
          * and its lab/act and a lab/act section number is separate from its respective lecture section

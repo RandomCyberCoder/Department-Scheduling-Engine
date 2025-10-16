@@ -195,7 +195,7 @@ public class Constants {
                     .collect(Collectors.toSet());
 
             STUDIO_STYLE_COURSES = Stream.of(
-                    microControllerRooms,
+                    microControllerCourses,
                     generalCpeCourses,
                     capstoneCourses
                     )

@@ -33,7 +33,7 @@ public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
 
-    private static final boolean PRINT_DETAILED_SUMMARY = false;
+    private static final boolean PRINT_DETAILED_SUMMARY = true;
 
     public static void main(String[] args) throws Exception{
         ArrayList<Room> roomList;

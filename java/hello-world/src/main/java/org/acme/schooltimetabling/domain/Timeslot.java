@@ -30,6 +30,7 @@ public class Timeslot {
     private EnumSet<Days> lecDays;
     private EnumSet<Days> nonLecDays;
     public float lecHours;
+    private float labActHours;
     public float totalHours;
     public float totalHours2;
     public boolean secondSlot;
@@ -203,6 +204,8 @@ public class Timeslot {
                     this.nonLecDays.add(Days.FRIDAY);
                 }
 
+                /*Hours per day for second timeslot are assumed to be dedicated towards labs/acts */
+                this.labActHours = lecture_hours2;
                 this.startTimeLabAct = LocalTime.parse(startTime2.trim(), FORMATTER);
                 this.endTimeLabAct = LocalTime.parse(endTime2.trim(), FORMATTER);
                 this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(total_hours2 * 2),
@@ -220,6 +223,7 @@ public class Timeslot {
             this.nonLecDays = this.lecDays;
             this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lecHours * 2),
                     this.nonLecDays);
+            this.labActHours = this.lecHours;
         }
 
         /*we assume that the whole block will be occupied by whoever is assigned it*/
@@ -312,6 +316,10 @@ public class Timeslot {
 
     public float getLecHours() {
         return lecHours;
+    }
+
+    public float getLabActHours(){
+        return labActHours;
     }
 
     public float getTotalHours() {
