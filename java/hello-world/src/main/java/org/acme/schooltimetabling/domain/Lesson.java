@@ -14,6 +14,7 @@ public class Lesson {
     public boolean hasLabAct;
     public int lec_hours, lab_activity_hours;
     public Teacher teacherObj;
+    private Integer linker;
 
 
     @PlanningVariable
@@ -41,7 +42,7 @@ public class Lesson {
     public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         /*calling normal constructor used during setup*/
-        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj);
+        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj, null);
 
         /*Populate planning variables*/
         this.timeslot = timeslot;
@@ -66,7 +67,7 @@ public class Lesson {
      * @param teacherObj teacher object associated with the <i>teacherName</i>
      */
     public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
-                  String courseConfig, int courseID, Teacher teacherObj){
+                  String courseConfig, int courseID, Teacher teacherObj, Integer linker){
         /*One unit of lecture is equal to one hour in class*/
         final int LEC_UNITS_TO_HOURS = 1;
         /*One unit of Activity is equal to two hours in the activity*/
@@ -168,5 +169,9 @@ public class Lesson {
 
     public Teacher getTeacherObj() {
         return teacherObj;
+    }
+
+    public Integer getLinker(){
+        return linker;
     }
 }

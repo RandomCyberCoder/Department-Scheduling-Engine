@@ -192,7 +192,7 @@ public class LessonGenerator extends Generator{
         /*create class*/
         return new Lesson(Integer.toString(lessonID), sectionNumber, courseName, teacherName,
                 courseModifier, courseConfig, Constants.COURSE_ID_BIMAP.get(courseName),
-                teacher);
+                teacher, null);
     }
 
     /**
