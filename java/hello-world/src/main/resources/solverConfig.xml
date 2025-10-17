@@ -38,7 +38,7 @@
         <acceptor>
 <!--            <lateAcceptanceSize>100</lateAcceptanceSize>-->
 <!--                <entityTabuRatio>0.05</entityTabuRatio>-->
-                <simulatedAnnealingStartingTemperature>5hard/20soft</simulatedAnnealingStartingTemperature>
+                <simulatedAnnealingStartingTemperature>5hard/0medium/20soft</simulatedAnnealingStartingTemperature>
         </acceptor>
         <moveSelector>
             <changeMoveSelector>
@@ -55,10 +55,7 @@
             </changeMoveSelector>
         </moveSelector>
 
-<!--        <acceptor>-->
-<!--            <entityTabuRatio>0.05</entityTabuRatio>-->
-<!--            <simulatedAnnealingStartingTemperature>2hard/20soft</simulatedAnnealingStartingTemperature>-->
-<!--        </acceptor>-->
+
 <!--        <forager>-->
 <!--            <acceptedCountLimit>500</acceptedCountLimit>-->
 <!--        </forager>-->

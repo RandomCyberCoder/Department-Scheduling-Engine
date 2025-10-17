@@ -69,7 +69,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                             l1Days.contains(Days.THURSDAY) != l2Days.contains(Days.THURSDAY) ||
                             l1Days.contains(Days.FRIDAY) != l2Days.contains(Days.FRIDAY);
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Teacher has same course on same days");
     }
 
@@ -99,7 +99,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     bitset.and(lesson.getTeacherObj().getConflict());
                     return (bitset.cardinality() > 0);
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("TimeSlot conflicts with teacher's availability (hard no)");
     }
 
@@ -128,7 +128,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return bs1.intersects(bs2);
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Teacher found teaching more than one course at the same time");
     }
 
@@ -161,7 +161,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return t1.getLabActBitSet().intersects(t2.getLabActBitSet());
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Lab or Activity room conflict");
     }
 
@@ -195,7 +195,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA)
                             || !(Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <  FLOAT_TIME_DELTA);
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .justifyWith((lesson, score) -> new WrongHoursAmountJustification(lesson))
                 .asConstraint("Lesson's timeslot must have exact time needed");
     }
@@ -224,7 +224,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                         return Constants.ROOM_TO_ID_BIMAP.get(Constants.LEC_ONLY) != room.getID();
                     }
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Lesson with wrong room type");
     }
 
@@ -241,7 +241,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return copy.cardinality() != 0;
                 })
-                .reward(HardSoftScore.ONE_SOFT
+                .reward(HardMediumSoftScore.ONE_SOFT
                         , lesson -> {
                             BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
                             BitSet copy = lecBitSet.get(0
@@ -264,7 +264,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return copy.cardinality() != 0;
                 })
-                .penalize(HardSoftScore.ONE_SOFT
+                .penalize(HardMediumSoftScore.ONE_SOFT
                         , lesson -> {
                             BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
                             BitSet copy = lecBitSet.get(0
@@ -296,7 +296,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     return mask.cardinality() != cardinality;
                 })
-                .penalize(HardSoftScore.ONE_HARD)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Studio space must be consecutive");
     }
 }
