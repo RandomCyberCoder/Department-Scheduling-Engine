@@ -7,6 +7,7 @@ import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,68 @@ public class LessonGenerator extends Generator{
 
 
     /**
+     *
+     * @param course a course string in the format '&lt;modifier&gt;-&lt;course name&gt;' or '&lt;course name&gt;'
+     * @return a Pair where the first element is the course modifier and the second element is the course name
+     * @see Constants#SPECIAL_CODE_CONVERSION
+     */
+    private static Pair<String, String> getCourseDetails(String course){
+        final String DUMMY_COURSE_MODIFIER = "";
+        String courseName;
+        String courseModifier;
+
+        String[] courseInformation = course.split("-");
+
+        /*we check if the course has any modifiers*/
+        if(courseInformation.length == 1){
+            courseName = courseInformation[0];
+            courseModifier = DUMMY_COURSE_MODIFIER;
+        }
+        else{
+            courseName = courseInformation[1];
+            courseModifier = courseInformation[0];
+            courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
+        }
+
+        return new Pair<>(courseModifier, courseName);
+    }
+
+
+    /**
+     * Checks if the course should be scheduled. Checks given course should be scheduled based on the configuration
+     * and modifier
+     *
+     * @param modifier course modifier; empty string if none
+     * @param name course name
+     * @param config course configuration
+     * @return Ture if the course with given modifier should be scheduled; False otherwise
+     * @see Constants#SKIP_CONFIGURATIONS
+     * @see Constants#SKIP_SCHEDULE
+     */
+    private static boolean checkCourse(String modifier, String name, String config){
+        /*we found a modifier so check if we want to schedule it
+         * or do anything special*/
+        if(Constants.SKIP_SCHEDULE.contains(modifier)){
+            if(Constants.DEBUG){
+                LOGGER.warn(String.format("Skipping course scheduling due to modifier: name '%s',  " +
+                        "modifier '%s'", name, modifier));
+            }
+            return false;
+        }
+
+        if(Constants.SKIP_CONFIGURATIONS.contains(config)){
+            if(Constants.DEBUG){
+                LOGGER.warn(String.format("Skipping course due to configuration: name '%s', configuration '%s'"
+                        , name, config));
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
      * <p>Generates a new lesson for the course that a teacher will teach.</p>
      * <p>If the course has a modifier {@link Constants#SKIP_SCHEDULE Constants.SKIP_SCHEDULE} or configuration
      * {@link Constants#SKIP_CONFIGURATIONS Constants.SKIP_CONFIGURATIONS} contains it will not be scheduled</p>
@@ -124,50 +187,24 @@ public class LessonGenerator extends Generator{
                                          String course, String teacherName, int lessonID){
         final String DUMMY_COURSE_MODIFIER = "";
         String[] courseInformation;
-        String courseName;
-        String courseModifier;
         String courseConfig;
         boolean hasLabOrAct;
         int sectionNumber;
         Teacher teacher;
 
-        courseInformation = course.split("-");
-        /*we check if the course has any modifiers
-         * This is also used to check if we want to skip the course*/
-        if(courseInformation.length == 1){
-            courseName = courseInformation[0];
-            courseModifier = DUMMY_COURSE_MODIFIER;
-        }
-        else{
-            courseName = courseInformation[1];
-            courseModifier = courseInformation[0];
-            courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
-
-
-            /*we found a modifier so check if we want to schedule it
-             * or do anything special*/
-            if(Constants.SKIP_SCHEDULE.contains(courseModifier)){
-                if(Constants.DEBUG){
-                    LOGGER.warn(String.format("Skipping scheduling of course with name %s with " +
-                            "modifier %s", courseName, courseModifier));
-                }
-                return null;
-            }
-        }
-
+        //first element = modifier; second element = course name
+        Pair<String, String> courseDetails = getCourseDetails(course);
+        String courseModifier = courseDetails.getFirst();
+        String courseName = courseDetails.getSecond();
         courseConfig = Constants.COURSE_CONFIGS.get(courseName);
 
-        if(Constants.SKIP_CONFIGURATIONS.contains(courseConfig)){
-            if(Constants.DEBUG){
-                LOGGER.warn(String.format("Skipping course '%s' with configuration %s for %s", courseName, courseConfig
-                        , teacherName));
-            }
+        //check if the course should be scheduled; if not return null
+        if(!checkCourse(courseModifier, courseName, courseConfig)){
             return null;
         }
 
         hasLabOrAct = determineLabOrAct(courseConfig);
         sectionNumber = courseSectionCounter.get(courseName);
-
 
         /*We increase the section counter by two if it has a lab because a lesson consists of its lecture
          * and its lab/act and a lab/act section number is separate from its respective lecture section
