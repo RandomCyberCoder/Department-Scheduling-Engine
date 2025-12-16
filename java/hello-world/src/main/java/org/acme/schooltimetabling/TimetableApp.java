@@ -33,7 +33,7 @@ public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
 
-    private static final boolean PRINT_DETAILED_SUMMARY = true;
+    private static final boolean PRINT_DETAILED_SUMMARY = false;
 
     public static void main(String[] args) throws Exception{
         ArrayList<Room> roomList;
@@ -61,7 +61,9 @@ public class TimetableApp {
 
 
         /*TODO make it so teachers with no survey get assigned a generic timeslot
-        *  ....maybe add a list of the generics to constants???*/
+        *  ....maybe add a list of the generics to constants???
+        *  UPDATE & ASK: this is done but I need to tell beard that I actually allow for them to be
+        *  completely available with no unacceptable times rather than giving them a fixed schedule*/
         /*read the cur & prev quarter survey and then create Teacher objects*/
         String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
         String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);

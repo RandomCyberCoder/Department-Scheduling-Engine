@@ -8,7 +8,7 @@
         <constraintProviderClass>org.acme.schooltimetabling.solver.TimetableConstraintProvider</constraintProviderClass>
     </scoreDirectorFactory>
     <termination>
-        <secondsSpentLimit>15</secondsSpentLimit>
+        <secondsSpentLimit>25</secondsSpentLimit>
     </termination>
 
     <constructionHeuristic>

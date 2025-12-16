@@ -1,7 +1,6 @@
 package org.acme.schooltimetabling.solver;
 
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final float FLOAT_TIME_DELTA = 0.01f;
 
-
+    /*TODO For the linker I think this should be a special case to handle in the constraint */
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
         return new Constraint[] {
