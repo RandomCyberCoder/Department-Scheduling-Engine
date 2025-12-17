@@ -13,6 +13,7 @@ class Teacher(models.Model):
         return self.canon
 
 class History(models.Model):
+    # Note: in the DB this field is named teacher_id
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
     is_canon = models.BooleanField()
     name = models.CharField(max_length=100, unique=True)

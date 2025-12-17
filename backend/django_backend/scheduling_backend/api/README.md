@@ -6,15 +6,15 @@ curl -X PATCH http://localhost:8000/api/teachers/1/ -H "Content-Type: applicatio
 curl -X PUT http://localhost:8000/api/teachers/1/ -H "Content-Type: application/json" -d '{"canon": "eman", "non_canon": "edog"}'
 
 
-curl http://localhost:8000/api/teachers/1/
+done curl http://localhost:8000/api/teachers/1/
 
-curl http://localhost:8000/api/teachers/?department=csc
-
-
-curl -X DELETE http://localhost:8000/api/teachers/1/
+done curl http://localhost:8000/api/teachers/?department=csc
 
 
-curl -X POST http://localhost:8000/api/teachers/file/   -F "file=@faculty_names_use.xlsx"
+done curl -X DELETE http://localhost:8000/api/teachers/1/
+
+
+curl -X POST http://localhost:8000/api/teachers/file/ -F "file=@faculty_names_use.xlsx"
 
 
 curl -X POST http://localhost:8000/api/teachers/create/ -H "Content-Type: application/json" -d '{"canon": "newUser", "non_canon": "ghost"}'
