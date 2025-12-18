@@ -47,7 +47,7 @@ public class LessonGenerator extends Generator{
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      * @return an ArrayList of all courses that a valid object could be made for
      */
-    public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap){
+    public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap) {
         final int STARTING_SECTION_NUMBER = 1;
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
@@ -58,18 +58,18 @@ public class LessonGenerator extends Generator{
 
 
         /*create a list of courses to section number and remove courses not in the department we
-        * are scheduling*/
+         * are scheduling*/
         HashMap<String, Integer> courseSectionCounter = new HashMap<>();
-        for(String course: Constants.COURSE_CONFIGS.keySet()){
-            if(!course.contains(DEPARTMENT)){
+        for (String course : Constants.COURSE_CONFIGS.keySet()) {
+            if (!course.contains(DEPARTMENT)) {
                 continue;
             }
             courseSectionCounter.put(course, STARTING_SECTION_NUMBER);
         }
 
         /*loop through the schedule (list of courses) a teacher is planned
-        * to teach*/
-        for(ScheduleFormat schedule: schedules){
+         * to teach*/
+        for (ScheduleFormat schedule : schedules) {
             teacherName = schedule.getName();
             //TODO just make the tacher object and pass that instead of the teacher name
             /*This is a list courses that will be scheduled*/
@@ -78,13 +78,13 @@ public class LessonGenerator extends Generator{
             List<String> potentialCourses = getPotentialCourses(schedule, CURRENT_TERM);
 
             /*filter out the courses that aren't currently in the department we
-            * want to schedule*/
+             * want to schedule*/
             coursesToSchedule = potentialCourses.stream()
                     .filter(course -> course.contains(DEPARTMENT))
                     .collect(Collectors.toCollection(ArrayList::new));
 
             /*schedule selected courses*/
-            for(String course: coursesToSchedule){
+            for (String course : coursesToSchedule) {
                 Pair<String, String> parsedCourse = getCourseDetails(course);
                 String courseModifier = parsedCourse.getFirst();
                 String courseName = parsedCourse.getSecond();
@@ -96,289 +96,300 @@ public class LessonGenerator extends Generator{
                 }
 
                 /*split studio style courses*/
-                if(Constants.STUDIO_STYLE_COURSES.contains(courseName)){
-                    getTeacher(teacherHashMap, teacherName)
+                //TODO don't parse here. parse in the helper just like generate lesson does
+                if (Constants.STUDIO_STYLE_COURSES.contains(courseName)) {
+                    Pair<Lesson, Lesson> studio_split = studioHelper(courseName, courseModifier, courseConfig,
+                            getTeacher(teacherHashMap, teacherName));
+                    if(studio_split != null){
 
+                    }
 
+                }
+                else{
+                    newLesson = generateLesson(teacherHashMap, courseSectionCounter,
+                            course, teacherName, lessonID);
+                    if(newLesson != null) lessons.add(newLesson);
+                }
             }
         }
 
         return lessons;
     }
 
+        /**
+         * <p>Generates a new lesson for the course that a teacher will teach.</p>
+         * <p>If the course has a modifier {@link Constants#SKIP_SCHEDULE Constants.SKIP_SCHEDULE} or configuration
+         * {@link Constants#SKIP_CONFIGURATIONS Constants.SKIP_CONFIGURATIONS} contains it will not be scheduled</p>
+         *
+         * @param teacherHashMap Hashmap of teacher's <i>canon name</i> mapped to its respective <i>Teacher</i> object
+         * @param courseSectionCounter HashMap of a course name mapped to its next available section number
+         * @param course name of the course whose lesson will be created for
+         * @param teacherName name of the teacher who will teach the lesson
+         * @param lessonID unique ID of the lesson
+         * @return returns a new lesson to be scheduled or null if the lesson will be skipped
+         * @see Constants#COURSE_CONFIGS
+         * @see Constants#COURSE_ID_BIMAP
+         */
+        private static Lesson generateLesson(HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
+                String course, String teacherName, int lessonID){
+            final String DUMMY_COURSE_MODIFIER = "";
+            String[] courseInformation;
+            String courseConfig;
+            boolean hasLabOrAct;
+            int sectionNumber;
+            Teacher teacher;
 
+            //first element = modifier; second element = course name
+            Pair<String, String> courseDetails = getCourseDetails(course);
+            String courseModifier = courseDetails.getFirst();
+            String courseName = courseDetails.getSecond();
+            courseConfig = Constants.COURSE_CONFIGS.get(courseName);
 
-    /**
-     * <p>Generates a new lesson for the course that a teacher will teach.</p>
-     * <p>If the course has a modifier {@link Constants#SKIP_SCHEDULE Constants.SKIP_SCHEDULE} or configuration
-     * {@link Constants#SKIP_CONFIGURATIONS Constants.SKIP_CONFIGURATIONS} contains it will not be scheduled</p>
-     *
-     * @param teacherHashMap Hashmap of teacher's <i>canon name</i> mapped to its respective <i>Teacher</i> object
-     * @param courseSectionCounter HashMap of a course name mapped to its next available section number
-     * @param course name of the course whose lesson will be created for
-     * @param teacherName name of the teacher who will teach the lesson
-     * @param lessonID unique ID of the lesson
-     * @return returns a new lesson to be scheduled or null if the lesson will be skipped
-     * @see Constants#COURSE_CONFIGS
-     * @see Constants#COURSE_ID_BIMAP
-     */
-    private static Lesson generateLesson(HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
-                                         String course, String teacherName, int lessonID){
-        final String DUMMY_COURSE_MODIFIER = "";
-        String[] courseInformation;
-        String courseConfig;
-        boolean hasLabOrAct;
-        int sectionNumber;
-        Teacher teacher;
-
-        //first element = modifier; second element = course name
-        Pair<String, String> courseDetails = getCourseDetails(course);
-        String courseModifier = courseDetails.getFirst();
-        String courseName = courseDetails.getSecond();
-        courseConfig = Constants.COURSE_CONFIGS.get(courseName);
-
-        //check if the course should be scheduled; if not return null
-        if(skipCourse(courseModifier, courseName, courseConfig)){
-            return null;
-        }
-
-        hasLabOrAct = determineLabOrAct(courseConfig);
-        sectionNumber = courseSectionCounter.get(courseName);
-
-        /*We increase the section counter by two if it has a lab because a lesson consists of its lecture
-         * and its lab/act and a lab/act section number is separate from its respective lecture section
-         * number*/
-        courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
-
-       teacher = getTeacher(teacherHashMap, teacherName);
-
-        /*create class*/
-        return new Lesson(Integer.toString(lessonID), sectionNumber, courseName,
-                courseModifier, courseConfig,  teacher, null);
-    }
-
-
-    /**
-     * Get the teacher object associated for the given <i>teacher name</i>; if no associated object
-     * exists, then one is created, but with no conflict, preference, or acceptable times
-     *
-     * @param teacherHashMap map with a canon name as a key and teacher object as a value
-     * @param teacherName canon teacher name
-     * @return teacher object for given teacher name
-     * @see LessonGenerator#noSurveyTeacher(String)
-     */
-    private static Teacher getTeacher(HashMap<String, Teacher> teacherHashMap, String teacherName){
-        /*checking if we can find the teacher; skip teacher if we can't
-         * find their teacher object*/
-        Teacher teacher = teacherHashMap.get(teacherName);
-        if(teacher == null){
-            if(Constants.DEBUG){
-                LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
-                        "Creating one for them with now.", teacherName));
+            //check if the course should be scheduled; if not return null
+            if(skipCourse(courseModifier, courseName, courseConfig)){
+                return null;
             }
 
-            //create teacher object
-            teacher = noSurveyTeacher(teacherName);
+            hasLabOrAct = determineLabOrAct(courseConfig);
+            sectionNumber = courseSectionCounter.get(courseName);
 
-            teacherHashMap.put(teacherName, teacher);
+            /*We increase the section counter by two if it has a lab because a lesson consists of its lecture
+             * and its lab/act and a lab/act section number is separate from its respective lecture section
+             * number*/
+            courseSectionCounter.replace(courseName, (hasLabOrAct ? sectionNumber + 2 : sectionNumber + 1) );
+
+            teacher = getTeacher(teacherHashMap, teacherName);
+
+            /*create class*/
+            return new Lesson(Integer.toString(lessonID), sectionNumber, courseName,
+                    courseModifier, courseConfig,  teacher, null);
         }
 
-        return teacher;
-    }
 
+        /**
+         * Get the teacher object associated for the given <i>teacher name</i>; if no associated object
+         * exists, then one is created, but with no conflict, preference, or acceptable times
+         *
+         * @param teacherHashMap map with a canon name as a key and teacher object as a value
+         * @param teacherName canon teacher name
+         * @return teacher object for given teacher name
+         * @see LessonGenerator#noSurveyTeacher(String)
+         */
+        private static Teacher getTeacher(HashMap<String, Teacher> teacherHashMap, String teacherName){
+            /*checking if we can find the teacher; skip teacher if we can't
+             * find their teacher object*/
+            Teacher teacher = teacherHashMap.get(teacherName);
+            if(teacher == null){
+                if(Constants.DEBUG){
+                    LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
+                            "Creating one for them with now.", teacherName));
+                }
 
-    /**
-     * <p>Extracts the list of courses that will be potentially scheduled</p>
-     *
-     * @param schedule ScheduleFormat object that contains instructor name and courses they will teach
-     * @param CURRENT_TERM term to schedule for
-     * @return List of potential courses to be scheduled
-     */
-    private static List<String> getPotentialCourses(ScheduleFormat schedule, String CURRENT_TERM) {
-        if("fall".equalsIgnoreCase(CURRENT_TERM)){
-            return schedule.getFall();
-        }
-        else if("winter".equalsIgnoreCase(CURRENT_TERM)){
-            return schedule.getWinter();
-        }
-        else{
-            return schedule.getSpring();
-        }
-    }
+                //create teacher object
+                teacher = noSurveyTeacher(teacherName);
 
-
-    /**
-     * Parses a course string in the format specified for the course param into it's modifier and course name
-     * @param course a course string in the format '&lt;modifier&gt;-&lt;course name&gt;' or '&lt;course name&gt;'
-     * @return a Pair where the first element is the course modifier (empty string in no modifier was given); the
-     * second element is the course name
-     * @see Constants#SPECIAL_CODE_CONVERSION
-     */
-    private static Pair<String, String> getCourseDetails(String course){
-        final String DUMMY_COURSE_MODIFIER = "";
-        String courseName;
-        String courseModifier;
-
-        String[] courseInformation = course.split("-");
-
-        /*we check if the course has any modifiers*/
-        if(courseInformation.length == 1){
-            courseName = courseInformation[0];
-            courseModifier = DUMMY_COURSE_MODIFIER;
-        }
-        else{
-            courseName = courseInformation[1];
-            courseModifier = courseInformation[0];
-            courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
-        }
-
-        return new Pair<>(courseModifier, courseName);
-    }
-
-
-    /**
-     * Checks if the course should be scheduled base on its configuration and modifier.
-     *
-     * @param modifier course modifier; empty string if none
-     * @param name course name
-     * @param config course configuration
-     * @return Ture if the course with given modifier should be scheduled; False otherwise
-     * @see Constants#SKIP_CONFIGURATIONS
-     * @see Constants#SKIP_SCHEDULE
-     */
-    private static boolean skipCourse(String modifier, String name, String config){
-        /*we found a modifier so check if we want to schedule it
-         * or do anything special*/
-        if(Constants.SKIP_SCHEDULE.contains(modifier)){
-            if(Constants.DEBUG){
-                LOGGER.warn(String.format("Skipping course scheduling due to modifier: name '%s',  " +
-                        "modifier '%s'", name, modifier));
+                teacherHashMap.put(teacherName, teacher);
             }
-            return true;
+
+            return teacher;
         }
 
-        if(Constants.SKIP_CONFIGURATIONS.contains(config)){
-            if(Constants.DEBUG){
-                LOGGER.warn(String.format("Skipping course due to configuration: name '%s', configuration '%s'"
-                        , name, config));
+
+        /**
+         * <p>Extracts the list of courses that will be potentially scheduled</p>
+         *
+         * @param schedule ScheduleFormat object that contains instructor name and courses they will teach
+         * @param CURRENT_TERM term to schedule for
+         * @return List of potential courses to be scheduled
+         */
+        private static List<String> getPotentialCourses(ScheduleFormat schedule, String CURRENT_TERM) {
+            if("fall".equalsIgnoreCase(CURRENT_TERM)){
+                return schedule.getFall();
             }
-            return true;
+            else if("winter".equalsIgnoreCase(CURRENT_TERM)){
+                return schedule.getWinter();
+            }
+            else{
+                return schedule.getSpring();
+            }
         }
 
-        return false;
+
+        /**
+         * Parses a course string in the format specified for the course param into it's modifier and course name
+         * @param course a course string in the format '&lt;modifier&gt;-&lt;course name&gt;' or '&lt;course name&gt;'
+         * @return a Pair where the first element is the course modifier (empty string in no modifier was given); the
+         * second element is the course name
+         * @see Constants#SPECIAL_CODE_CONVERSION
+         */
+        private static Pair<String, String> getCourseDetails(String course){
+            final String DUMMY_COURSE_MODIFIER = "";
+            String courseName;
+            String courseModifier;
+
+            String[] courseInformation = course.split("-");
+
+            /*we check if the course has any modifiers*/
+            if(courseInformation.length == 1){
+                courseName = courseInformation[0];
+                courseModifier = DUMMY_COURSE_MODIFIER;
+            }
+            else{
+                courseName = courseInformation[1];
+                courseModifier = courseInformation[0];
+                courseModifier = Constants.SPECIAL_CODE_CONVERSION.get(courseModifier);
+            }
+
+            return new Pair<>(courseModifier, courseName);
+        }
+
+
+        /**
+         * Checks if the course should be scheduled base on its configuration and modifier.
+         *
+         * @param modifier course modifier; empty string if none
+         * @param name course name
+         * @param config course configuration
+         * @return Ture if the course with given modifier should be scheduled; False otherwise
+         * @see Constants#SKIP_CONFIGURATIONS
+         * @see Constants#SKIP_SCHEDULE
+         */
+        private static boolean skipCourse(String modifier, String name, String config){
+            /*we found a modifier so check if we want to schedule it
+             * or do anything special*/
+            if(Constants.SKIP_SCHEDULE.contains(modifier)){
+                if(Constants.DEBUG){
+                    LOGGER.warn(String.format("Skipping course scheduling due to modifier: name '%s',  " +
+                            "modifier '%s'", name, modifier));
+                }
+                return true;
+            }
+
+            if(Constants.SKIP_CONFIGURATIONS.contains(config)){
+                if(Constants.DEBUG){
+                    LOGGER.warn(String.format("Skipping course due to configuration: name '%s', configuration '%s'"
+                            , name, config));
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+
+        /**
+         * Studio style helper to create special lessons for the studio style courses
+         * @param name name of the course (i.e. csc457)
+         * @param modifier course modifier; if none present use them empty string
+         * @param config configuration to use for the split
+         * @param teacher instructor teaching the course
+         * @return a studio style course split into a lecture and either a lab or activity lesson; First element is the
+         *  lecture lesson
+         */
+        private static Pair<Lesson, Lesson> studioHelper(String name, String modifier, String config, Teacher teacher){
+            /* units lecture-lab-activity */
+            final int LECTURE = 1;
+            final int LAB = 2;
+            final int ACT = 3;
+            String[] configParsed = config.split("-");
+            int lecUnits = Integer.parseInt(configParsed[LECTURE]);
+            int labUnits = Integer.parseInt(configParsed[LAB]);
+            int actUnits = Integer.parseInt(configParsed[ACT]);
+            Pair<String, String> parsedCourse = getCourseDetails(course);
+            String courseModifier = parsedCourse.getFirst();
+            String courseName = parsedCourse.getSecond();
+
+            String newConfig;
+            int idToUse;
+            int sectionNumber;
+
+
+            /*TODO: I could have sworn I saw a studio style course that had no lecture. If this is possible,
+             *  then we will make a course with only a lecture or activity sort of like a normal course but force
+             *  studio space to be all on the same day continuously*/
+            /*Assuming studio style courses have a lecture and either a lab or activity*/
+
+            /*create a lesson for the lecture portion*/
+            newConfig = String.format("%d-0-0", lecUnits);
+            sectionNumber = COURSE_SECTION_COUNTER.get(name);
+            COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
+            idToUse = nxtLessonID();
+            Lesson lecLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
+                    , modifier, newConfig, teacher, 1);
+
+
+            /*create a lesson for the lab or activity portion of the course*/
+            if(labUnits > 0){
+                newConfig = String.format("0-%d-0", labUnits);
+            }
+            else{
+                newConfig = String.format("0-0-%d", actUnits);
+            }
+            sectionNumber = COURSE_SECTION_COUNTER.get(name);
+            COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
+            idToUse = nxtLessonID();
+            Lesson labActLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
+                    , modifier, newConfig, teacher, 1);
+
+            //debug comments
+            if(lecUnits == 0) {
+                LOGGER.error(String.format("studio style course '%s' has no lecture; implement logic for this", name));
+            }
+            if(labUnits == 0 || actUnits == 0){
+                LOGGER.error(String.format("studio style course '%s' has no lab or activity; implement logic for this. " +
+                        "I don't think this is possible though", name));
+            }
+            return new Pair<>(lecLesson, labActLesson);
+        }
+
+
+
+        /**
+         * This function is used to create a teacher object during lesson creation if a teacher object can't be found
+         * for the name. It will return a faculty object if the person is found to be a faculty member. Note that the object
+         * returned will have empty conflict, preferences, and acceptable BitSets.
+         *
+         * @param name name of teacher. Assumes it's in canon name format (i.e. &lt;last name&gt, &lt;rest of name&gt;)
+         * @return a teacher object; or faculty if found to be a faculty member
+         * @see Teacher
+         * @see Faculty
+         */
+        private static Teacher noSurveyTeacher(String name){
+            final int LAST_NAME_POS = 0;
+            String[] nameFragments = name.split(",");
+
+            if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
+                LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
+                        , name));
+                return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+            }
+
+            return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+        }
+
+        /**
+         * <p>The function determines if the giving course configuration has
+         * a lab/activity</p>
+         *
+         * @param courseConfig a course configuration in format E-L-A where
+         *                     E = lecture units, L = lab units, and
+         *                     A = activity units
+         * @return returns true if the course configuration contains a lab
+         * or activity
+         */
+        private static boolean determineLabOrAct(String courseConfig){
+            final int NO_UNITS = 0;
+            String[] units = courseConfig.split("-");
+            int labUnits = Integer.parseInt(units[1]);
+            int actUnits = Integer.parseInt(units[2]);
+            return !(labUnits == NO_UNITS && actUnits == NO_UNITS);
+        }
+
+        /**
+         * helper function to ensure lessonID is always incremented when retrieving the next available lesson ID
+         * @return next available lesson ID
+         */
+        private static int nxtLessonID(){
+            return lessonID++;
+        }
     }
-
-
-    /**
-     * Studio style helper to create special lessons for the studio style courses
-     * @param name name of the course (i.e. csc457)
-     * @param modifier course modifier; if none present use them empty string
-     * @param config configuration to use for the split
-     * @param teacher instructor teaching the course
-     * @return a studio style course split into a lecture and either a lab or activity lesson; First element is the
-     *  lecture lesson
-     */
-    private static Pair<Lesson, Lesson> studioHelper(String name, String modifier, String config, Teacher teacher){
-        /* units lecture-lab-activity */
-        final int LECTURE = 1;
-        final int LAB = 2;
-        final int ACT = 3;
-        String[] configParsed = config.split("-");
-        int lecUnits = Integer.parseInt(configParsed[LECTURE]);
-        int labUnits = Integer.parseInt(configParsed[LAB]);
-        int actUnits = Integer.parseInt(configParsed[ACT]);
-
-        String newConfig;
-        int idToUse;
-        int sectionNumber;
-
-
-        /*TODO: I could have sworn I saw a studio style course that had no lecture. If this is possible,
-         *  then we will make a course with only a lecture or activity sort of like a normal course but force
-         *  studio space to be all on the same day continuously*/
-        /*Assuming studio style courses have a lecture and either a lab or activity*/
-
-        /*create a lesson for the lecture portion*/
-        newConfig = String.format("%d-0-0", lecUnits);
-        sectionNumber = COURSE_SECTION_COUNTER.get(name);
-        COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        idToUse = nxtLessonID();
-        Lesson lecLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
-                , modifier, newConfig, teacher, 1);
-
-
-        /*create a lesson for the lab or activity portion of the course*/
-        if(labUnits > 0){
-            newConfig = String.format("0-%d-0", labUnits);
-        }
-        else{
-            newConfig = String.format("0-0-%d", actUnits);
-        }
-        sectionNumber = COURSE_SECTION_COUNTER.get(name);
-        COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        idToUse = nxtLessonID();
-        Lesson labActLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
-                , modifier, newConfig, teacher, 1);
-
-        //debug comments
-        if(lecUnits == 0) {
-            LOGGER.error(String.format("studio style course '%s' has no lecture; implement logic for this", name));
-        }
-        if(labUnits == 0 || actUnits == 0){
-            LOGGER.error(String.format("studio style course '%s' has no lab or activity; implement logic for this. " +
-                    "I don't think this is possible though", name));
-        }
-        return new Pair<>(lecLesson, labActLesson);
-    }
-
-
-
-    /**
-     * This function is used to create a teacher object during lesson creation if a teacher object can't be found
-     * for the name. It will return a faculty object if the person is found to be a faculty member. Note that the object
-     * returned will have empty conflict, preferences, and acceptable BitSets.
-     *
-     * @param name name of teacher. Assumes it's in canon name format (i.e. &lt;last name&gt, &lt;rest of name&gt;)
-     * @return a teacher object; or faculty if found to be a faculty member
-     * @see Teacher
-     * @see Faculty
-     */
-    private static Teacher noSurveyTeacher(String name){
-        final int LAST_NAME_POS = 0;
-        String[] nameFragments = name.split(",");
-
-        if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
-            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
-                    , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
-        }
-
-        return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
-    }
-
-    /**
-     * <p>The function determines if the giving course configuration has
-     * a lab/activity</p>
-     *
-     * @param courseConfig a course configuration in format E-L-A where
-     *                     E = lecture units, L = lab units, and
-     *                     A = activity units
-     * @return returns true if the course configuration contains a lab
-     * or activity
-     */
-    private static boolean determineLabOrAct(String courseConfig){
-        final int NO_UNITS = 0;
-        String[] units = courseConfig.split("-");
-        int labUnits = Integer.parseInt(units[1]);
-        int actUnits = Integer.parseInt(units[2]);
-        return !(labUnits == NO_UNITS && actUnits == NO_UNITS);
-    }
-
-    /**
-     * helper function to ensure lessonID is always incremented when retrieving the next available lesson ID
-     * @return next available lesson ID
-     */
-    private static int nxtLessonID(){
-        return lessonID++;
-    }
-}
