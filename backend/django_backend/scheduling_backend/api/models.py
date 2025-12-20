@@ -4,7 +4,7 @@ from django.db import models
 class Teacher(models.Model):
     canon = models.CharField(max_length=100, unique=True)
     non_canon = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(blank=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     cpe = models.BooleanField(default="False")
     csc = models.BooleanField(default="False")
     faculty = models.BooleanField(default="False")
@@ -17,6 +17,9 @@ class History(models.Model):
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
     is_canon = models.BooleanField()
     name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f"name: {self.name}; canon: {self.is_canon}; teacher_fk: {self.teacher}"
 
 class Survey(models.Model):
     AVAILABILITY_CHOICES = {

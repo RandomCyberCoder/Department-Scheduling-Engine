@@ -4,12 +4,13 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
 from django.shortcuts import render
 from django.db.models import Q
-from ..models import Teacher
-from ..serializer import TeacherSerializer, FileUploadSerializer
+from ..models import Teacher, History
+from ..serializer import TeacherSerializer, FileUploadSerializer, HistorySerializer
 from typing import List, Tuple
 import pandas as pd
 import traceback
-
+from ..types.teacherData import TeacherData
+from .history_helpers import history_save_name
 
 VALID_DEPARTMENTS = ["csc", "cpe"]
 
@@ -19,7 +20,6 @@ def valid_file_extension(file_name: str, extensions: list) -> bool:
     if extension  in extensions:
         return True
     return False
-
 
 # view functions
 @api_view(['GET'])
@@ -39,6 +39,8 @@ def get_teachers(request):
 
     return Response(serializer.data)
 
+
+#TODO TEST THIS. I SHOULD HAVE WRITTEN ALL LOGIC NOW
 @api_view(['POST'])
 def create_teacher(request):
     # check if upload is in bulk or single instance
@@ -47,14 +49,31 @@ def create_teacher(request):
     # serialize data
     serializer = TeacherSerializer(data=request.data, many=is_list)
     # check if its valid
+    print("before validation")
+    print(request.data)
     if serializer.is_valid():
         # if so then save it
-        serializer.save()
+        print("got here")
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)
+        teachers = serializer.save()
+        
+        #store the names in the history table
+        # lst_data = serializer.data
+        if not is_list:
+            teachers = [teachers]
+        
+        for teacher in teachers:
+            # new_pk = teacher["id"]
+            canon_name = teacher.canon
+            non_canon_name = teacher.non_canon
+            history_save_name(teacher, canon_name, True)
+            history_save_name(teacher, non_canon_name, False)
+ 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+ 
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
 def teachers_file_upload(request):
@@ -123,6 +142,7 @@ def update_teacher(request, pk):
                         "msg" :"Couldn't update the object"},
                         status.HTTP_406_NOT_ACCEPTABLE)
 
+    #check if a teacher entry with the given primary key exists
     try:
         teacher = Teacher.objects.get(pk=pk)
         print(teacher)
@@ -139,10 +159,12 @@ def update_teacher(request, pk):
                          "data": serializer.data},
                          status.HTTP_200_OK)
     elif request.method == 'PUT':
+        #TODO Make sure this is idempotent
         print("put endpoint")
         serializer = TeacherSerializer(teacher, data=request.data)
         return update_teacher_helper(serializer, status.HTTP_200_OK)
     elif request.method == 'PATCH':
+        #TODO if a either version of a teacher's name is changed then store it in the history table
         serializer = TeacherSerializer(teacher, data=request.data, partial=True)
         print("patch endpoint")
         return update_teacher_helper(serializer, status.HTTP_200_OK)

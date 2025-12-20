@@ -1,11 +1,43 @@
 from rest_framework import serializers
-from .models import Teacher, Survey
+from .models import Teacher, Survey, History
+
+
+class TeacherListSerializer(serializers.ListSerializer):
+
+    def validate(self, data):
+        print("rand the teacher list validator")
+        unique_canon = set()
+        unique_non = set()
+
+        #go through all Teacher items in the list
+        for item in data:
+            canon = item["canon"]
+            non_canon = item["non_canon"]
+
+            if canon in unique_canon:
+                raise serializers.ValidationError(f"Payload found to have duplicate canon key '{canon}'")
+            if non_canon in unique_non:
+                raise serializers.ValidationError(f"Payload found to have duplicate non-canon key '{non_canon}'")
+
+            unique_canon.add(canon)
+            unique_non.add(non_canon)
+
+        return data
 
 # convert and properly transport you data into json your api can use?
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = '__all__'
+        list_serializer_class = TeacherListSerializer
+
+    def validate_canon(self, value):
+        print("canon validator called")
+        return value.strip()
+    
+    def validate_non_canon(self, value):
+        print("non canon validator called")
+        return value.strip()
 
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
@@ -19,3 +51,7 @@ class SurveySerializer(serializers.ModelSerializer):
         model = Survey
         fields = '__all__'
 
+class HistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = History
+        fields = '__all__'
