@@ -29,6 +29,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = '__all__'
+        read_only_fields = ['id']
         list_serializer_class = TeacherListSerializer
 
     def validate_canon(self, value):
@@ -50,8 +51,10 @@ class SurveySerializer(serializers.ModelSerializer):
     class Meta:
         model = Survey
         fields = '__all__'
+        read_only_fields = ['id']
 
 class HistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = History
         fields = '__all__'
+        read_only_fields = ['id']
