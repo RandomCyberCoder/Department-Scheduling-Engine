@@ -1,6 +1,6 @@
 from ..models import History, Teacher
 
-#TODO sure this is. Look into adding this into Teacher custom update/save functions
+#TODO Look into adding this into Teacher custom update/save functions
 def history_save_name(teacher: Teacher, teacher_name: str, canon: bool) -> None:
     """
     Stores a name in the history table for the given teacher primary key
@@ -26,4 +26,4 @@ def history_save_name(teacher: Teacher, teacher_name: str, canon: bool) -> None:
         create_defaults={**base_data, "name": teacher_name}
     )
 
-    print(f"The object -> {obj} \nhas creation status: {created}")
+    # print(f"The object -> {obj} \nhas creation status: {created}")

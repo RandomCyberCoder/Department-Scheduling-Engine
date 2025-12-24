@@ -11,6 +11,7 @@ import pandas as pd
 import traceback
 from ..types.teacherData import TeacherData
 from .history_helpers import history_save_name
+from django.core import serializers
 
 VALID_DEPARTMENTS = ["csc", "cpe"]
 
@@ -21,9 +22,16 @@ def valid_file_extension(file_name: str, extensions: list) -> bool:
         return True
     return False
 
-# view functions
+
+
+
 @api_view(['GET'])
 def get_teachers(request):
+    """
+    GET endpoint for retrienveing all teachers are teachers within just the CPE or CSC department 
+    
+    :param request: payload request
+    """
     department = request.query_params.get("department")
     if department is not None:
         if department.lower() not in VALID_DEPARTMENTS:
@@ -40,30 +48,36 @@ def get_teachers(request):
     return Response(serializer.data)
 
 
-#TODO TEST THIS. I SHOULD HAVE WRITTEN ALL LOGIC NOW
+
+
 @api_view(['POST'])
 def create_teacher(request):
+    """
+    Creates a Teacher object(s) in the data base. Will return 400 if payload has a duplicate within or 
+    duplicates a unique filed in the DB. Each teacher created will also have two entries in the History
+    table. One for their canon and another for their non_canon name
+    
+    :param request: payload request
+    """
+    
     # check if upload is in bulk or single instance
     is_list = isinstance(request.data, list)
 
     # serialize data
     serializer = TeacherSerializer(data=request.data, many=is_list)
     # check if its valid
-    print("before validation")
-    print(request.data)
     if serializer.is_valid():
         # if so then save it
         print("got here")
         # return Response(serializer.data, status=status.HTTP_201_CREATED)
         teachers = serializer.save()
         
-        #store the names in the history table
-        # lst_data = serializer.data
+        #normalize data
         if not is_list:
             teachers = [teachers]
         
+        #store names in History table
         for teacher in teachers:
-            # new_pk = teacher["id"]
             canon_name = teacher.canon
             non_canon_name = teacher.non_canon
             history_save_name(teacher, canon_name, True)
@@ -73,7 +87,9 @@ def create_teacher(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
- 
+
+
+
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
 def teachers_file_upload(request):
@@ -129,6 +145,8 @@ def teachers_file_upload(request):
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
 
 
+
+
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @parser_classes([JSONParser])
 def update_teacher(request, pk):
@@ -160,6 +178,10 @@ def update_teacher(request, pk):
                          status.HTTP_200_OK)
     elif request.method == 'PUT':
         #TODO Make sure this is idempotent
+        #should this take all the fields
+        #it also seems that a put request should add 
+        #note a put request should also be able to create
+        #for fields that don't exists they should just default
         print("put endpoint")
         serializer = TeacherSerializer(teacher, data=request.data)
         return update_teacher_helper(serializer, status.HTTP_200_OK)
@@ -171,13 +193,17 @@ def update_teacher(request, pk):
     elif request.method == 'DELETE':
         print("deleting endpoint")
         teacher.delete()
-        return Response({"success": f"teacher object with pk '{pk}' has been deleted"},
+        return Response({"success": f"teacher object with pk '{pk}' has been deleted",
+                         "object": serializers.serialize("json", [teacher])},
                         status=status.HTTP_204_NO_CONTENT)
     else:
         print("illegal method")
         return Response({"error": "Unsupported HTTP method for endpoint"},
                         status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
+
+
+
 '''
 Endpoint function for uploading a file to update teachers
 It will scan for what teachers are faculty members. Try to find their teacher object
@@ -283,17 +309,32 @@ def set_faculty(request):
                 status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+
+
 @api_view(["PATCH"])
 @parser_classes([JSONParser])
 def teacher_bulk_update(request):
+    """Bulk updates teachers. Allows a teacher to be identified by email, canon_name, non_canon_name or their id (primary key).
+    If multiple teachers found for a lookup then they are skipped. Once the teacher is identified, their fields can be updated.
 
-    '''
-    Validates if the structure of the request is valid
-    '''
+    Args:
+        request (_type_): request
+    """
+
+    #valid keys for nested dictionaries
+    teacher_fields = {f.name for f in Teacher._meta.get_fields()}
+    lookup_options = {"email", "canon_name", "non_canon_name", "id"}
+
     def validate_req(data: any) -> Tuple[bool, str]:
-        #valid keys for nested dictionaries
-        teacher_fields = {f.name for f in Teacher._meta.get_fields()}
-        lookup_options = {"email", "canon_name", "non_canon_name", "pk"}
+        """Validate payload request to make sure that at least one valid field is present for the lookup and updating.
+        Any fields that can't be used for looking up a teacher or updating a teacher will be ignored
+
+        Args:
+            data (any): request payload
+
+        Returns:
+            Tuple[bool, str]: _description_
+        """
 
         if not isinstance(data, list):
             return False, "data must given a list"
@@ -302,25 +343,36 @@ def teacher_bulk_update(request):
             if not isinstance(update_obj, dict):
                 return False, "list elements must be in a dictionary"
 
-            print(update_obj)
             if "lookup" not in update_obj or "update_data" not in update_obj:
                 return False, f"update payload at index '{index}' must include the fields 'lookup' and 'update_data'"
             
             lookup_keys = set(update_obj["lookup"].keys())
             update_data_keys = set(update_obj["update_data"].keys()) 
 
-            #check for invalid keys in respective dictionaries
+            #check for invalid keys in respective dictionaries using set theory
             lookup_diff = lookup_keys.difference(lookup_options)
             update_data_diff = update_data_keys.difference(teacher_fields)
 
-            if lookup_diff or update_data_diff or len(lookup_keys) == 0:
-                return False, (f"no lookup option found or invalid key(s) found in 'lookup' or 'update_data' for object at index {index}. "
+            len_lookup = len(lookup_keys)
+            len_update = len(update_data_keys)
+            #make sure at least on valid field is present and that data needed is present
+            if len(lookup_diff) == len_lookup or len(update_data_diff) == len_update or len_lookup == 0 or len_update == 0:
+                return False, (f"no lookup option found in 'lookup' or no data in 'update_data' for object at index {index}. "
                                 f"Valid keys for objects respectively are {lookup_options} and {teacher_fields}. ")
 
         return True, "all data valid"
     
 
     def generate_Q_objects(lookup_obj: dict) -> Q:
+        """Takes a dictionary with lookup fields to query for a teacher entity. It will OR all the lookup fields together.
+
+        Args:
+            lookup_obj (dict): dictionary of lookup fields. Available lookup fields are 'email',
+            'canon_name', 'non_canon_name', and 'id'.
+
+        Returns:
+            Q: A Q object to query based on lookup field(s)
+        """
         cur_Q = None
 
         for k, v in lookup_obj.items():
@@ -330,7 +382,7 @@ def teacher_bulk_update(request):
                 Q_to_add = Q(canon=v)
             elif k == "non_canon_name":
                 Q_to_add = Q(non_canon=v)
-            elif k == "pk":
+            elif k == "id":
                 Q_to_add = Q(id=v)
 
             if cur_Q is None:
@@ -348,21 +400,30 @@ def teacher_bulk_update(request):
         return Response({"error": msg},
                         status.HTTP_400_BAD_REQUEST)
     
+    # store what teacher entities where updated successfully or failed to update
     success = []
     failed = []
     for update_obj in req_data:
         try:
+            update_data = update_obj["update_data"]
             teacher = Teacher.objects.get(generate_Q_objects(update_obj["lookup"]))
-            serializer = TeacherSerializer(teacher, data=update_obj["update_data"], partial=True)
+            serializer = TeacherSerializer(teacher, data=update_data, partial=True)
+            
             if serializer.is_valid():
-                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}"})
                 serializer.save()
+                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}"})
+                #save new names in history table
+                if "canon" in update_data:
+                    history_save_name(teacher, update_data["canon"], True)
+                if "non_canon" in update_obj["update_data"]:
+                    history_save_name(teacher, update_data["non_canon"], False)
             else:
                 failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
                         "error": f"{serializer.errors}"})
         except Exception as e:
-            print("--------------------------------------------------------------------------------")
-            print(traceback.format_exc())
+            #failure could occur due to duplicating a field, invalid data, or 2+ objects found for query
+            # print("--------------------------------------------------------------------------------")
+            # print(traceback.format_exc())
             failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
                         "error": f"{e}"})
 
