@@ -2,26 +2,19 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
+from rest_framework.exceptions import APIException
 from django.shortcuts import render
 from django.db.models import Q
-from ..models import Teacher, History
-from ..serializer import TeacherSerializer, FileUploadSerializer, HistorySerializer
 from typing import List, Tuple
 import pandas as pd
 import traceback
-from ..types.teacherData import TeacherData
-from .history_helpers import history_save_name
+from ..models import Teacher, History
+from ..serializer import TeacherSerializer, FileUploadSerializer
+from .helper.history_helpers import history_save_name
+from .helper.teacher_helpers import valid_file_extension, tsv_to_df, generate_Q_objects
 from django.core import serializers
 
 VALID_DEPARTMENTS = ["csc", "cpe"]
-
-# helper classes 
-def valid_file_extension(file_name: str, extensions: list) -> bool:
-    extension = file_name.split(".")[-1]
-    if extension  in extensions:
-        return True
-    return False
-
 
 
 
@@ -93,11 +86,22 @@ def create_teacher(request):
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
 def teachers_file_upload(request):
+    """Will attempt to create an object if one does not exist. If one exists it will be updated.
+    This will only consider the teacher entity fields 'canon', 'non_canon', and 'email'
+
+    Args:
+        request (_type_): request payload
+
+    Raises:
+        Exception: exceptions raised are handled by the function
+
+    Returns:
+        _type_: _description_
+    """
     #we allow for csv files or excel files; various different excel extensions
-    valid_extensions = ['csv', 'xlsx', 'xlsm', 'xlsb']
+    valid_extensions = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
     serializer = FileUploadSerializer(data=request.data)
     if serializer.is_valid():
-        print("valid payload")
         try:
             file = serializer.validated_data["file"]
 
@@ -107,41 +111,79 @@ def teachers_file_upload(request):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            extension = file.name.split(".")[-1]
-            if extension == "CSV":
+            extension = file.name.split(".")[-1].lower()
+            if extension == "csv":
                 df = pd.read_csv(file)
+            elif extension == 'tsv':
+                df = tsv_to_df(file)
             else:
                 df = pd.read_excel(file)
-            if "name" not in df.columns or "canon" not in df.columns:
+
+            #allow for canon name to be titled either as 'name' or 'non_canon'
+            if "name" not in df.columns and "non_canon" not in df.columns or "canon" not in df.columns:
                 return Response(
                     {"error": f"File : {valid_extensions}"}, 
                     status=status.HTTP_400_BAD_REQUEST
-                )
-            print(df)
-
-            #create Teacher entries for upload to DB
-            entries = []
-            for index, row in df.iterrows():
-                data = {"canon": row["canon"], "non_canon": row["name"]}
-                entries.append(data)
-
-            # TODO update to serialize individual to check which are valid and which aren't and return this information in the response    
-            teacher_serializer = TeacherSerializer(data=entries, many=True)
-
-            try:
-                if not teacher_serializer.is_valid():
-                    raise Exception("error creating Teacher objects for uploading to DB", status.HTTP_500_INTERNAL_SERVER_ERROR)
-                teacher_serializer.save()
-                return Response({"success": "Teachers have been created or updated", "data": teacher_serializer.data},
-                                status.HTTP_201_CREATED)
-                    
-            except Exception as e:
-                return Response({"error": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+                )  
         except Exception as e:
             print(f"problem parsing file. error:\n{e}")
             return Response({"error": f"problem reading the file {file.name}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+            
+        non_canon_col = "name"
+        email_present = False
+        if "non_canon" in df.columns:
+            non_canon_col = "non_canon"
+        if "email" in df.columns:
+            email_present = True
+
+        #normalize pandas data frame
+        for col in df.columns:
+            df[col] = (
+                df[col]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+            )
+
+        #figure out what updates/creations succeed and which didn't
+        success = []
+        failed = []
+        for _, row in df.iterrows():
+            entry = {"canon": row["canon"], "non_canon": row[non_canon_col]}
+            if email_present and row["email"] != "":
+                entry["email"] = row["email"]
+        
+            try:
+                query  = generate_Q_objects(entry)
+                teacher = Teacher.objects.filter(query)
+                if teacher.count() > 1:
+                    raise APIException(detail="Multiple teacher entities with given fields", code=status.HTTP_409_CONFLICT)
+                else:
+                    teacher = teacher.first()
+                created = False
+                
+                if teacher:
+                    teacher_serializer = TeacherSerializer(teacher, data=entry, partial=True)
+                else:
+                    teacher_serializer = TeacherSerializer(data=entry)
+                    created = True
+                
+                teacher_serializer.is_valid(raise_exception=True)
+                teacher = teacher_serializer.save()
+                history_save_name(teacher, entry["canon"], True)
+                history_save_name(teacher, entry["non_canon"], False)
+                #add canon and non_cannon names to history table
+                success.append({"creation_status": created,
+                                "teacher": teacher_serializer.data})
+            except Exception as e:
+                failed.append({"msg": f"{e}",
+                                "attempt": entry})
+
+        return Response({"msg": "finished trying to update teachers",
+                        "success": success,
+                        "failed": failed},
+                        status.HTTP_200_OK)
+
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
 
 
@@ -215,25 +257,6 @@ TODO if we set up a history of names for a person we could also pull from that w
 @parser_classes([FormParser, MultiPartParser])
 def set_faculty(request):
     MINIMUM_EXPECTED_COLUMNS = ["name", "title", "email"]
-
-    def tsv_to_df(file) -> pd.DataFrame:
-        captured_header = False
-        parsed_lines = []
-
-        for line in file:
-            parsed_line = line.decode("utf-8").split("\t")
-            normalized_line = [value.strip() for value in parsed_line]
-
-            if not captured_header:
-                header = [value.lower() for value in normalized_line]
-                captured_header = True
-                continue
-
-            parsed_lines.append(parsed_line)
-
-        df = pd.DataFrame(data=parsed_lines, columns=header)
-     
-        return df
     
 
     def invalid_df(df: pd.DataFrame) -> bool:
@@ -323,7 +346,7 @@ def teacher_bulk_update(request):
 
     #valid keys for nested dictionaries
     teacher_fields = {f.name for f in Teacher._meta.get_fields()}
-    lookup_options = {"email", "canon_name", "non_canon_name", "id"}
+    lookup_options = {"email", "canon", "non_canon", "id"}
 
     def validate_req(data: any) -> Tuple[bool, str]:
         """Validate payload request to make sure that at least one valid field is present for the lookup and updating.
@@ -362,36 +385,6 @@ def teacher_bulk_update(request):
 
         return True, "all data valid"
     
-
-    def generate_Q_objects(lookup_obj: dict) -> Q:
-        """Takes a dictionary with lookup fields to query for a teacher entity. It will OR all the lookup fields together.
-
-        Args:
-            lookup_obj (dict): dictionary of lookup fields. Available lookup fields are 'email',
-            'canon_name', 'non_canon_name', and 'id'.
-
-        Returns:
-            Q: A Q object to query based on lookup field(s)
-        """
-        cur_Q = None
-
-        for k, v in lookup_obj.items():
-            if k == "email":
-                Q_to_add = Q(email=v)
-            elif k == "canon_name":
-                Q_to_add = Q(canon=v)
-            elif k == "non_canon_name":
-                Q_to_add = Q(non_canon=v)
-            elif k == "id":
-                Q_to_add = Q(id=v)
-
-            if cur_Q is None:
-                cur_Q = Q_to_add
-            else: 
-                cur_Q |= Q_to_add
-
-        return cur_Q
-
 
     req_data = request.data
     valid, msg = validate_req(req_data)

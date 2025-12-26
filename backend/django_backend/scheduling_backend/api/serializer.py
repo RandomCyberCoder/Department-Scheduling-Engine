@@ -5,7 +5,6 @@ from .models import Teacher, Survey, History
 class TeacherListSerializer(serializers.ListSerializer):
 
     def validate(self, data):
-        print("rand the teacher list validator")
         unique_canon = set()
         unique_non = set()
 
@@ -33,11 +32,9 @@ class TeacherSerializer(serializers.ModelSerializer):
         list_serializer_class = TeacherListSerializer
 
     def validate_canon(self, value):
-        print("canon validator called")
         return value.strip()
     
     def validate_non_canon(self, value):
-        print("non canon validator called")
         return value.strip()
 
 class FileUploadSerializer(serializers.Serializer):
