@@ -112,6 +112,9 @@ def teachers_file_upload(request):
                 )
             
             extension = file.name.split(".")[-1].lower()
+            if extension not in valid_extensions:
+                raise APIException(detail=f"file extension not allowed. Valid extensions are {valid_extensions}",
+                                   code=status.HTTP_400_BAD_REQUEST)
             if extension == "csv":
                 df = pd.read_csv(file)
             elif extension == 'tsv':
@@ -126,8 +129,8 @@ def teachers_file_upload(request):
                     status=status.HTTP_400_BAD_REQUEST
                 )  
         except Exception as e:
-            print(f"problem parsing file. error:\n{e}")
-            return Response({"error": f"problem reading the file {file.name}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"problem reading the file {file.name}",
+                             "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         non_canon_col = "name"
         email_present = False
@@ -425,21 +428,3 @@ def teacher_bulk_update(request):
                 "failed": failed},
                 status.HTTP_200_OK)
         
-    
-    
-    # [
-    #     {
-    #         "lookup": {
-    #             #options but at least one should be present
-    #             "email": "example@example.com",
-    #             "canon_name": "Eman",
-    #             "non_canon_name": "Edog",
-    #             "pk": <int>
-    #         },
-    #         #this is the data that will be passed in
-    #         "update_data":{ 
-    #             "csc": "True"
-    #         }
-    #     }
-    # ]
-    
