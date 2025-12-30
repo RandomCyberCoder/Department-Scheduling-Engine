@@ -40,6 +40,11 @@ class TeacherSerializer(serializers.ModelSerializer):
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
 
+class SurveyFileSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    cur_term = serializers.CharField(max_length=4)
+    prev_term = serializers.CharField(max_length=4)
+
 class DepartmentFileUpload(serializers.Serializer):
     file = serializers.FileField()
     department = serializers.CharField(max_length=3)
