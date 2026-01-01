@@ -39,7 +39,7 @@ def term_checker(value):
     FORMAT_MSG = "the termfield format is XYYZ where X is the first digit of the" \
         " year, Y is is the last two digits of the year, and Z is the term code. Term code: spring -> 2; winter -> 4; " \
         "summer -> 6; fall -> 8"
-    if len(value) != 4 or value[4] not in ["2", "4", "6", "8"]:
+    if len(value) != 4 or value[3] not in ["2", "4", "6", "8"]:
         raise ValidationError(FORMAT_MSG)
 
     

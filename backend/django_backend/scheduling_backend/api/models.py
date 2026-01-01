@@ -60,7 +60,7 @@ class Survey(models.Model):
     #survey realted fields
     email = models.EmailField(null=True)
     name = models.CharField(max_length=50)
-    use_old = models.BooleanField()
+    use_old = models.BooleanField(blank=True)
 
     mwf_7_am = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, validators=[avail_vailidator])
     mwf_8_am = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, validators=[avail_vailidator])
@@ -111,9 +111,9 @@ class Survey(models.Model):
     gap = models.CharField(max_length=20, choices=AGREE_CHOICES, validators=[pref_validator])
     
     #doesn't enforce text length
-    constraint = models.TextField()
-    require = models.TextField()
-    pref = models.TextField()
-    comment = models.TextField()
-    stars = models.TextField()
+    constraint = models.TextField(blank=True)
+    require = models.TextField(blank=True)
+    pref = models.TextField(blank=True)
+    comment = models.TextField(blank=True)
+    stars = models.TextField(blank=True)
 

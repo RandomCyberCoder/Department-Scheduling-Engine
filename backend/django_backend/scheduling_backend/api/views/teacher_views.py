@@ -3,15 +3,14 @@ from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from django.shortcuts import render
 from django.db.models import Q
-from typing import List, Tuple
+from typing import Tuple
 import pandas as pd
-import traceback
-from ..models import Teacher, History
+from ..models import Teacher
 from ..serializer import TeacherSerializer, FileUploadSerializer
 from .helper.history_helpers import history_save_name
-from .helper.teacher_helpers import valid_file_extension, tsv_to_df, generate_Q_objects
+from .helper.teacher_helpers import valid_file_extension, tsv_to_df
+from .helper.query_helpers import generate_Q_objects
 from django.core import serializers
 
 VALID_DEPARTMENTS = ["csc", "cpe"]
