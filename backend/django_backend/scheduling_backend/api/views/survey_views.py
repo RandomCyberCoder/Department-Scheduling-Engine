@@ -104,9 +104,21 @@ def delete_survey_instance(request, pk) -> Response:
 
 @api_view(["POST"])
 @parser_classes([FormParser, MultiPartParser])
-def survey_file_upload(request):
-    def bleed_survey():
-        pass
+def survey_file_upload(request: Request) -> Response:
+    """Allows for a file upload (csv, tsv, or excel) and will create a survey instance for survey response in the file. If a 
+    survey instance already exists for the a term and teacher name combo, the previous instance will be replaced with the new one. If
+    a survey bleeds forward, **only** the time **avaiability** fields will be replaced.
+
+    Args:
+        request (Request): _description_
+
+    Raises:
+        APIException: _description_
+        APIException: _description_
+
+    Returns:
+        Response: payload indicating what survey entries where created/updated or failed
+    """
 
     #TODO file reading code is duplicated. teachers_file_upload uses this as well
     #read and validate file
@@ -222,26 +234,9 @@ def survey_file_upload(request):
             #Add additional survey model fields
             data = {**data, "cur_term": CUR_TERM, "prev_term": PREV_TERM, "use_old": BLEED_SURVEY, "teacher": teacher.id}
 
-            #TODO bleed forward and cur available work?
-
-            #check teacher has a suvrvey for the term. IF one exists update it
-            
-            cur_term_survey = find_survey(CUR_TERM, teacher)
-            if cur_term_survey is not None:
-                # if previous survey found use it and update "Availability" fields
-                survey_serializer = SurveySerializer(cur_term_survey, 
-                                              data={**{field: data[field] for field in AVAIL_FIELDS},
-                                                    "prev_term": PREV_TERM,
-                                                    "use_old": BLEED_SURVEY},
-                                              partial=True)
-                survey_serializer.is_valid(raise_exception=True)
-                survey_serializer.save()
-                success.append({"msg": "prev suvery for teacher found; updated entry",
-                                "suvey_id": survey_serializer.data["id"],
-                                "creation": False,
-                                "teacher_file_idx": idx,
-                                "teacher": teacher_serializer.data})
-                continue
+            #check teacher has a suvrvey for the term. If one exists then replace it
+            potential = find_survey(CUR_TERM, teacher)
+            cur_term_survey = (potential,) if potential is not None else ()
             
             #if bleeds forward replace data for "avaialbility" fields
             if BLEED_SURVEY:
@@ -265,13 +260,13 @@ def survey_file_upload(request):
                     this would change how fill out empty strings in the df for AVAIL/PREF fields'''
                     data[field] = prev_data[field]
 
-            survey_serializer = SurveySerializer(data=data)
+            survey_serializer = SurveySerializer(*cur_term_survey, data=data)
             
             survey_serializer.is_valid(raise_exception=True)
             survey_serializer.save()
             success.append({"msg": "teacher",
                             "suvey_id": survey_serializer.data["id"],
-                            "creation": True,
+                            "creation": potential is None,
                             "teacher_file_idx": idx,
                             "teacher": teacher_serializer.data})
             
