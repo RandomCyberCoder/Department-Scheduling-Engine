@@ -5,6 +5,7 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.junit.jupiter.api.*;
@@ -36,8 +37,8 @@ public class TestLessons {
 
         /*read the current quarter survey
          * and then create Teacher objects*/
-        String curQuarterSurveyPath = "input/2254-survey.csv";
-        String prevQuarterSurveyPath = "input/2252-survey.csv";
+        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
+        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
         System.out.println("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
         System.out.println("Reading the previous quarter teacher survey");
@@ -47,7 +48,9 @@ public class TestLessons {
         HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
 
         /*parse schedules*/
-        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses("input/schedule-2254-CSC.json");
+        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(
+                String.format("input/schedule-%s-%s.json", ParseInput.scheduleConfig.curTerm,
+                        ParseInput.scheduleConfig.department));
 
         /*Creating Lessons*/
         lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
@@ -80,5 +83,45 @@ public class TestLessons {
                             () -> assertFalse(Constants.SKIP_CONFIGURATIONS.contains(Constants.COURSE_CONFIGS.get(lesson.courseName))),
                             () -> assertFalse(Constants.SKIP_SCHEDULE.contains(lesson.modifiers)));
                 }));
+    }
+
+    @Test
+    @DisplayName("Check studio courses")
+    void checkStudio(){
+        //set once the pair has been verified
+        Set<Integer> linked = new HashSet<>();
+        //holds lesson whose pair needs to be found
+        Map<Integer, Lesson> findPair = new HashMap<>();
+        assertAll("Loop checking all potential studio style courses",
+                lessonList.stream()
+                        .filter(lesson ->
+                                Constants.STUDIO_STYLE_COURSES.contains(lesson.courseName.toLowerCase())
+                        )
+                        .map(lesson -> (Executable) () -> {
+                            //checks for a specific lesson
+                            assertAll("Checking studio course",
+                                    //check if lesson's link has a pair already
+                                    () -> assertFalse(linked.contains(lesson.getLinker())),
+                                    //check for pair
+                                    () -> assertTrue(() -> {
+                                        Lesson prev = findPair.getOrDefault(lesson.getLinker(), null);
+                                        if(prev != null){
+                                            //make sure the one lesson is lab/act and the other is the lecture
+                                            if(prev.hasLecture == lesson.hasLecture
+                                                    || prev.hasLabAct == lesson.hasLabAct) return false;
+                                            else{
+                                                //if pair has been validated add it to paired lesson verified
+                                                linked.add(lesson.getLinker());
+                                                return true;
+                                            }
+                                        }
+                                        else{
+                                            findPair.put(lesson.getLinker(), lesson);
+                                            return true;
+                                        }
+                                    })
+
+                            );
+                }).toList());
     }
 }

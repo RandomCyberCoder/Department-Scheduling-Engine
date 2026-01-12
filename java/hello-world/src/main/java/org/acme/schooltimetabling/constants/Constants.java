@@ -161,7 +161,13 @@ public class Constants {
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
 
-            STUDIO_STYLE_COURSES = Set.of();
+            //All studio style course for the CSC department go here
+            //Enter them as a list into the Stream.of() as a parameter
+            STUDIO_STYLE_COURSES = Stream.of(
+                    List.<String>of()
+                    )
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet());
 
         }
         else{
@@ -194,10 +200,13 @@ public class Constants {
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
 
+            //All studio style course for the CSC department go here
+            //Enter them as a list into the Stream.of() as a parameter
             STUDIO_STYLE_COURSES = Stream.of(
-                    microControllerCourses,
-                    generalCpeCourses,
-                    capstoneCourses
+                    microControllerCourses
+                    , generalCpeCourses
+                    , capstoneCourses
+//                    , cscStyleCourses
                     )
                     .flatMap(Collection::stream)
                     .collect(Collectors.toSet());

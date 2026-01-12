@@ -25,13 +25,26 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
         return new Constraint[] {
+
+                /*
+                TODO check for studio lesson switch for them if the lesson has a linker pass them if the lesson is
+                not the lab/act portion of the studio
+                 */
                 // Hard constraints
+                //TODO CHECK Update
                 sameClassSameDays(constraintFactory),
+                //TODO CHECK Update
                 teacherLessonConflict(constraintFactory),
+                //TODO CHECK Update
                 lessonConflict(constraintFactory),
+                //TODO CHECK Update
                 labActRoomConflict(constraintFactory),
+                //TODO CHECK Update
+                //TODO check for studio lesson switch
                 wrongHoursAmount(constraintFactory),
+                //TODO CHECK Update
                 wrongRoomType(constraintFactory),
+                //TODO check for studio lesson switch
                 studioSpace(constraintFactory),
 
                 // Medium Constraints
