@@ -40,7 +40,7 @@ public class Constants {
      */
     public static final HashMap<String, String> COURSE_CONFIGS;
     /**
-     *
+     * Maps a course to a unique ID, this ID will never change. i.e. csc101 -> 1;
      */
     public static final BiMap<String, Integer> COURSE_ID_BIMAP;
     /**
@@ -64,12 +64,14 @@ public class Constants {
      * <i>LEC_ONLY</i> class attribute which is needed to
      * assign a room to lessons that are strictly lecture only
      */
+    //TODO switch to IDs? this const is used during solving
     public static final Set<String> POSSIBLE_ROOMS;
     /**
      * Contains lab/act course names mapped to
      * lab/act rooms those courses are allowed to be in. Courses
      * included should be those that have lab/act room restrictions
      */
+    //TODO we should change this to use the courseID and roomID this const is used during solving
     public static final Map<String, Set<String>> COURSE_TO_ROOMS;
     /**
      * BiMap containing room names mapped to their unique IDs
@@ -78,6 +80,7 @@ public class Constants {
     /**
      * Set of studio style course names
      * */
+    //TODO switch to IDs? this const is used during solving
     public static final Set<String> STUDIO_STYLE_COURSES;
     /**
      * HashMap that maps the teacher name (ex. format FIRST LAST) mapped
@@ -280,5 +283,9 @@ public class Constants {
         }
 
         return instructorNameMapping;
+    }
+
+    static private void setupTest(){
+
     }
 }

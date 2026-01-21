@@ -33,7 +33,7 @@ public class TeacherGenerator extends Generator{
 
 
         if(canonName == null){
-            TeacherGenerator.LOGGER.error(String.format("Couldn't find canon name for %s. SKIPPING", instructorName));
+            LOGGER.error(String.format("Couldn't find canon name for %s. SKIPPING", instructorName));
             return null;
         }
 
@@ -55,7 +55,7 @@ public class TeacherGenerator extends Generator{
         String[] splitName = canonName.split(",");
 
         if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
-            TeacherGenerator.LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
+            LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
             return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
         }
         return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);

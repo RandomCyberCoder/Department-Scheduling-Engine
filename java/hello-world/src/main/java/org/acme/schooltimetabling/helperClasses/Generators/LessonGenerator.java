@@ -17,7 +17,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LessonGenerator extends Generator{
+    public static boolean studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
+    /**
+     * Keeps track of the next available section number available for a course
+     */
     private static final HashMap<String, Integer> COURSE_SECTION_COUNTER;
     /**
      * Holds the next available lesson ID. NOTE use the {@link #nxtLessonID()} function to retrieve the next
@@ -100,18 +104,18 @@ public class LessonGenerator extends Generator{
                 }
 
                 /*split studio style courses*/
-                //TODO don't parse here. parse in the helper just like generate lesson does
                 if (Constants.STUDIO_STYLE_COURSES.contains(courseName)) {
                     Pair<Lesson, Lesson> studio_split = studioHelper(courseName, courseModifier, courseConfig,
                             getTeacher(teacherHashMap, teacherName));
                     if(studio_split != null){
+                        studio_detected = true;
                         lessons.add(studio_split.getKey());
                         lessons.add(studio_split.getValue());
                     }
                 }
                 else{
                     newLesson = generateLesson(teacherHashMap, courseSectionCounter,
-                            course, teacherName, lessonID);
+                            course, teacherName);
                     if(newLesson != null) lessons.add(newLesson);
                 }
             }
@@ -132,15 +136,13 @@ public class LessonGenerator extends Generator{
      * @param courseSectionCounter HashMap of a course name mapped to its next available section number
      * @param course name of the course whose lesson will be created for
      * @param teacherName name of the teacher who will teach the lesson
-     * @param lessonID unique ID of the lesson
      * @return returns a new lesson to be scheduled or null if the lesson will be skipped
      * @see Constants#COURSE_CONFIGS
      * @see Constants#COURSE_ID_BIMAP
      */
     private static Lesson generateLesson(HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
-            String course, String teacherName, int lessonID){
+            String course, String teacherName){
         final Integer NO_LESSON_LINKER = null;
-        String[] courseInformation;
         String courseConfig;
         boolean hasLabOrAct;
         int sectionNumber;
@@ -168,7 +170,7 @@ public class LessonGenerator extends Generator{
         teacher = getTeacher(teacherHashMap, teacherName);
 
         /*create class*/
-        return new Lesson(Integer.toString(lessonID), sectionNumber, courseName,
+        return new Lesson(Integer.toString(nxtLessonID()), sectionNumber, courseName,
                 courseModifier, courseConfig,  teacher, NO_LESSON_LINKER);
     }
 
@@ -337,8 +339,7 @@ public class LessonGenerator extends Generator{
         newConfig = String.format("%d-0-0", lecUnits);
         sectionNumber = COURSE_SECTION_COUNTER.get(name);
         COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        idToUse = nxtLessonID();
-        Lesson lecLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
+        Lesson lecLesson = new Lesson(Integer.toString(nxtLessonID()), sectionNumber, name
                 , modifier, newConfig, teacher, LINKER_ID);
 
 
@@ -351,8 +352,7 @@ public class LessonGenerator extends Generator{
         }
         sectionNumber = COURSE_SECTION_COUNTER.get(name);
         COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        idToUse = nxtLessonID();
-        Lesson labActLesson = new Lesson(Integer.toString(idToUse), sectionNumber, name
+        Lesson labActLesson = new Lesson(Integer.toString(nxtLessonID()), sectionNumber, name
                 , modifier, newConfig, teacher, LINKER_ID);
 
         return new Pair<>(lecLesson, labActLesson);

@@ -17,6 +17,9 @@ public class Lesson {
     private final int NO_HOURS = 0;
     private final int NO_SECTION = -1;
 
+    /**
+     * Planning id
+     */
     @PlanningId
     private String id;
     public String courseName, teacherName, modifiers;
@@ -24,7 +27,7 @@ public class Lesson {
     public boolean hasLecture, hasLabAct;
     public int lec_hours, lab_activity_hours;
     public Teacher teacherObj;
-    private Integer linker;
+    private Integer linker = null;
 
 
     @PlanningVariable
@@ -42,14 +45,34 @@ public class Lesson {
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
 
     /* Test factory methods */
+
+    /**
+     * No linker
+     */
     public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                             String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
                 , timeslot, room);
     }
+    /**
+     * with linker
+     */
+    public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+                                          String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room,
+                                          Integer linker){
+        return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
+                , timeslot, room, linker);
+    }
 
     /* Test constructor(s)*/
-    public Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+
+    private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room, Integer linker){
+        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
+                , timeslot, room);
+        this.linker = linker;
+    }
+    private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
 //        /*calling normal constructor used during setup*/
 //        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj, null);
@@ -76,7 +99,6 @@ public class Lesson {
         this.teacherName = teacherName;
         this.teacherObj = teacherObj;
         this.modifiers = modifiers;
-        this.linker = null;
         /*Populate planning variables*/
         this.timeslot = timeslot;
         this.room = room;
@@ -135,6 +157,9 @@ public class Lesson {
     // Getters and setters
     // ************************************************************************
 
+    /**
+     * @return planning id
+     */
     public String getId() {
         return id;
     }
@@ -178,6 +203,10 @@ public class Lesson {
         return labActSection;
     }
 
+    public boolean isHasLecture() {
+        return hasLecture;
+    }
+
     public boolean isHasLabAct() {
         return hasLabAct;
     }
@@ -196,5 +225,9 @@ public class Lesson {
 
     public Integer getLinker(){
         return linker;
+    }
+
+    public boolean isStudio(){
+        return Constants.STUDIO_STYLE_COURSES.contains(this.courseName);
     }
 }

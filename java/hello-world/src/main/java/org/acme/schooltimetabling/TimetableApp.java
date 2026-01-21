@@ -7,8 +7,6 @@ import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
-import com.google.common.collect.BiMap;
-import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -16,6 +14,7 @@ import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -78,7 +77,8 @@ public class TimetableApp {
 
         /*generate timeslots*/
         LOGGER.info("Creating timeslot objects");
-        timeslotList = TimeslotGenerator.generateTimeslots("constants/possibleTimes.csv");
+        timeslotList = TimeslotGenerator.generateTimeslots(
+                String.format("constants/%s_possibleTimes.csv", ParseInput.scheduleConfig.department));
 
         /*parse schedules*/
         /*read from the file who will be teaching what for this quarter*/
@@ -118,6 +118,8 @@ public class TimetableApp {
         }
 
         storeResults(solution);
+
+        return;
     }
 
     public static void storeResults(Timetable solution) throws Exception{
@@ -137,23 +139,32 @@ public class TimetableApp {
 
             cell = row.createCell(1);
             cell.setCellValue("Course Name");
-            sheet.setColumnWidth(1,6000);
+            sheet.setColumnWidth(1,4000);
 
             cell = row.createCell(2);
-            cell.setCellValue("Has a lab/act");
-            sheet.setColumnWidth(3,6000);
-
-            cell = row.createCell(3);
-            cell.setCellValue("Room");
+            cell.setCellValue("Lesson planning ID");
             sheet.setColumnWidth(2,6000);
 
+
+            cell = row.createCell(3);
+            cell.setCellValue("Linker");
+            sheet.setColumnWidth(3, 2000);
+
             cell = row.createCell(4);
-            cell.setCellValue("Lecture Time");
-            sheet.setColumnWidth(4,10000);
+            cell.setCellValue("Has a lab/act");
+            sheet.setColumnWidth(4,6000);
 
             cell = row.createCell(5);
+            cell.setCellValue("Room");
+            sheet.setColumnWidth(5,6000);
+
+            cell = row.createCell(6);
+            cell.setCellValue("Lecture Time");
+            sheet.setColumnWidth(6,10000);
+
+            cell = row.createCell(7);
             cell.setCellValue("Lab Time");
-            sheet.setColumnWidth(5,10000);
+            sheet.setColumnWidth(7,10000);
         }
 
         for(Lesson lesson: solutionLessons){
@@ -167,17 +178,25 @@ public class TimetableApp {
             cell.setCellValue(lesson.getCourseName());
 
             cell = row.createCell(2);
+            cell.setCellValue(lesson.getId());
+
+            if(lesson.getLinker() != null){
+                cell = row.createCell(3);
+                cell.setCellValue(lesson.getLinker());
+            }
+
+            cell = row.createCell(4);
             cell.setCellValue(lesson.hasLabAct);
 
             if(lesson.getTimeslot() != null && lesson.getRoom() != null){
 
-                cell = row.createCell(3);
+                cell = row.createCell(5);
                 cell.setCellValue(lesson.getRoom().getName());
 
-                cell = row.createCell(4);
+                cell = row.createCell(6);
                 cell.setCellValue(lesson.getTimeslot().toStringLec());
 
-                cell = row.createCell(5);
+                cell = row.createCell(7);
                 cell.setCellValue(lesson.getTimeslot().toStringLabAct());
             }
         }

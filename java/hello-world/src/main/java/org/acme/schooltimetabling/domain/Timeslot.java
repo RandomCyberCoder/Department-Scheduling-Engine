@@ -4,14 +4,10 @@ import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 
-import java.sql.Time;
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Timeslot {
 
@@ -29,7 +25,15 @@ public class Timeslot {
     /*I should make these days into a class or something*/
     private EnumSet<Days> lecDays;
     private EnumSet<Days> nonLecDays;
+    /**
+     * Amount of hours per day in portion one of this timeslot;
+     * usually for lecture but possibly for studio space
+     */
     public float lecHours;
+    /**
+     * Amount of hours per day in the second portion of this timeslot if any;
+     * currently used only for lab/act
+     */
     private float labActHours;
     public float totalHours;
     public float totalHours2;
@@ -66,7 +70,7 @@ public class Timeslot {
      * @param labDays
      * @return
      */
-    public static Timeslot test_lacLabBitAndDays(int ID, BitSet lecBitSet, BitSet labActBitSet
+    public static Timeslot test_lecLabBitAndDays(int ID, BitSet lecBitSet, BitSet labActBitSet
             , EnumSet<Days> lecDays , EnumSet<Days> labDays){
         return new Timeslot(ID, lecBitSet, labActBitSet, lecDays, labDays);
     }
@@ -234,6 +238,8 @@ public class Timeslot {
         if(!onlyLec){
             this.allTimesBitSet.or(this.labActBitSet);
         }
+
+        //TODO we could add some logic here to verify the timeslot. When others besides me make the timeslots
     }
 
 
@@ -269,6 +275,32 @@ public class Timeslot {
         buildLecRep.append(" - ").append(endTime.toString());
 
         return buildLecRep.toString();
+    }
+
+    /**
+     * <p>Check that is timeslot is continuous; i.e. timeslot is for one day and the time
+     * is dedicated to either a lab or lecture.</p>
+     * <p>NOTE: if the timeslot was read in having two slots. Then it will auto be marked
+     * as not continuous even if the time is back to back. Assumed they are meant for separate
+     * portions of a course; i.e. lecture and labs</p>
+     * <p>NOTE: if the timeslot is only one hour long on a single days it won't be marked as continuous</p>
+     * @return True if continuous; Otherwise false. One hour long (continuous) single day timeslots are marked
+     * as not continuous;
+     */
+    public boolean isContinuous(){
+        if(lecDays.size() != 1 || !nonLecDays.isEmpty()) return false;
+
+        BitSet potentialBitSet = lectureBitSet;
+        int indexFirstBit = potentialBitSet.nextSetBit(0);
+        int cardinality = potentialBitSet.cardinality();
+        BitSet mask = new BitSet();
+        mask.set(indexFirstBit, indexFirstBit + cardinality);
+        mask.and(potentialBitSet);
+
+        if(cardinality <= 2) return false;
+
+        return mask.cardinality() == cardinality;
+
     }
 
     // ************************************************************************

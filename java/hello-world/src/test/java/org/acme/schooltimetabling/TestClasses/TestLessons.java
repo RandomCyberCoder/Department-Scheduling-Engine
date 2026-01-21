@@ -100,6 +100,8 @@ public class TestLessons {
                         .map(lesson -> (Executable) () -> {
                             //checks for a specific lesson
                             assertAll("Checking studio course",
+                                    //checks that studio courses have a link
+                                    () -> assertNotNull(lesson.getLinker()),
                                     //check if lesson's link has a pair already
                                     () -> assertFalse(linked.contains(lesson.getLinker())),
                                     //check for pair
@@ -124,4 +126,5 @@ public class TestLessons {
                             );
                 }).toList());
     }
+
 }

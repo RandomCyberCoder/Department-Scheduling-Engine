@@ -7,16 +7,16 @@ import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.LogSetUp;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.*;
 
 import java.time.Duration;
-import java.util.BitSet;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.*;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final float FLOAT_TIME_DELTA = 0.01f;
@@ -24,35 +24,38 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     /*TODO For the linker I think this should be a special case to handle in the constraint */
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
-        return new Constraint[] {
 
-                /*
-                TODO check for studio lesson switch for them if the lesson has a linker pass them if the lesson is
-                not the lab/act portion of the studio
-                 */
-                // Hard constraints
-                //TODO CHECK Update
-                sameClassSameDays(constraintFactory),
-                //TODO CHECK Update
-                teacherLessonConflict(constraintFactory),
-                //TODO CHECK Update
-                lessonConflict(constraintFactory),
-                //TODO CHECK Update
-                labActRoomConflict(constraintFactory),
-                //TODO CHECK Update
-                //TODO check for studio lesson switch
-                wrongHoursAmount(constraintFactory),
-                //TODO CHECK Update
-                wrongRoomType(constraintFactory),
-                //TODO check for studio lesson switch
+        //studio class specific constraints
+        Constraint[] studioConstraint = new Constraint[]{
                 studioSpace(constraintFactory),
+                studioLabAfterLesson(constraintFactory),
+        };
+
+        //mutability
+        List<Constraint> solver_constraints = new ArrayList<>(Arrays.asList(
+                // Hard constraints
+                sameClassSameDays(constraintFactory),
+                teacherLessonConflict(constraintFactory),
+                lessonConflict(constraintFactory),
+                labActRoomConflict(constraintFactory),
+                wrongHoursAmount(constraintFactory),
+                wrongRoomType(constraintFactory),
 
                 // Medium Constraints
 
                 // Soft constraints
                 outPrimeTime(constraintFactory),
                 inPrimeTime(constraintFactory)
-        };
+        ));
+
+        //add studio specific constraints for studio courses
+        if(LessonGenerator.studio_detected){
+            LogSetUp.LOGGER.info("Studio classes detected. Adding studio specific constraints.");
+            solver_constraints.addAll(Arrays.asList(studioConstraint));
+        }
+        else LogSetUp.LOGGER.info("No studio classes detected, leaving out studio specific constraints");
+
+        return solver_constraints.toArray(new Constraint[0]);
     }
 
 
@@ -60,9 +63,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
      * <p>This constraint makes sure if an instructor is teaching multiple instances of a course that
      * they all land on the same day. This is essential because teaching different instances of a course
      * on different schedules is a nightmare for the instructor to plan out.</p>
-     *
-     * <p>This currently doesn't take into account the possibility of labs being scheduled on different
-     * days... should it???</p>
      *
      * @param constraintFactory constraint factory
      * @return constraint
@@ -73,6 +73,14 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
                     Joiners.equal(Lesson::getCourseID))
                 .filter((lesson, lesson2) -> {
+                    //TODO (STUDIO) CHECK the following assumption w/ Beard
+                    //for studio style classes we only care about the lecture portion, skip lab/act portion
+                    if(lesson.isStudio() && lesson.isHasLabAct() ||
+                            lesson2.isStudio() && lesson2.isHasLabAct()){
+                        return false;
+                    }
+
+                    //compare only lecture days
                     EnumSet<Days> l1Days = lesson.getTimeslot().getLecDays();
                     EnumSet<Days> l2Days = lesson2.getTimeslot().getLecDays();
                     return l1Days.contains(Days.MONDAY) != l2Days.contains(Days.MONDAY) ||
@@ -86,14 +94,13 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
 
+
+
     /**
      * <p>This constraint checks if the lesson timeslot overlaps with the instructors conflict
-     * bitset. If it does it will be penalized with ONE_HARD</p>
+     * bitset. If it does it will be penalized with ONE_HARD.</p>
      *
-     * <p>NOTE: need to think about this more now that a timeslot can have space between... maybe
-     * add an xor for faculty that need the dead space that can be possible or make this constraint
-     * smarter and check the lab/lec timeslots individually; maybe or the lab&lec timeslot and the AND
-     * it with alltimeslot? ... idk</p>
+     * <p>This only checks for the lecture and lab bitsets. This takes into account gaps.</p>
      *
      * @param constraintFactory constraint factory
      * @return constraint
@@ -103,32 +110,23 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .forEach(Lesson.class)
                 .filter(lesson -> {
                     BitSet bitset = new BitSet();
-                    /*TODO: this bitset takes into account gaps in the bitset
-                    *  that are built in. We might need a lecture and lab bitset
-                    *  instead and take into account the gap in this constraint or
-                    *  another somehow*/
-                    bitset.or(lesson.getTimeslot().allTimesBitSet);
+
+                    //Use lecture and lab/act bitset rather than the "All" bitset to not take into account gaps
+                    bitset.or(lesson.getTimeslot().getLectureBitSet());
+                    bitset.or(lesson.getTimeslot().getLabActBitSet());
+
                     bitset.and(lesson.getTeacherObj().getConflict());
-                    return (bitset.cardinality() > 0);
+                    return bitset.cardinality() > 0;
                 })
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("TimeSlot conflicts with teacher's availability (hard no)");
     }
 
-    /*make a bit mask for constraints in these next two comments .... might actually not be needed*/
 
-    /*make a constraint for teachers checking if they have a conflict */
+
 
     /**
-     * <p>Checks that a teacher isn't teaching two classes at the same time.</p>
-     *
-     * Personal NOTE: Currently I am checking for allTimeBitset which can include breaks. i.e
-     * lec+lab time may only be 6hrs but the timeslot has 7 hours. Imagine the hour gap on tuesdays
-     * and thursdays.
-     * Revisit this later. I'm pretty sure the way right now is okay, but good to note
-     *
-     *
-     *
+     * <p>Checks that a teacher isn't teaching two lessons at the same time.</p>
      */
     Constraint lessonConflict(ConstraintFactory constraintFactory){
         return constraintFactory
@@ -144,18 +142,18 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Teacher found teaching more than one course at the same time");
     }
 
-    /*consider making a constraint where a non lab/activity courses have the general room
-    * assigned to them OR will this be handled by the other constraints OR make a constraint
-    * where we make sure lessons are given the right room. i.e. lecture only courses have the
-    * general room and the lab/activity rooms have appropriate room*/
 
-    /*make a constraint for room conflicts; each day should be a seperate event*/
 
-    //problem being solved: check if two lessons are in the same room at the same time.
-        //check if on the same day. If yes check if they overlap
 
-    //what we have: a act/lab bitset
-    //question: do we need to filter out timeslots that don't hav lab
+    /*TODO Pretty sure this is covered: make a constraint for room conflicts; each day should be a separate event*/
+
+    /**
+     * This constraint will penalize any unique pairs of lessons (w/ lab/act) that use the same room
+     * at the same time
+     *
+     * @param constraintFactory - constraint factory
+     * @return constraint for one lesson in a room at a time
+     */
     Constraint labActRoomConflict(ConstraintFactory constraintFactory){
         return constraintFactory
                 //for each lesson
@@ -168,10 +166,21 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                             return lesson.isHasLabAct() && lesson2.isHasLabAct();
                         }))
                 .filter((lesson, lesson2) -> {
-                    Timeslot t1 = lesson.getTimeslot();
-                    Timeslot t2 = lesson2.getTimeslot();
+                    BitSet bitSet1;
+                    BitSet bitSet2;
 
-                    return t1.getLabActBitSet().intersects(t2.getLabActBitSet());
+                    //pseudocode
+                    /*(if) the first one is a studio course we look at the first bitset (currently called the lecture
+                    bitset. We worry about the right timeslot being assigned in the "wrongHoursAmount constraint*/
+                    /*(else) if not a studio course then we check like normal for the lab/act bitset*/
+                    if(lesson.isStudio()) bitSet1 = lesson.getTimeslot().getLectureBitSet();
+                    else bitSet1 = lesson.getTimeslot().getLabActBitSet();
+
+                    /*same if else logic here for the studio room*/
+                    if(lesson.isStudio()) bitSet2 = lesson2.getTimeslot().getLectureBitSet();
+                    else bitSet2 = lesson2.getTimeslot().getLabActBitSet();
+
+                    return bitSet1.intersects(bitSet2);
                 })
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Lab or Activity room conflict");
@@ -194,9 +203,29 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         return constraintFactory
                 .forEach(Lesson.class)
                 .filter(lesson -> {
-                    EnumSet<Days> lDays = lesson.getTimeslot().getLecDays();
-                    EnumSet<Days> nonLDays = lesson.getTimeslot().getNonLecDays();
+                    /*
+                    TODO will have to assign the timeslot differently for studio courses only. for lecture only we also
+                     have to add logic to prevent it being given a time slot that has all the time on just one day*/
                     final Timeslot ts = lesson.getTimeslot();
+                    //Special case for lab split for studio courses
+                    if(lesson.isStudio() && lesson.isHasLabAct()){
+                        //lab/act portion of studio course should be continuous; PENALTY if not
+                        if(!ts.isContinuous()) return true;
+                        float ts_hours = ts.getLecHours();
+
+                        float diff = Math.abs(lesson.getLab_activity_hours() - ts_hours);
+
+                        return diff > FLOAT_TIME_DELTA;
+                    }
+
+                    /*Only studio courses should have continuous time. Prevent lecture only courses
+                    from taking studio timeslots; PENALTY*/
+                    if(ts.isContinuous()) return true;
+
+                    /*tests course with only lecture; tests course that has lecture and lab that can be scheduled
+                    * normally, basically not a studio course. Tests the lecture lesson portion of a studio course split*/
+                    EnumSet<Days> lDays = ts.getLecDays();
+                    EnumSet<Days> nonLDays = ts.getNonLecDays();
 
                     float tsLecHrs = ts.getLecHours();
                     tsLecHrs *= lDays.size();
@@ -204,15 +233,22 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot
-                    return !(Math.abs(lesson.lec_hours - tsLecHrs) < FLOAT_TIME_DELTA)
-                            || !(Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <  FLOAT_TIME_DELTA);
+                    return !(Math.abs(lesson.lec_hours - tsLecHrs) <= FLOAT_TIME_DELTA)
+                            || !(Math.abs(lesson.lab_activity_hours - tsLabActHrs)  <=  FLOAT_TIME_DELTA);
                 })
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .justifyWith((lesson, score) -> new WrongHoursAmountJustification(lesson))
                 .asConstraint("Lesson's timeslot must have exact time needed");
     }
 
-    /*constraint: certain lab courses must be in certain rooms*/
+    /**
+     * <p>Make sure the lessons are in the correct room. If the lesson has a lab/act we make sure it is placed
+     * in a lab room. If the lesson is lecture only the we make sure it is placed in the lecture room (aka the
+     * universal/general) room. Lecture rooms assumed to be "infinite"</p>
+     *
+     * @param constraintFactory constraint factory
+     * @return constraint penalizing lessons in the wrong room
+     */
     Constraint wrongRoomType(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
@@ -221,7 +257,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     if(lesson.isHasLabAct()){
                         /*certain labs/acts can only be in certain rooms*/
                         if(Constants.COURSE_TO_ROOMS.containsKey(lesson.getCourseName())){
-                            //check that the room the lesson is given is in the list of valid rooms
+                            //check that the room the lesson is in the set of valid rooms
                             Set<String> validRooms = Constants.COURSE_TO_ROOMS.get(lesson.getCourseName());
                             return !validRooms.contains(room.getName());
                         }
@@ -240,12 +276,95 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Lesson with wrong room type");
     }
 
+
+
+
+    /**
+     * Checks studio courses' lab/act portion occurs on one day with consecutive time
+     * @param constraintFactory constraint factory
+     * @return constraint penalizing studio courses not using studio time
+     */
+    Constraint studioSpace(ConstraintFactory constraintFactory){
+        return  constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    //only check lab/act portion of the studio style split
+                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) ||
+                            !lesson.isHasLabAct() ||
+                            Constants.TESTING) return false;
+
+//                    if(lesson.getTimeslot().getLecDays().size() != 1 ||
+//                            !lesson.getTimeslot().getNonLecDays().isEmpty()) return true;
+//
+//
+//                    //make sure time is consecutive on the day
+//                    BitSet potentialBitSet = lesson.getTimeslot().lectureBitSet;
+//                    int indexFirstBit = potentialBitSet.nextSetBit(0);
+//                    int cardinality = potentialBitSet.cardinality();
+//                    BitSet mask = new BitSet();
+//                    mask.set(indexFirstBit, indexFirstBit + cardinality);
+//                    mask.and(potentialBitSet);
+//
+//                    return mask.cardinality() != cardinality;
+
+
+                    //"lecture" portion will be used for lab/act space
+                    //The timeslot should only have the lecture portion set. For a single day
+                    return !lesson.getTimeslot().isContinuous();
+
+                })
+                .penalize(HardMediumSoftScore.ONE_HARD)
+                .asConstraint("Studio space must be consecutive on a single day");
+    }
+
+
+    /**
+     * For studio courses, it makes sure that at least one lecture occurs before the lab occurs
+     * //TODO check with beard. Not sure if this is actually a thing but leaving it here just in case
+     * @param constraintFactory
+     * @return constraint penalizing studio courses that have their lab time before any lecture has taken place
+     */
+    Constraint studioLabAfterLesson(ConstraintFactory constraintFactory){
+        //filter for studio only courses
+        //just check the first bit of the lab vs lec bitset. if lab comes before penalty
+        return constraintFactory.forEachUniquePair(Lesson.class,
+                        Joiners.equal(Lesson::getLinker),
+                        //skip non-studio classes
+                        Joiners.filtering((lesson, lesson2) -> lesson.isStudio() && lesson.isStudio())
+                )
+                .filter((lesson, lesson2) -> {
+                    //NOTE: one lesson will be the lec and the other one will be the lab/act
+
+                    //if first lesson is the lec, get the lecture bitset else use lesson2's bitset
+                    final BitSet lecBS = lesson.isHasLecture() ? lesson.getTimeslot().getLectureBitSet() :
+                            lesson2.getTimeslot().getLectureBitSet();
+                    //if first lesson is the lab, get the lecture (yes the lecture) bitset else use lesson2's bitset
+                    final BitSet labBS = lesson.isHasLabAct() ? lesson.getTimeslot().getLectureBitSet() :
+                            lesson2.getTimeslot().getLectureBitSet();
+
+                    return labBS.nextSetBit(0) <= lecBS.nextSetBit(0);
+                })
+                .penalize(HardMediumSoftScore.ONE_HARD)
+                .asConstraint("Studio Penalty: lab before all lecture");
+    }
+
+
     /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours
      * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf
      * lets make this a positive score and */
+
+    /**
+     * Rewards 30-minute blocks of lecture time outside prime time.
+     *
+     * @param constraintFactory constraint factory
+     * @return constraint rewarding lecture time out of prime time
+     */
     Constraint outPrimeTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
+                    if(!lesson.hasLecture) return false;
+
+                    /*if the lesson has a lecture then we are guaranteed lecture bitset is being
+                     * used for the lecture portion*/
                     BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
                     BitSet copy = lecBitSet.get(0
                             , lecBitSet.length());
@@ -266,9 +385,19 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
 
+    /**
+     * Penalizes 30-minute blocks of lecture time in prime time
+     *
+     * @param constraintFactory constraint factory
+     * @return constraint penalizing lecture time in prime time
+     */
     Constraint inPrimeTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
+                    if(!lesson.hasLecture) return false;
+
+                    /*if the lesson has a lecture then we are guaranteed the lecture bitset is being
+                    * used for the lecture portion*/
                     BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
                     BitSet copy = lecBitSet.get(0
                             , lecBitSet.length());
@@ -288,27 +417,4 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Penalizing for being in prime time");
     }
 
-
-    Constraint studioSpace(ConstraintFactory constraintFactory){
-        return  constraintFactory.forEach(Lesson.class)
-                .filter(lesson -> {
-                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) &&
-                    !Constants.TESTING) return false;
-
-                    if(!lesson.isHasLabAct()) return false;
-
-                    if(lesson.getTimeslot().getNonLecDays().size() != 1) return true;
-
-                    BitSet labActBitSet = lesson.getTimeslot().getLabActBitSet();
-                    int indexFirstBit = labActBitSet.nextSetBit(0);
-                    int cardinality = labActBitSet.cardinality();
-                    BitSet mask = new BitSet();
-                    mask.set(indexFirstBit, indexFirstBit + cardinality);
-                    mask.and(labActBitSet);
-
-                    return mask.cardinality() != cardinality;
-                })
-                .penalize(HardMediumSoftScore.ONE_HARD)
-                .asConstraint("Studio space must be consecutive");
-    }
 }
