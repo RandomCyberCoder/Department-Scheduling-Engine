@@ -21,7 +21,6 @@ import java.util.*;
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final float FLOAT_TIME_DELTA = 0.01f;
 
-    /*TODO For the linker I think this should be a special case to handle in the constraint */
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
@@ -145,10 +144,8 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
 
 
-    /*TODO Pretty sure this is covered: make a constraint for room conflicts; each day should be a separate event*/
-
     /**
-     * This constraint will penalize any unique pairs of lessons (w/ lab/act) that use the same room
+     * This constraint will penalize any unique pair of lessons (w/ lab/act) that use the same room
      * at the same time
      *
      * @param constraintFactory - constraint factory
