@@ -4,6 +4,7 @@ import org.apache.poi.hssf.record.CFHeaderRecord;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STUnsignedDecimalNumber;
 
 import java.time.LocalTime;
+import java.time.temporal.ChronoField;
 import java.util.BitSet;
 import java.time.LocalDateTime;
 import java.time.DayOfWeek;
@@ -51,26 +52,16 @@ public class BitSetHelper {
      * @throws Exception
      */
     public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days) throws Exception{
+        final int LST_POSSIBLE_HR = 22;
+        final int FIRST_POSSIBLE_HR = 7;
+        /* Each hour has two 30-minute blocks*/
+        final int HOUR_OFFSET = 2;
         BitSet bitSet = new BitSet();
-        int dayOffset = switch (startTime.getHour()) {
-            case 7 -> 0; // 7 AM
-            case 8 -> 2;
-            case 9 -> 4;
-            case 10 -> 6;
-            case 11 -> 8;
-            case 12 -> 10;
-            case 13 -> 12;
-            case 14 -> 14;
-            case 15 -> 16;
-            case 16 -> 18;
-            case 17 -> 20;
-            case 18 -> 22;
-            case 19 -> 24;
-            case 20 -> 26;
-            case 21 -> 28; //9 PM
-            default ->
-                    throw new Exception(String.format("There was an error reading the time '%s'", startTime.toString()));
-        };
+        //TODO so it's not so wierd of mapping values. Do math such as hour-7 and multiply by 2 to get offset
+        int startHour = startTime.getHour();
+        if(startHour < FIRST_POSSIBLE_HR || startHour > LST_POSSIBLE_HR) throw new Exception(String.format(
+                "There was an error reading the time '%s'", startTime));
+        int dayOffset = (startHour - FIRST_POSSIBLE_HR) * HOUR_OFFSET;
 
         /* This offset is used mostly for testing*/
         /* Move offset forward one bit for offset if the time starts 30 minutes after the hour*/
