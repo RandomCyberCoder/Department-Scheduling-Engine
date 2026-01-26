@@ -150,7 +150,7 @@ public class TeacherGenerator extends Generator{
      * @return valid teacher ID
      * @see Teacher
      */
-    static int getNextTeacherID(){
+    static public int getNextTeacherID(){
         return nextTeacherID++;
     }
 }
