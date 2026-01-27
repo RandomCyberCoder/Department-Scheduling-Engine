@@ -9,7 +9,7 @@ import pandas as pd
 from ..models import Teacher
 from ..serializer import TeacherSerializer, FileUploadSerializer
 from .helper.history_helpers import history_save_name
-from .helper.teacher_helpers import valid_file_extension, tsv_to_df
+from .helper.file_reader import file_to_df
 from .helper.query_helpers import generate_Q_objects
 from django.core import serializers
 
@@ -25,6 +25,8 @@ def get_teachers(request):
     :param request: payload request
     """
     department = request.query_params.get("department")
+    # faculty = request.query_param.get("faculty")
+    # all_flag = request.query_param.get("all_flag")
     if department is not None:
         if department.lower() not in VALID_DEPARTMENTS:
             return Response({"error": f"valid departments are: {VALID_DEPARTMENTS}"},
@@ -81,7 +83,7 @@ def create_teacher(request):
 
 
 
-
+#TODO add the possibility for a facutly field as well. it will be easier to use I think if so
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
 def teachers_file_upload(request):
@@ -98,38 +100,30 @@ def teachers_file_upload(request):
         _type_: _description_
     """
     #we allow for csv files or excel files; various different excel extensions
-    valid_extensions = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
+    VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
     serializer = FileUploadSerializer(data=request.data)
     if serializer.is_valid():
+        FILE = serializer.validated_data["file"]
         try:
-            file = serializer.validated_data["file"]
-
-            if not valid_file_extension(file.name, valid_extensions):
-                return Response(
-                    {"error": f"Invalid file type. Allowed file types are: {valid_extensions}"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            extension = file.name.split(".")[-1].lower()
-            if extension not in valid_extensions:
-                raise APIException(detail=f"file extension not allowed. Valid extensions are {valid_extensions}",
-                                   code=status.HTTP_400_BAD_REQUEST)
-            if extension == "csv":
-                df = pd.read_csv(file)
-            elif extension == 'tsv':
-                df = tsv_to_df(file)
-            else:
-                df = pd.read_excel(file)
-
-            #allow for canon name to be titled either as 'name' or 'non_canon'
-            if "name" not in df.columns and "non_canon" not in df.columns or "canon" not in df.columns:
-                return Response(
-                    {"error": f"File : {valid_extensions}"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )  
+            df = file_to_df(FILE, VALID_EXTENSIONS)
+        except APIException as e:
+            return Response({
+                "msg": f"{e}"},
+            status=status.HTTP_406_NOT_ACCEPTABLE)
         except Exception as e:
-            return Response({"error": f"problem reading the file {file.name}",
+            return Response({"error": f"problem reading the file {FILE.name}",
                              "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        #allow for canon name to be titled either as 'name' or 'non_canon'
+        if (("name" not in df.columns and "non_canon" not in df.columns) 
+            #prevent both being present
+            or ("name" in df.columns and "non_canon" in df.columns) 
+            or "canon" not in df.columns):
+            return Response(
+                {"error": ("Name column(s) not found. A column with the name 'non_canon' or 'name' and a column"
+                 " with the name 'canon' must exist")}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )  
             
         non_canon_col = "name"
         email_present = False
@@ -190,7 +184,7 @@ def teachers_file_upload(request):
 
 
 
-
+#NOTE i don't plan to support this endpoint
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @parser_classes([JSONParser])
 def update_teacher(request, pk):
@@ -217,6 +211,7 @@ def update_teacher(request, pk):
     if request.method == 'GET':
         print("get endpoint")
         serializer = TeacherSerializer(teacher)
+        print(f"data from get: {serializer.data}")
         return Response({"success": "Teacher object retrieved",
                          "data": serializer.data},
                          status.HTTP_200_OK)
@@ -271,7 +266,7 @@ def set_faculty(request):
         
 
 
-    valid_extensions = ["csv", "tsv"]
+    VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
     serializer = FileUploadSerializer(data=request.data)
 
     if not serializer.is_valid():
@@ -279,22 +274,21 @@ def set_faculty(request):
                     "msg": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'PATCH':
-        file = serializer.validated_data["file"]
- 
-        if not valid_file_extension(file.name, valid_extensions):
-            return Response({"error": f"Invalid file type. Allowed file types are: {valid_extensions}"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        FILE = serializer.validated_data["file"]   
+        
+        try:
+            faculty_df = file_to_df(FILE, VALID_EXTENSIONS)
+        except APIException as e:
+            return Response({"error": f"{e}"}, 
+                status=status.HTTP_406_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"problem reading the file {FILE.name}",
+                             "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        extension = file.name.split(".")[-1]        
         updates = []
         updates_teacher = []
         failed = []
 
-        if extension == "csv":
-            faculty_df = pd.read_csv(file)
-        elif extension == "tsv":
-            faculty_df = tsv_to_df(file)
 
         if invalid_df(faculty_df):
             return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
@@ -406,7 +400,8 @@ def teacher_bulk_update(request):
             
             if serializer.is_valid():
                 serializer.save()
-                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}"})
+                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}",
+                                "teacher_data": serializer.data})
                 #save new names in history table
                 if "canon" in update_data:
                     history_save_name(teacher, update_data["canon"], True)
@@ -416,9 +411,6 @@ def teacher_bulk_update(request):
                 failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
                         "error": f"{serializer.errors}"})
         except Exception as e:
-            #failure could occur due to duplicating a field, invalid data, or 2+ objects found for query
-            # print("--------------------------------------------------------------------------------")
-            # print(traceback.format_exc())
             failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
                         "error": f"{e}"})
 

@@ -42,7 +42,6 @@ def find_teacher(canon=None, non_canon=None, email=None) -> Teacher:
         return teachers_found.first() 
     else:
         #if not teacher found in the Teacher's table, fall back to the history table
-        #TODO check what happens with empty canon and non_canon; make sure it works as intended
         query = Q()
         for value in [canon, non_canon]:
             if value is not None:
@@ -62,8 +61,7 @@ def find_teacher(canon=None, non_canon=None, email=None) -> Teacher:
 
 
 
-
-#TODO test find_survey func    
+ 
 def find_survey(term: str, teacher: Teacher) -> Survey | None:
     try:
         #throws error if no unique object is found

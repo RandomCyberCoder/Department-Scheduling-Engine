@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import pandas as pd
 from ..models import Survey
 from ..serializer import TeacherSerializer, SurveyFileSerializer, SurveySerializer
-from .helper.teacher_helpers import valid_file_extension
+from .helper.file_reader import file_to_df
 from .helper.survey_helpers import find_teacher, find_survey
 
 @api_view(["GET"])
@@ -50,7 +50,6 @@ def survey_base_endpoint(request: Request) -> Response:
 
 
     PARM_NAME = request.query_params.get("name")
-    print(PARM_NAME)
     PARM_TERM = request.query_params.get("term")
     PARM_EMAIL = request.query_params.get("email")
     #if all query params should be true
@@ -120,9 +119,6 @@ def survey_file_upload(request: Request) -> Response:
         Response: payload indicating what survey entries where created/updated or failed
     """
 
-    #TODO file reading code is duplicated. teachers_file_upload uses this as well
-    #read and validate file
-    valid_extensions = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
     #note that the name in the survey is expected to be the non-canon name
     #field names have the same name as the model field names
     AVAIL_FIELDS = ["mwf_7_am", "mwf_8_am", "mwf_9_am", "mwf_10_am", "mwf_11_am", "mwf_12_pm", "mwf_1_pm", "mwf_2_pm",
@@ -154,26 +150,12 @@ def survey_file_upload(request: Request) -> Response:
     print(serializer.data)
     print(serializer.validated_data)
     try:
+        VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
         FILE = serializer.validated_data["file"]
         CUR_TERM = serializer.validated_data["cur_term"]
         PREV_TERM = serializer.validated_data["prev_term"]
 
-        if not valid_file_extension(FILE.name, valid_extensions):
-            return Response(
-                {"error": f"Invalid file type. Allowed file types are: {valid_extensions}"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        extension = FILE.name.split(".")[-1].lower()
-        if extension not in valid_extensions:
-            raise APIException(detail=f"file extension not allowed. Valid extensions are {valid_extensions}",
-                                code=status.HTTP_400_BAD_REQUEST)
-        if extension == "csv":
-            df = pd.read_csv(FILE)
-        elif extension == 'tsv':
-            df = pd.read_csv(FILE, sep="\t")
-        else:
-            df = pd.read_excel(FILE)
+        df = file_to_df(FILE, VALID_EXTENSIONS)
         
         #check number of columns expected
         if len(df.columns) != len(REPLACEMENT_FIELDNAMES):
@@ -211,22 +193,33 @@ def survey_file_upload(request: Request) -> Response:
     
     success = []
     failed = []
-    '''
-    NOTE Beard sometimes fills out surveys for other profs. This means Beard's email will apear for other professors.
-    Using email for lookup is not reliable
-    '''
     for idx, row in df.iterrows():
         try:
             #package survey entry
             #NOTE garunteed name field
             data = {k: v for k, v in zip(DATA_FIELDS, row)}
-            SURVEY_NAME = data[NAME_FIELD]
+            SURVEY_NAME = data[NAME_FIELD].strip()
             BLEED_SURVEY = BLEED_FORWARD_STRING == data[BLEEDS_FORWARD_FIELD]
             if SURVEY_NAME == "":
-                failed.append({})
+                failed.append({
+                    "msg": "Survey entry had no name",
+                    "teacher_file_idx": idx
+                })
+                continue
+            #SKIP generic timeslots
+            if "generic" in SURVEY_NAME.lower():
+                failed.append({
+                    "msg": f"SKIPPED: survey entry with name '{SURVEY_NAME}' skiped to being GENERIC",
+                    "teacher_file_idx": idx,
+                })
+                continue
+
 
             #find a teacher entity for given name (assumes name is non_canon)
             query_gen_dict = {"non_canon": SURVEY_NAME}
+            #NOTE beard said he would email fields
+            if(data["email"] != ""):
+                query_gen_dict["email"] = data["email"] 
             #raises an exception if nothing is found
             teacher = find_teacher(**query_gen_dict)
             teacher_serializer = TeacherSerializer(teacher)
@@ -244,7 +237,6 @@ def survey_file_upload(request: Request) -> Response:
                 prev_survey = find_survey(PREV_TERM, teacher)
                 #skip entry creation if no previous survey was found
                 if prev_survey is None:
-                    # raise Exception("suvery bled forward, but no previous survey found")
                     failed.append({"msg": f"suvery bled forward, but no previous survey found for the {PREV_TERM} term",
                                 "teacher_file_idx": idx,
                                 "teacher": teacher_serializer.data})

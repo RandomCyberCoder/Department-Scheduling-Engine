@@ -2,8 +2,6 @@ from django.db import models
 from .model_validators.survey_validators import avail_vailidator, pref_validator, term_checker
 from django.db.models import UniqueConstraint
 
-#TODO MIGRATE CHANGES
-# Create your models here.
 class Teacher(models.Model):
     canon = models.CharField(max_length=100, unique=True)
     non_canon = models.CharField(max_length=100, unique=True)
@@ -47,15 +45,10 @@ class Survey(models.Model):
     #start
 
     #fields for relationships
+    #TODO not sure if we actually want this to be null. Maybe no teacher object?
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
     cur_term = models.CharField(validators=[term_checker])
     prev_term = models.CharField(validators=[term_checker])
-    '''
-    TODO not sure about deleting on cascade here. Maybe just insert values of old survey into here
-    current implementation just uses the entire old survey som maybe replacing is okay
-    '''
-    # survey_bled = models.ForeignKey('Survey', on_delete=models.CASCADE)
-
 
     #survey realted fields
     email = models.EmailField(null=True)
