@@ -3,7 +3,9 @@ package org.acme.schooltimetabling.apiCalls.surveyEndpoint;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.acme.schooltimetabling.TimetableApp;
+import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
@@ -23,12 +25,15 @@ public class SurveyRecord {
             "tr_7_am", "tr_8_am", "tr_9_am", "tr_10_am", "tr_11_am", "tr_12_pm", "tr_1_pm", "tr_2_pm",
             "tr_3_pm", "tr_4_pm", "tr_5_pm", "tr_6_pm", "tr_7_pm", "tr_8_pm", "tr_9_pm"
     );
+    private Teacher teacher_rep = null;
     @JsonProperty("id")
     private int surveyID;
     @JsonProperty("name")
     private String nonCanonName;
     @JsonProperty("teacher_id")
     private int teacherFK;
+    @JsonProperty("teacher_detail")
+    private TeacherRecord teacherRecord;
     /**All extra Json properties not captured by class members with the @JsonProperty tag will
      * be placed into this variable*/
     private Map<String, Object> extraFields = new HashMap<>();
@@ -48,7 +53,18 @@ public class SurveyRecord {
         return extraFieldKeys.size() == timePrefKeys.size();
     }
 
+    /**
+     * Only one Teacher(or Faculty) object will be if and only if this function is called. The class
+     * will hold on to the created object to prevent the teacher from existing multiple times.
+     * @return
+     * @throws Exception
+     */
     public Teacher toTeacher() throws Exception{
+        if(teacher_rep == null) teacher_rep = createTeacherRep();
+        return  teacher_rep;
+    }
+
+    private Teacher createTeacherRep()throws Exception{
         BitSet conflict = new BitSet();
         BitSet preferences = new BitSet();
         BitSet acceptable = new BitSet();
@@ -67,8 +83,9 @@ public class SurveyRecord {
                 conflict.or(bsRep);
             }
         }
-
-        return new Teacher(TeacherGenerator.getNextTeacherID(), nonCanonName, preferences, acceptable, conflict);
+        Teacher teacher = new Teacher(TeacherGenerator.getNextTeacherID(), nonCanonName, preferences, acceptable, conflict);
+        if(teacherRecord.isFaculty()) teacher = new Faculty(teacher);
+        return teacher;
     }
 
     private BitSet fieldNameToBitSet(String fieldName) throws Exception{

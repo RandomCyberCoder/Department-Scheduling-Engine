@@ -22,7 +22,7 @@ public class TeacherCalls {
         getAllTeachers();
     }
 
-    public static List<Teacher> getAllTeachers() throws Exception{
+    public static List<TeacherRecord> getAllTeachers() throws Exception{
         TeacherService service = ApiConstants.retrofit.create(TeacherService.class);
         Call<List<TeacherRecord>> callSync = service.getTeachers(ImmutableMap.of(
 //                example of query param
@@ -30,16 +30,8 @@ public class TeacherCalls {
         ));
 
         Response<List<TeacherRecord>> response = callSync.execute();
-        List<TeacherRecord> records = response.body() != null ? response.body() : Collections.emptyList();
 
-        List<Teacher> teachers = new ArrayList<>();
-        for(TeacherRecord record: records){
-            //teacher hash map -> pk
-
-        }
-//        ImmutableMap.of
-        return teachers;
-
+        return response.body() != null ? response.body() : Collections.emptyList();
     }
 
 }

@@ -21,6 +21,14 @@ public class Teacher {
         this.conflict = conflict;
     }
 
+    protected Teacher(Teacher copyMe){
+        this.id = copyMe.id;
+        this.name = copyMe.name;
+        this.preferences = (BitSet) copyMe.preferences.clone();
+        this.acceptable = (BitSet) copyMe.acceptable.clone();
+        this.conflict = (BitSet) copyMe.conflict.clone();
+    }
+
     public int getId() {
         return id;
     }

@@ -64,8 +64,13 @@ public class Faculty extends Teacher{
         }
 
     }
+
     public Faculty(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict) {
         super(id, name, preferences, acceptable, conflict);
+    }
+
+    public Faculty(Teacher teacher){
+        super(teacher);
     }
 
     /**

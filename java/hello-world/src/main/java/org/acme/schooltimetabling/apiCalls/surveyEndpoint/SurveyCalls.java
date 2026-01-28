@@ -3,14 +3,12 @@ package org.acme.schooltimetabling.apiCalls.surveyEndpoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.acme.schooltimetabling.apiCalls.ApiConstants;
-import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.QueryMap;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,10 +16,10 @@ import java.util.Map;
 
 public class SurveyCalls {
 //    public static void main(String[] args) throws Exception{
-//        getTeacherRep();
+//        termSurveysToTeacher();
 //    }
 
-    public static List<Teacher> getTeacherRep() throws Exception{
+    public static List<Teacher> termSurveysToTeacher() throws Exception{
         ObjectMapper mapper = new ObjectMapper();
         SurveyService service = ApiConstants.retrofit.create(SurveyService.class);
         Call<List<Map<String, Object>>> callSync = service.getSurveys(ImmutableMap.of(
@@ -34,6 +32,7 @@ public class SurveyCalls {
         for(Map<String, Object> record: surveyMaps){
             //convert to teacher pref
             SurveyRecord surveyRecord = mapper.convertValue(record, SurveyRecord.class);
+            Teacher teacher = surveyRecord.toTeacher();
             teachers.add(surveyRecord.toTeacher());
         }
 
