@@ -10,10 +10,7 @@ import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LessonGenerator extends Generator{
@@ -55,7 +52,7 @@ public class LessonGenerator extends Generator{
      * @param teacherHashMap HashMap of teacher canon names to their teacher object
      * @return an ArrayList of all courses that a valid object could be made for
      */
-    public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, HashMap<String, Teacher> teacherHashMap) {
+    public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, Map<String, Teacher> teacherHashMap) {
         final int STARTING_SECTION_NUMBER = 1;
         final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
         final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
@@ -140,7 +137,7 @@ public class LessonGenerator extends Generator{
      * @see Constants#COURSE_CONFIGS
      * @see Constants#COURSE_ID_BIMAP
      */
-    private static Lesson generateLesson(HashMap<String, Teacher> teacherHashMap, HashMap<String, Integer> courseSectionCounter,
+    private static Lesson generateLesson(Map<String, Teacher> teacherHashMap, Map<String, Integer> courseSectionCounter,
             String course, String teacherName){
         final Integer NO_LESSON_LINKER = null;
         String courseConfig;
@@ -186,7 +183,7 @@ public class LessonGenerator extends Generator{
      * @return teacher object for given teacher name
      * @see LessonGenerator#noSurveyTeacher(String)
      */
-    private static Teacher getTeacher(HashMap<String, Teacher> teacherHashMap, String teacherName){
+    private static Teacher getTeacher(Map<String, Teacher> teacherHashMap, String teacherName){
         /*checking if we can find the teacher; skip teacher if we can't
          * find their teacher object*/
         Teacher teacher = teacherHashMap.get(teacherName);

@@ -16,10 +16,10 @@ import java.util.Map;
 
 public class SurveyCalls {
 //    public static void main(String[] args) throws Exception{
-//        termSurveysToTeacher();
+//        termSurveysToRecord();
 //    }
 
-    public static List<Teacher> termSurveysToTeacher() throws Exception{
+    public static List<SurveyRecord> termSurveysToRecord() throws Exception{
         ObjectMapper mapper = new ObjectMapper();
         SurveyService service = ApiConstants.retrofit.create(SurveyService.class);
         Call<List<Map<String, Object>>> callSync = service.getSurveys(ImmutableMap.of(
@@ -28,15 +28,14 @@ public class SurveyCalls {
         Response<List<Map<String, Object>>> response = callSync.execute();
         List<Map<String, Object>> surveyMaps = response.body() != null ? response.body() : Collections.emptyList();
 
-        List<Teacher> teachers = new ArrayList<>();
+        List<SurveyRecord> surveyRecords = new ArrayList<>();
         for(Map<String, Object> record: surveyMaps){
             //convert to teacher pref
             SurveyRecord surveyRecord = mapper.convertValue(record, SurveyRecord.class);
-            Teacher teacher = surveyRecord.toTeacher();
-            teachers.add(surveyRecord.toTeacher());
+            surveyRecords.add(surveyRecord);
         }
 
-        return teachers;
+        return surveyRecords;
     }
 
 

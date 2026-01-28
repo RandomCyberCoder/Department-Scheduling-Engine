@@ -1,9 +1,13 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
+import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyCalls;
+import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
+import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +16,69 @@ import java.util.*;
 public class TeacherGenerator extends Generator{
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherGenerator.class);
     private static int nextTeacherID = 0;
+
+    /**
+     *
+     * @return A Map mapping a teacher's canon name to their teacher object
+     */
+    public static Map<String, Teacher> teacherGenDriver() throws Exception{
+        Map<String, Teacher> teacherMap = new HashMap<>();
+        boolean success = false;
+        if(ParseInput.scheduleConfig.useApi){
+            try{
+                List<SurveyRecord> surveys = SurveyCalls.termSurveysToRecord();
+                if(surveys.isEmpty()){
+                    LOGGER.warn(String.format("No surveys found in the DB for the term %s. Falling back to files",
+                            ParseInput.scheduleConfig.curTerm));
+                }
+                else{
+                    for(SurveyRecord surveyRecord: surveys){
+                        surveyRecord.toTeacher();
+                        TeacherRecord teacherRecord = surveyRecord.getTeacherRecord();
+                        teacherMap.put(teacherRecord.getCanon(), surveyRecord.toTeacher());
+                    }
+                    success = true;
+                    LOGGER.info("Succeeded generating teachers using API call");
+                }
+            }
+            catch(Exception e){
+                LOGGER.error(String.format("Error reading surveys from api falling back to files. Error message: %s",
+                        e.getMessage()));
+            }
+        }
+
+        //Read surveys from files if API usage is not used, or it failed
+        if(!success){
+            /*New headers for the survey*/
+            ArrayList<String> newSurveyHeaders = new ArrayList<>(
+                    Arrays.asList("id", "start", "complete", "email", "name", "use_old",
+                            "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
+                            "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",
+                            "8 AM2","9 AM2","10 AM2","11 AM2","12 PM2","1 PM2","2 PM2",
+                            "3 PM2","4 PM2","5 PM2","6 PM2","7 PM2","8 PM2","9 PM2",
+                            "mwf_1", "tr_1", "mwf_2", "mwf_tr",
+                            "tr_2", "mwf_3","mwf_2_tr_1", "mwf_1_tr_2",
+                            "tr_3", "mwrf", "mtwr", "mw", "tr",
+                            "back_to_back", "gap", "constraint", "require",
+                            "pref", "comment", "stars")
+            );
+
+            /*read the cur & prev quarter survey and then create Teacher objects*/
+            String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
+            String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
+            LOGGER.info("Reading the current quarter teacher survey");
+            ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
+            LOGGER.info("Reading the previous quarter teacher survey");
+            /*read the prev quarter survey*/
+            ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
+            LOGGER.info("Creating teacher objects from files");
+            /*teacher name -> teacher object*/
+            teacherMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+        }
+
+        return teacherMap;
+    }
+
     /**
      * Generates the Teacher/Faculty object for the instructor's survey entry. It
      * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
@@ -76,7 +143,7 @@ public class TeacherGenerator extends Generator{
     {
         /* This Hash map will map the teacher's name to the teacher's object */
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
-        final String bleedForward = "Yes, use the same as last term";
+        final String BLEED_FORWARD_STRING = "Yes, use the same as last term";
         /*List of the time headers that are key's in the survey
         * entry HashMaps*/
         /*make it unmodifiable because this list should never change*/
@@ -96,7 +163,7 @@ public class TeacherGenerator extends Generator{
             String instructorName = surveyEntry.get("name");
 
             /*check if the instructor wants to bleed forward in current quarter's survey*/
-            if(bleedForward.equals(surveyEntry.get("use_old"))){
+            if(BLEED_FORWARD_STRING.equals(surveyEntry.get("use_old"))){
                 LOGGER.info(String.format("Bleeding forward %s", instructorName));
                 teacherBleed.put(instructorName, null);
 
@@ -125,7 +192,7 @@ public class TeacherGenerator extends Generator{
                 LOGGER.info(String.format("Trying to use %s's old survey", instructorName));
                 /*If the instructor choose to bleed forward in the previous survey
                 * we will be forced to skip them :( */
-                if(bleedForward.equals(surveyEntry.get("use_old"))){
+                if(BLEED_FORWARD_STRING.equals(surveyEntry.get("use_old"))){
                     LOGGER.warn(String.format("Previous survey also bleeds forward. SKIPPING %s", instructorName));
                     continue;
                 }
@@ -138,7 +205,21 @@ public class TeacherGenerator extends Generator{
                 Teacher curTeacher = generateTeacher(surveyEntry, surveyTimes);
                 if(curTeacher == null) continue;
                 teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
+                /*Remove from teachers left to bleed*/
+                teacherBleed.remove(instructorName);
             }
+        }
+
+        //go through teachers that didn't bleed and notify
+        if(!teacherBleed.keySet().isEmpty()){
+            StringBuilder names = new StringBuilder();
+            for(String teacherName: teacherBleed.keySet()){
+                names.append(String.format("%s; ", teacherName));
+            }
+            LOGGER.warn("Couldn't bleed The following teachers. No survey from the previous quarter, " +
+                    " previous quarter previous quarter bled or" +
+                    " no canon name associated with the survey (aka non-canon) name was found.\n" +
+                    names);
         }
 
         return teacherHashMap;

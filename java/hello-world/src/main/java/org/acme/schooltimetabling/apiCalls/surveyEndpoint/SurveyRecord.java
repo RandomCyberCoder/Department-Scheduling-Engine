@@ -56,7 +56,7 @@ public class SurveyRecord {
     /**
      * Only one Teacher(or Faculty) object will be if and only if this function is called. The class
      * will hold on to the created object to prevent the teacher from existing multiple times.
-     * @return
+     * @return Teacher representation of the survey. In other words, they have their preferences set.
      * @throws Exception
      */
     public Teacher toTeacher() throws Exception{
@@ -110,6 +110,15 @@ public class SurveyRecord {
         }
 
         return BitSetHelper.timeSlotBitSet(localTime, ONE_HOUR_BLOCK, days);
+    }
+
+    /**
+     * Gives the teacher record associated with the survey record in the DB at the time the api call
+     * was made to retrieve the survey record.
+     * @return
+     */
+    public TeacherRecord getTeacherRecord() {
+        return teacherRecord;
     }
 
     @Override

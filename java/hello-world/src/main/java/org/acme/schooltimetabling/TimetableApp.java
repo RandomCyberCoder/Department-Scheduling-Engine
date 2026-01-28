@@ -14,7 +14,6 @@ import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -44,37 +43,7 @@ public class TimetableApp {
                 ParseInput.scheduleConfig.curTerm, ParseInput.scheduleConfig.prevTerm,
                 ParseInput.scheduleConfig.seasonTerm));
 
-        /*New headers for the survey*/
-        ArrayList<String> newSurveyHeaders = new ArrayList<>(
-                Arrays.asList("id", "start", "complete", "email", "name", "use_old",
-                        "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
-                        "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",
-                        "8 AM2","9 AM2","10 AM2","11 AM2","12 PM2","1 PM2","2 PM2",
-                        "3 PM2","4 PM2","5 PM2","6 PM2","7 PM2","8 PM2","9 PM2",
-                        "mwf_1", "tr_1", "mwf_2", "mwf_tr",
-                        "tr_2", "mwf_3","mwf_2_tr_1", "mwf_1_tr_2",
-                        "tr_3", "mwrf", "mtwr", "mw", "tr",
-                        "back_to_back", "gap", "constraint", "require",
-                        "pref", "comment", "stars")
-        );
-
-
-        /*TODO make it so teachers with no survey get assigned a generic timeslot
-        *  ....maybe add a list of the generics to constants???
-        *  UPDATE & ASK: this is done but I need to tell beard that I actually allow for them to be
-        *  completely available with no unacceptable times rather than giving them a fixed schedule*/
-        /*read the cur & prev quarter survey and then create Teacher objects*/
-        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
-        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
-        LOGGER.info("Reading the current quarter teacher survey");
-        ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
-        LOGGER.info("Reading the previous quarter teacher survey");
-        /*read the prev quarter survey*/
-        ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
-        LOGGER.info("Creating teacher objects");
-        /*teacher name -> teacher object*/
-        HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
-
+        Map<String, Teacher> teacherMap = TeacherGenerator.teacherGenDriver();
         /*generate timeslots*/
         LOGGER.info("Creating timeslot objects");
         timeslotList = TimeslotGenerator.generateTimeslots(
@@ -87,7 +56,7 @@ public class TimetableApp {
 
         LOGGER.info("Creating lesson objects");
         /*Creating Lessons*/
-        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
+        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherMap);
 
         roomList = RoomGenerator.generateRooms();
         timetable = new Timetable("setup", timeslotList, roomList, lessonList);
@@ -122,7 +91,7 @@ public class TimetableApp {
         return;
     }
 
-    public static void storeResults(Timetable solution) throws Exception{
+    private static void storeResults(Timetable solution) throws Exception{
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet solutionSpreadsheet = workbook.createSheet("Solution");
         XSSFSheet leftOutSpreadsheet = workbook.createSheet("LeftOut");

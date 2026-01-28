@@ -5,4 +5,5 @@ public class ScheduleConfig {
     public String curTerm;
     public String prevTerm;
     public String seasonTerm;
+    public boolean useApi;
 }

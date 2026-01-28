@@ -44,6 +44,7 @@ public final class ParseInput {
             LOGGER.error("Program is terminating. Couldn't read the yaml file");
             LOGGER.error(String.format("Program assumes yaml file is located at '%s' int the resources directory",
                     YAML_FILE_PATH));
+            LOGGER.error(String.format("Related error: %s", e.getMessage()));
             System.exit(PROGRAM_FAILURE);
         }
 
