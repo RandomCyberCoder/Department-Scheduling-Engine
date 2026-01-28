@@ -101,6 +101,7 @@ def teachers_file_upload(request):
     """
     #we allow for csv files or excel files; various different excel extensions
     VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
+    FACULTY_COLUMN = "faculty"
     serializer = FileUploadSerializer(data=request.data)
     if serializer.is_valid():
         FILE = serializer.validated_data["file"]
@@ -134,6 +135,8 @@ def teachers_file_upload(request):
 
         #normalize pandas data frame
         for col in df.columns:
+            if col == FACULTY_COLUMN:
+                continue
             df[col] = (
                 df[col]
                 .fillna("")
@@ -148,7 +151,16 @@ def teachers_file_upload(request):
             entry = {"canon": row["canon"], "non_canon": row[non_canon_col]}
             if email_present and row["email"] != "":
                 entry["email"] = row["email"]
-        
+            if FACULTY_COLUMN in df.columns and row[FACULTY_COLUMN] != "":
+                is_faculty = row[FACULTY_COLUMN]
+                if isinstance(is_faculty, str):
+                    is_faculty = is_faculty.strip().lower()
+                if is_faculty == 0 or is_faculty == "false":
+                    entry["faculty"] = False
+                elif is_faculty == 1 or is_faculty == "true":
+                    entry["faculty"] = True
+                    
+            print(entry)
             try:
                 query  = generate_Q_objects(entry)
                 teacher = Teacher.objects.filter(query)

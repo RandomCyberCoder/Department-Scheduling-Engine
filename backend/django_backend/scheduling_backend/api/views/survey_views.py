@@ -63,10 +63,12 @@ def survey_base_endpoint(request: Request) -> Response:
     if PARM_EMAIL is not None:
         query = merge_Qs(query, Q(email=PARM_EMAIL), PARAM_ALL_FLAG)
 
-    query_res = Survey.objects.filter(query)
+    query_res = Survey.objects.select_related("teacher").filter(query)
     res_serialized = SurveySerializer(query_res, many=True)
-    
-    return Response(res_serialized.data, status.HTTP_200_OK)
+    ret_data = res_serialized.data
+    for data in ret_data:
+        data["teacher"] = data["teacher"]
+    return Response(ret_data, status.HTTP_200_OK)
 
 
 

@@ -50,6 +50,15 @@ class DepartmentFileUpload(serializers.Serializer):
     department = serializers.CharField(max_length=3)
 
 class SurveySerializer(serializers.ModelSerializer):
+    """NOTE for use when reading from DB. The model has a TeacherSerialzer read_only field.
+    This means that it will make another read from the DB unless you use `select_related("teacher")`
+    when making the query.
+    """
+    teacher_detail = TeacherSerializer(
+        source="teacher",
+        read_only=True
+    )
+
     class Meta:
         model = Survey
         fields = '__all__'

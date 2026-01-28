@@ -1,10 +1,12 @@
 import pandas as pd
 from rest_framework import status
 from rest_framework.exceptions import APIException
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
-def file_to_df(file, valid_extensions: list[str]) -> pd.DataFrame:
+#guessing this is the type for file since this is the runtime type
+def file_to_df(file: InMemoryUploadedFile, valid_extensions: list[str]) -> pd.DataFrame:
     """Takes a file and converts it into a pandas dataframe. This funcitons can handle
-    CSV, TSV, and excel files. Removes white space from column names
+    CSV, TSV, and excel files. Removes white space from column names.
 
     Args:
         file (_type_): file object
