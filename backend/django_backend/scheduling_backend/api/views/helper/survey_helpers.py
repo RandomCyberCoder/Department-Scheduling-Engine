@@ -34,7 +34,6 @@ def find_teacher(canon=None, non_canon=None, email=None) -> Teacher:
 
     #check for 2+, 0, or 1 teacher(s)
     query_count = teachers_found.count()
-    print(query_count)
     if query_count >= 2:
         raise APIException((f"Multiple teachers found for given search parameters: {query_gen}",
                          f" Teachers found: {teachers_found}"))
@@ -50,10 +49,8 @@ def find_teacher(canon=None, non_canon=None, email=None) -> Teacher:
             #raises and error if nothing was found or multiple found
             return History.objects.get(query).teacher
         except MultipleObjectsReturned as e:
-            print("helper mulitple found")
             raise APIException("No teacher found in Teacher's table. Fell back to History table and multiple objects found")
         except ObjectDoesNotExist as e:
-            print("helper none found")
             raise APIException("No teacher found in Teacher's table. Fell back to History table and no objects found")
         except Exception as e:
             print(f"{e}")

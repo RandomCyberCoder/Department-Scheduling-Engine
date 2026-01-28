@@ -149,8 +149,6 @@ def survey_file_upload(request: Request) -> Response:
     serializer = SurveyFileSerializer(data=request.data)
     #if invalid it will return a HTTP_4XX status code
     serializer.is_valid(raise_exception=True)
-    print(serializer.data)
-    print(serializer.validated_data)
     try:
         VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
         FILE = serializer.validated_data["file"]
@@ -200,6 +198,10 @@ def survey_file_upload(request: Request) -> Response:
             #package survey entry
             #NOTE garunteed name field
             data = {k: v for k, v in zip(DATA_FIELDS, row)}
+            #drop this field if it has bad data
+            if data["email"] in ["anonymous"]:
+                data.pop("email")
+
             SURVEY_NAME = data[NAME_FIELD].strip()
             BLEED_SURVEY = BLEED_FORWARD_STRING == data[BLEEDS_FORWARD_FIELD]
             if SURVEY_NAME == "":
