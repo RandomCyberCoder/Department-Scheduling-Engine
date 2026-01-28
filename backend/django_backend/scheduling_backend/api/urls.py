@@ -12,6 +12,9 @@ from .views.survey_views import (
     survey_base_endpoint,
     delete_survey_instance
 )
+from .views.history_views import(
+    historyRetByName
+)
 
 #routes for api
 urlpatterns = [
@@ -26,5 +29,8 @@ urlpatterns = [
     # survey endpoints
     path('surveys/file/', survey_file_upload, name="survey_file_upload"),
     path('surveys/', survey_base_endpoint, name="base_survey_endpoint"),
-    path('surveys/remove/<int:pk>/', delete_survey_instance, name="del_surv_inst")
+    path('surveys/remove/<int:pk>/', delete_survey_instance, name="del_surv_inst"),
+
+    # history endpoints
+    path('history/', historyRetByName, name="retrieve_by_name")
 ]

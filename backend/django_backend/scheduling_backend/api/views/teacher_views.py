@@ -196,7 +196,7 @@ def teachers_file_upload(request):
 
 
 
-#NOTE i don't plan to support this endpoint
+#NOTE I only support the GET and DELETE methods, the other two haven't been devoloped enough or have been replaced by other endpoints
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @parser_classes([JSONParser])
 def update_teacher(request, pk):
@@ -227,20 +227,20 @@ def update_teacher(request, pk):
         return Response({"success": "Teacher object retrieved",
                          "data": serializer.data},
                          status.HTTP_200_OK)
-    elif request.method == 'PUT':
-        #TODO Make sure this is idempotent
-        #should this take all the fields
-        #it also seems that a put request should add 
-        #note a put request should also be able to create
-        #for fields that don't exists they should just default
-        print("put endpoint")
-        serializer = TeacherSerializer(teacher, data=request.data)
-        return update_teacher_helper(serializer, status.HTTP_200_OK)
-    elif request.method == 'PATCH':
-        #TODO if a either version of a teacher's name is changed then store it in the history table
-        serializer = TeacherSerializer(teacher, data=request.data, partial=True)
-        print("patch endpoint")
-        return update_teacher_helper(serializer, status.HTTP_200_OK)
+    # elif request.method == 'PUT':
+    #     #TODO Make sure this is idempotent
+    #     #should this take all the fields
+    #     #it also seems that a put request should add 
+    #     #note a put request should also be able to create
+    #     #for fields that don't exists they should just default
+    #     print("put endpoint")
+    #     serializer = TeacherSerializer(teacher, data=request.data)
+    #     return update_teacher_helper(serializer, status.HTTP_200_OK)
+    # elif request.method == 'PATCH':
+    #     #TODO if a either version of a teacher's name is changed then store it in the history table
+    #     serializer = TeacherSerializer(teacher, data=request.data, partial=True)
+    #     print("patch endpoint")
+    #     return update_teacher_helper(serializer, status.HTTP_200_OK)
     elif request.method == 'DELETE':
         print("deleting endpoint")
         teacher.delete()
