@@ -1,6 +1,7 @@
 package org.acme.schooltimetabling.TestClasses;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,8 @@ public class TestBitset {
     BitSet modifyBitset;
     @BeforeEach
     void setUp(){
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         modifyBitset = new BitSet();
     }
 

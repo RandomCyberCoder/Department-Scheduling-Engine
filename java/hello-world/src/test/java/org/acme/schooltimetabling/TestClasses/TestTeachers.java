@@ -6,6 +6,7 @@ import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ public class TestTeachers {
     static HashMap<String, Teacher> teacherHashMap;
     @BeforeAll
     static void setup() throws Exception{
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         try {
             /*New headers for the survey*/
             ArrayList<String> newSurveyHeaders = new ArrayList<>(

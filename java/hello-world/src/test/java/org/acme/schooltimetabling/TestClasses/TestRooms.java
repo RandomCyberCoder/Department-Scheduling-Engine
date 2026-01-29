@@ -3,6 +3,7 @@ package org.acme.schooltimetabling.TestClasses;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.helperClasses.Generators.RoomGenerator;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.Executable;
 
@@ -13,6 +14,8 @@ public class TestRooms {
     static ArrayList<Room> roomLst;
     @BeforeAll
     static void setup(){
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         roomLst = RoomGenerator.generateRooms();
     }
 

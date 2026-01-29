@@ -5,6 +5,7 @@ import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class Faculty extends Teacher{
 
         try{
             /*CSC faculty times*/
-            if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
+            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
                 facultyTimes = List.of(
                         LocalTime.parse("1:00PM", formatter),
                         LocalTime.parse("2:00PM", formatter)

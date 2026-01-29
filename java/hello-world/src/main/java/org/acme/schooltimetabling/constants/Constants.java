@@ -4,6 +4,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.helperClasses.Generators.Generator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -121,7 +122,7 @@ public class Constants {
         * scheduled*/
         COURSE_TO_ROOMS = new HashMap<>();
 
-        if(ParseInput.scheduleConfig.department.equalsIgnoreCase("csc")){
+        if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
             List<String> introCourses = List.of("csc101", "csc202", "csc203", "csc357");
             Set<String> introRooms = Set.of("301", "302", "232A");
 
@@ -253,10 +254,11 @@ public class Constants {
      * the third name is the "canon" name.</p>
      * <p>BiMap returned is in the format non-canon -> canon. Meaning the reverse BiMap
      * is in the format canon -> non-canon</p>
-     * @param resourceFilePath
+     * @param resourceFilePath file path to Excel file. Assumes column order is email
      * @return BiMap of instructor's names, non-canon -> canon.
      */
     static private BiMap<String, String> getInstructorNameMapping(String resourceFilePath){
+        //TODO add api endpoint call here
         BiMap<String, String> instructorNameMapping = HashBiMap.create();
 
         final int NAME_CELL_POS = 1;
@@ -283,9 +285,5 @@ public class Constants {
         }
 
         return instructorNameMapping;
-    }
-
-    static private void setupTest(){
-
     }
 }

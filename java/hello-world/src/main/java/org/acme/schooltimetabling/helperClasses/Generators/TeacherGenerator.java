@@ -8,6 +8,7 @@ import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +23,16 @@ public class TeacherGenerator extends Generator{
      * @return A Map mapping a teacher's canon name to their teacher object
      */
     public static Map<String, Teacher> teacherGenDriver() throws Exception{
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         Map<String, Teacher> teacherMap = new HashMap<>();
         boolean success = false;
-        if(ParseInput.scheduleConfig.useApi){
+        if(ScheduleConfig.isUseApi()){
             try{
                 List<SurveyRecord> surveys = SurveyCalls.termSurveysToRecord();
                 if(surveys.isEmpty()){
                     LOGGER.warn(String.format("No surveys found in the DB for the term %s. Falling back to files",
-                            ParseInput.scheduleConfig.curTerm));
+                            ScheduleConfig.getCurTerm()));
                 }
                 else{
                     for(SurveyRecord surveyRecord: surveys){
@@ -64,8 +67,8 @@ public class TeacherGenerator extends Generator{
             );
 
             /*read the cur & prev quarter survey and then create Teacher objects*/
-            String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
-            String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
+            String curQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getCurTerm());
+            String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getPrevTerm());
             LOGGER.info("Reading the current quarter teacher survey");
             ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
             LOGGER.info("Reading the previous quarter teacher survey");

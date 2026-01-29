@@ -19,6 +19,8 @@ public class TestLessons {
     static HashMap<String, String> courseConfigs;
     @BeforeAll
     static void setUp() throws Exception{
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         /*New headers for the survey*/
         ArrayList<String> newSurveyHeaders = new ArrayList<>(
                 Arrays.asList("id", "start", "complete", "email", "name", "use_old",
@@ -37,8 +39,8 @@ public class TestLessons {
 
         /*read the current quarter survey
          * and then create Teacher objects*/
-        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.curTerm);
-        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ParseInput.scheduleConfig.prevTerm);
+        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getCurTerm());
+        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getPrevTerm());
         System.out.println("Reading the current quarter teacher survey");
         ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
         System.out.println("Reading the previous quarter teacher survey");
@@ -49,8 +51,8 @@ public class TestLessons {
 
         /*parse schedules*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(
-                String.format("input/schedule-%s-%s.json", ParseInput.scheduleConfig.curTerm,
-                        ParseInput.scheduleConfig.department));
+                String.format("input/schedule-%s-%s.json", ScheduleConfig.getCurTerm(),
+                        ScheduleConfig.getDepartment()));
 
         /*Creating Lessons*/
         lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
@@ -85,6 +87,7 @@ public class TestLessons {
                 }));
     }
 
+    //Note this test is currently not applicable using a different definition of a studio style course
     @Test
     @DisplayName("Check studio courses")
     void checkStudio(){

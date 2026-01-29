@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.acme.schooltimetabling.apiCalls.ApiConstants;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
@@ -23,7 +24,7 @@ public class SurveyCalls {
         ObjectMapper mapper = new ObjectMapper();
         SurveyService service = ApiConstants.retrofit.create(SurveyService.class);
         Call<List<Map<String, Object>>> callSync = service.getSurveys(ImmutableMap.of(
-                "term", ParseInput.scheduleConfig.curTerm
+                "term", ScheduleConfig.getCurTerm()
         ));
         Response<List<Map<String, Object>>> response = callSync.execute();
         List<Map<String, Object>> surveyMaps = response.body() != null ? response.body() : Collections.emptyList();

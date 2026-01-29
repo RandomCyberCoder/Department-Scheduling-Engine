@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.TestClasses;
 
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.Generators.TimeslotGenerator;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,8 @@ public class TestTimeslot {
 
     @BeforeAll
     static void setUp(){
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         timeslotList = TimeslotGenerator.generateTimeslots("possibletimes.csv");
     }
 

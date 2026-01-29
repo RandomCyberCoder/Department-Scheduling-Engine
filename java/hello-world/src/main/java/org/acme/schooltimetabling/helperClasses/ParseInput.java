@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.awt.*;
 import java.io.*;
-import java.net.PasswordAuthentication;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -21,34 +18,10 @@ import java.util.stream.Collectors;
 public final class ParseInput {
     /**Program failure value */
     public static final int PROGRAM_FAILURE = 1;
-    /**Configuration for scheduling*/
-    public static ScheduleConfig scheduleConfig;
-    /**
-     * File path within the resources directory the YAML configuration file
-     * is expected to be located
-     */
-    private static final String YAML_FILE_PATH = "constants/config.yaml";
     /**
      * Needed for logging information
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseInput.class);
-
-    static{
-        try(InputStream inputStream = getResourceAsStream(YAML_FILE_PATH)) {
-
-            // Initialize scheduleConfig with the parsed YAML content
-            Yaml yaml = new Yaml();
-            scheduleConfig = yaml.loadAs(inputStream, ScheduleConfig.class);
-
-        } catch (Exception e) {
-            LOGGER.error("Program is terminating. Couldn't read the yaml file");
-            LOGGER.error(String.format("Program assumes yaml file is located at '%s' int the resources directory",
-                    YAML_FILE_PATH));
-            LOGGER.error(String.format("Related error: %s", e.getMessage()));
-            System.exit(PROGRAM_FAILURE);
-        }
-
-    }
 
     private ParseInput(){
         throw new UnsupportedOperationException("This is a utility class an cannot be instantiated");
@@ -61,7 +34,7 @@ public final class ParseInput {
      *                 resources directory
      * @return File as a stream; null if the file can't be returned as a stream
      */
-    private static InputStream getResourceAsStream(String filePath){
+    public static InputStream getResourceAsStream(String filePath){
         return ParseInput.class.getClassLoader().getResourceAsStream(filePath);
     }
 

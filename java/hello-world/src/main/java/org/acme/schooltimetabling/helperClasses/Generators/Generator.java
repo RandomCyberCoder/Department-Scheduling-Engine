@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ public class Generator {
      * @return A bidirectional map of a course to its ID
      */
     public static BiMap<String, Integer> genCourseToIdMapping(Iterator<String> courses){
-        final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
+        final String DEPARTMENT = ScheduleConfig.getDepartment().toLowerCase();
         BiMap<String, Integer> courseIdMapping = HashBiMap.create();
         int count = 1;
         String course;

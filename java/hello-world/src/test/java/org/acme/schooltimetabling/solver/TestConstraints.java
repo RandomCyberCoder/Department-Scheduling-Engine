@@ -10,6 +10,7 @@ import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +63,8 @@ public class TestConstraints {
 
     @BeforeAll
     static void setUp(){
+        String YAML_FILE_PATH = "constants/config.yaml";
+        ScheduleConfig.loadConfig(YAML_FILE_PATH);
         LessonGenerator.studio_detected = true;
         /*This is set for special behavior needed for testing*/
 //        Constants.TESTING = true;

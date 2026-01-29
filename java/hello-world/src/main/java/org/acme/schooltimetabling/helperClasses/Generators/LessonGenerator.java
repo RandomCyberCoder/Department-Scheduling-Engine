@@ -4,6 +4,7 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.apache.commons.math3.util.Pair;
@@ -28,7 +29,7 @@ public class LessonGenerator extends Generator{
     private static int availableLinkerID = 1;
 
     static {
-        final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
+        final String DEPARTMENT = ScheduleConfig.getDepartment().toLowerCase();
         final int STARTING_SECTION_NUMBER = 1;
 
         COURSE_SECTION_COUNTER = new HashMap<>();
@@ -54,8 +55,8 @@ public class LessonGenerator extends Generator{
      */
     public static ArrayList<Lesson> generateLessons(List<ScheduleFormat> schedules, Map<String, Teacher> teacherHashMap) {
         final int STARTING_SECTION_NUMBER = 1;
-        final String CURRENT_TERM = ParseInput.scheduleConfig.curTerm;
-        final String DEPARTMENT = ParseInput.scheduleConfig.department.toLowerCase();
+        final String CURRENT_TERM = ScheduleConfig.getCurTerm();
+        final String DEPARTMENT = ScheduleConfig.getDepartment().toLowerCase();
         ArrayList<Lesson> lessons = new ArrayList<>();
         String teacherName;
 
