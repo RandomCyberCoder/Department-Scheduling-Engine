@@ -2,6 +2,8 @@ package org.acme.schooltimetabling.constants;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherCalls;
+import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.helperClasses.Generators.Generator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
@@ -258,8 +260,22 @@ public class Constants {
      * @return BiMap of instructor's names, non-canon -> canon.
      */
     static private BiMap<String, String> getInstructorNameMapping(String resourceFilePath){
-        //TODO add api endpoint call here
         BiMap<String, String> instructorNameMapping = HashBiMap.create();
+        boolean apiSuccess = false;
+        if(ScheduleConfig.isUseApi()){
+            LOGGER.info("Attempting to read teacher records from DB");
+            try{
+                List<TeacherRecord> teacherRecords = TeacherCalls.getAllTeachers();
+                for(TeacherRecord record: teacherRecords){
+                    instructorNameMapping.put(record.getNonCanon(), record.getNonCanon());
+                }
+                LOGGER.info("Succeeded generating teacher name mapping using DB");
+                return instructorNameMapping;
+            } catch(Exception e){
+                LOGGER.error("Failed to create teacher mapping using DB. Falling back to file based creation");
+                instructorNameMapping = HashBiMap.create();
+            }
+        }
 
         final int NAME_CELL_POS = 1;
         final int CANON_CELL_POS = 2;
