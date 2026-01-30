@@ -25,6 +25,8 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
         //studio class specific constraints
+        /*NOTE left out due to studio space being different from what I originally thought
+        * the true studio constraint can just be taken into account in other constraints*/
         Constraint[] studioConstraint = new Constraint[]{
                 studioSpace(constraintFactory),
                 studioLabAfterLesson(constraintFactory),
@@ -288,20 +290,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) ||
                             !lesson.isHasLabAct() ||
                             Constants.TESTING) return false;
-
-//                    if(lesson.getTimeslot().getLecDays().size() != 1 ||
-//                            !lesson.getTimeslot().getNonLecDays().isEmpty()) return true;
-//
-//
-//                    //make sure time is consecutive on the day
-//                    BitSet potentialBitSet = lesson.getTimeslot().lectureBitSet;
-//                    int indexFirstBit = potentialBitSet.nextSetBit(0);
-//                    int cardinality = potentialBitSet.cardinality();
-//                    BitSet mask = new BitSet();
-//                    mask.set(indexFirstBit, indexFirstBit + cardinality);
-//                    mask.and(potentialBitSet);
-//
-//                    return mask.cardinality() != cardinality;
 
 
                     //"lecture" portion will be used for lab/act space
