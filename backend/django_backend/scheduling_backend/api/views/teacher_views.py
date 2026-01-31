@@ -4,6 +4,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.db.models import Q
+from django.db import transaction
 from typing import Tuple
 import pandas as pd
 from ..models import Teacher
@@ -160,7 +161,6 @@ def teachers_file_upload(request):
                 elif is_faculty == 1 or is_faculty == "true":
                     entry["faculty"] = True
                     
-            print(entry)
             try:
                 query  = generate_Q_objects(entry)
                 teacher = Teacher.objects.filter(query)
@@ -177,9 +177,10 @@ def teachers_file_upload(request):
                     created = True
                 
                 teacher_serializer.is_valid(raise_exception=True)
-                teacher = teacher_serializer.save()
-                history_save_name(teacher, entry["canon"], True)
-                history_save_name(teacher, entry["non_canon"], False)
+                with transaction.atomic():
+                    teacher = teacher_serializer.save()
+                    history_save_name(teacher, entry["canon"], True)
+                    history_save_name(teacher, entry["non_canon"], False)
                 #add canon and non_cannon names to history table
                 success.append({"creation_status": created,
                                 "teacher": teacher_serializer.data})
@@ -213,42 +214,36 @@ def update_teacher(request, pk):
     #check if a teacher entry with the given primary key exists
     try:
         teacher = Teacher.objects.get(pk=pk)
-        print(teacher)
     except Exception as e:
-        print(type(status.HTTP_404_NOT_FOUND))
         return Response({"error": f"{e}",
                          "msg": f"Couldn't find teacher object with primary key {pk}"},
                         status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
-        print("get endpoint")
         serializer = TeacherSerializer(teacher)
-        print(f"data from get: {serializer.data}")
         return Response({"success": "Teacher object retrieved",
                          "data": serializer.data},
                          status.HTTP_200_OK)
-    # elif request.method == 'PUT':
-    #     #TODO Make sure this is idempotent
-    #     #should this take all the fields
-    #     #it also seems that a put request should add 
-    #     #note a put request should also be able to create
-    #     #for fields that don't exists they should just default
-    #     print("put endpoint")
-    #     serializer = TeacherSerializer(teacher, data=request.data)
-    #     return update_teacher_helper(serializer, status.HTTP_200_OK)
-    # elif request.method == 'PATCH':
-    #     #TODO if a either version of a teacher's name is changed then store it in the history table
-    #     serializer = TeacherSerializer(teacher, data=request.data, partial=True)
-    #     print("patch endpoint")
-    #     return update_teacher_helper(serializer, status.HTTP_200_OK)
+    elif request.method == 'PUT':
+        return({"msg": "METHOD not implemented"}, status.HTTP_501_NOT_IMPLEMENTED)
+        #TODO Make sure this is idempotent
+        #should this take all the fields
+        #it also seems that a put request should add 
+        #note a put request should also be able to create
+        #for fields that don't exists they should just default
+        serializer = TeacherSerializer(teacher, data=request.data)
+        return update_teacher_helper(serializer, status.HTTP_200_OK)
+    elif request.method == 'PATCH':
+        return({"msg": "METHOD not implemented"}, status.HTTP_501_NOT_IMPLEMENTED)
+        #TODO if a either version of a teacher's name is changed then store it in the history table
+        serializer = TeacherSerializer(teacher, data=request.data, partial=True)
+        return update_teacher_helper(serializer, status.HTTP_200_OK)
     elif request.method == 'DELETE':
-        print("deleting endpoint")
         teacher.delete()
         return Response({"success": f"teacher object with pk '{pk}' has been deleted",
                          "object": serializers.serialize("json", [teacher])},
                         status=status.HTTP_204_NO_CONTENT)
     else:
-        print("illegal method")
         return Response({"error": "Unsupported HTTP method for endpoint"},
                         status.HTTP_405_METHOD_NOT_ALLOWED)
 
