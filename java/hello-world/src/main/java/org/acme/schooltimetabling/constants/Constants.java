@@ -118,7 +118,7 @@ public class Constants {
         SKIP_SCHEDULE =  Set.of("Remote", "SecondSplit", "HandSchedule",
                 "Double", "Triple");
 
-        SKIP_CONFIGURATIONS = Set.of("various", "non-standard", "0-0-2");
+        SKIP_CONFIGURATIONS = Set.of("various", "non-standard", "0-0-2", "1-2-0");
 
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/

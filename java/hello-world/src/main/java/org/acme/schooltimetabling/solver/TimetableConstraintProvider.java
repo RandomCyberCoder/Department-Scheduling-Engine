@@ -24,13 +24,15 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
-        //studio class specific constraints
-        /*NOTE left out due to studio space being different from what I originally thought
-        * the true studio constraint can just be taken into account in other constraints*/
-        Constraint[] studioConstraint = new Constraint[]{
-                studioSpace(constraintFactory),
-                studioLabAfterLesson(constraintFactory),
-        };
+//Disconnected courses being left out during this change.
+
+//        //studio class specific constraints
+//        /*NOTE left out due to studio space being different from what I originally thought
+//        * the true studio constraint can just be taken into account in other constraints*/
+//        Constraint[] studioConstraint = new Constraint[]{
+//                studioSpace(constraintFactory),
+//                studioLabAfterLesson(constraintFactory),
+//        };
 
         //mutability
         List<Constraint> solver_constraints = new ArrayList<>(Arrays.asList(
@@ -49,12 +51,14 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 inPrimeTime(constraintFactory)
         ));
 
-        //add studio specific constraints for studio courses
-        if(LessonGenerator.studio_detected){
-            LogSetUp.LOGGER.info("Studio classes detected. Adding studio specific constraints.");
-            solver_constraints.addAll(Arrays.asList(studioConstraint));
-        }
-        else LogSetUp.LOGGER.info("No studio classes detected, leaving out studio specific constraints");
+//Disconnected courses being left out during this change.
+
+//        //add studio specific constraints for studio courses
+//        if(LessonGenerator.OLD_studio_detected){
+//            LogSetUp.LOGGER.info("Studio classes detected. Adding studio specific constraints.");
+//            solver_constraints.addAll(Arrays.asList(studioConstraint));
+//        }
+//        else LogSetUp.LOGGER.info("No studio classes detected, leaving out studio specific constraints");
 
         return solver_constraints.toArray(new Constraint[0]);
     }
@@ -74,13 +78,14 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
                     Joiners.equal(Lesson::getCourseID))
                 .filter((lesson, lesson2) -> {
-                    //TODO (STUDIO) CHECK the following assumption w/ Beard
-                    //for studio style classes we only care about the lecture portion, skip lab/act portion
-                    if(lesson.isStudio() && lesson.isHasLabAct() ||
-                            lesson2.isStudio() && lesson2.isHasLabAct()){
-                        return false;
-                    }
+                    //This is for disconnected Leaving out until proper studios are done
+//                    if(lesson.isStudio() && lesson.isHasLabAct() ||
+//                            lesson2.isStudio() && lesson2.isHasLabAct()){
+//                        return false;
+//                    }
 
+                    /*TODO ask Beard if the following only matters for lecture or lab as well. (We could
+                    *  also make it so only the number of days matter)*/
                     //compare only lecture days
                     EnumSet<Days> l1Days = lesson.getTimeslot().getLecDays();
                     EnumSet<Days> l2Days = lesson2.getTimeslot().getLecDays();
@@ -162,21 +167,26 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                         //that have a lab/activity
                         Joiners.filtering((lesson, lesson2) -> {
                             //make sure that the lesson requires a lab/activity room
+                            //TODO ASK BEARD: I'm assuming studio style classes will always have a lecture and lab
                             return lesson.isHasLabAct() && lesson2.isHasLabAct();
                         }))
                 .filter((lesson, lesson2) -> {
                     BitSet bitSet1;
                     BitSet bitSet2;
 
-                    //pseudocode
-                    /*(if) the first one is a studio course we look at the first bitset (currently called the lecture
-                    bitset. We worry about the right timeslot being assigned in the "wrongHoursAmount constraint*/
-                    /*(else) if not a studio course then we check like normal for the lab/act bitset*/
-                    if(lesson.isStudio()) bitSet1 = lesson.getTimeslot().getLectureBitSet();
+                    if(lesson.isStudio()){
+                        bitSet1 = new BitSet();
+                        bitSet1.or(lesson.getTimeslot().getLectureBitSet());
+                        bitSet1.or(lesson.getTimeslot().getLabActBitSet());
+                    }
                     else bitSet1 = lesson.getTimeslot().getLabActBitSet();
 
                     /*same if else logic here for the studio room*/
-                    if(lesson.isStudio()) bitSet2 = lesson2.getTimeslot().getLectureBitSet();
+                    if(lesson2.isStudio()){
+                        bitSet2 = new BitSet();
+                        bitSet2.or(lesson2.getTimeslot().getLectureBitSet());
+                        bitSet2.or(lesson2.getTimeslot().getLabActBitSet());
+                    }
                     else bitSet2 = lesson2.getTimeslot().getLabActBitSet();
 
                     return bitSet1.intersects(bitSet2);
@@ -202,25 +212,24 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         return constraintFactory
                 .forEach(Lesson.class)
                 .filter(lesson -> {
-                    /*
-                    TODO will have to assign the timeslot differently for studio courses only. for lecture only we also
-                     have to add logic to prevent it being given a time slot that has all the time on just one day*/
+                    //Disconnected courses being left out during this change
+
+//                    //Special case for lab split for studio courses
+//                    if(lesson.isStudio() && lesson.isHasLabAct()){
+//                        //lab/act portion of studio course should be continuous; PENALTY if not
+//                        if(!ts.isContinuous()) return true;
+//                        float ts_hours = ts.getLecHours();
+//
+//                        float diff = Math.abs(lesson.getLab_activity_hours() - ts_hours);
+//
+//                        return diff > FLOAT_TIME_DELTA;
+//                    }
+//
+//                    /*Only studio courses should have continuous time. Prevent lecture only courses
+//                    from taking studio timeslots; PENALTY*/
+//                    if(ts.isContinuous()) return true;
+
                     final Timeslot ts = lesson.getTimeslot();
-                    //Special case for lab split for studio courses
-                    if(lesson.isStudio() && lesson.isHasLabAct()){
-                        //lab/act portion of studio course should be continuous; PENALTY if not
-                        if(!ts.isContinuous()) return true;
-                        float ts_hours = ts.getLecHours();
-
-                        float diff = Math.abs(lesson.getLab_activity_hours() - ts_hours);
-
-                        return diff > FLOAT_TIME_DELTA;
-                    }
-
-                    /*Only studio courses should have continuous time. Prevent lecture only courses
-                    from taking studio timeslots; PENALTY*/
-                    if(ts.isContinuous()) return true;
-
                     /*tests course with only lecture; tests course that has lecture and lab that can be scheduled
                     * normally, basically not a studio course. Tests the lecture lesson portion of a studio course split*/
                     EnumSet<Days> lDays = ts.getLecDays();

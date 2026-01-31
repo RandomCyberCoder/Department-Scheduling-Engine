@@ -3,7 +3,6 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
-import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -15,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LessonGenerator extends Generator{
-    public static boolean studio_detected = false;
+    public static boolean OLD_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
     /**
      * Keeps track of the next available section number available for a course
@@ -97,25 +96,12 @@ public class LessonGenerator extends Generator{
 
                 /*check if the course is marked for scheduling*/
                 if(skipCourse(courseModifier, courseName, courseConfig)){
-
                     continue;
                 }
 
-                /*split studio style courses*/
-                if (Constants.STUDIO_STYLE_COURSES.contains(courseName)) {
-                    Pair<Lesson, Lesson> studio_split = studioHelper(courseName, courseModifier, courseConfig,
-                            getTeacher(teacherHashMap, teacherName));
-                    if(studio_split != null){
-                        studio_detected = true;
-                        lessons.add(studio_split.getKey());
-                        lessons.add(studio_split.getValue());
-                    }
-                }
-                else{
-                    newLesson = generateLesson(teacherHashMap, courseSectionCounter,
-                            course, teacherName);
-                    if(newLesson != null) lessons.add(newLesson);
-                }
+                newLesson = generateLesson(teacherHashMap, courseSectionCounter,
+                        course, teacherName);
+                if(newLesson != null) lessons.add(newLesson);
             }
         }
 
@@ -294,7 +280,7 @@ public class LessonGenerator extends Generator{
 
 
 
-    /**
+    /** NOTE this not how true studios should be handled
      * Studio style helper to create special lessons for the studio style courses
      * @param name name of the course (i.e. csc457)
      * @param modifier course modifier; if none present use them empty string
@@ -304,6 +290,9 @@ public class LessonGenerator extends Generator{
      *  lecture lesson
      */
     private static Pair<Lesson, Lesson> studioHelper(String name, String modifier, String config, Teacher teacher){
+        //leaving out while proper studio implementation
+        if(true) throw new UnsupportedOperationException("This is not what a proper studio is. This implementation actually" +
+                " is a nice to have.");
         /* units lecture-lab-activity */
         final int LECTURE = 0;
         final int LAB = 1;
