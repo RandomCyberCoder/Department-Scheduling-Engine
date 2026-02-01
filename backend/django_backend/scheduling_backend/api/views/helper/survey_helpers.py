@@ -52,8 +52,7 @@ def find_teacher(canon=None, non_canon=None, email=None) -> Teacher:
             raise APIException("No teacher found in Teacher's table. Fell back to History table and multiple objects found")
         except ObjectDoesNotExist as e:
             raise APIException("No teacher found in Teacher's table. Fell back to History table and no objects found")
-        except Exception as e:
-            print(f"{e}")
+        except Exception as _:
             raise APIException("No unique teacher in Teacher table. Fell back to history table and failed to find unqiue teacher")
 
 

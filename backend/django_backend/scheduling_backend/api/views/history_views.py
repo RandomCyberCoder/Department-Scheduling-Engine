@@ -24,7 +24,6 @@ def historyRetByName(request: Request) -> Response:
         Response: teacher object if otherwise it return a 4XX status code
     """
     PARAM_SERACH_NAME = request.query_params.get("name", None)
-    print(PARAM_SERACH_NAME)
     if PARAM_SERACH_NAME is None:
         return Response({"msg": "endpoint requires the query parameter 'name'"},
                         status=status.HTTP_400_BAD_REQUEST)
