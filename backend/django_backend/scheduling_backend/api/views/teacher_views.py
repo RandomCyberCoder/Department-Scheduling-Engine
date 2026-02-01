@@ -57,27 +57,23 @@ def create_teacher(request):
     
     # check if upload is in bulk or single instance
     is_list = isinstance(request.data, list)
-
     # serialize data
     serializer = TeacherSerializer(data=request.data, many=is_list)
     # check if its valid
     if serializer.is_valid():
-        # if so then save it
-        print("got here")
-        # return Response(serializer.data, status=status.HTTP_201_CREATED)
-        teachers = serializer.save()
-        
-        #normalize data
-        if not is_list:
-            teachers = [teachers]
-        
-        #store names in History table
-        for teacher in teachers:
-            canon_name = teacher.canon
-            non_canon_name = teacher.non_canon
-            history_save_name(teacher, canon_name, True)
-            history_save_name(teacher, non_canon_name, False)
- 
+        with transaction.atomic():
+            teachers = serializer.save()
+            
+            #normalize data
+            if not is_list:
+                teachers = [teachers]
+            
+            #store names in History table
+            for teacher in teachers:
+                canon_name = teacher.canon
+                non_canon_name = teacher.non_canon
+                history_save_name(teacher, canon_name, True)
+                history_save_name(teacher, non_canon_name, False)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -280,59 +276,59 @@ def set_faculty(request):
             Response({"error": f"{serializer.errors}",
                     "msg": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
 
-    if request.method == 'PATCH':
-        FILE = serializer.validated_data["file"]   
-        
-        try:
-            faculty_df = file_to_df(FILE, VALID_EXTENSIONS)
-        except APIException as e:
-            return Response({"error": f"{e}"}, 
-                status=status.HTTP_406_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": f"problem reading the file {FILE.name}",
-                             "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        updates = []
-        updates_teacher = []
-        failed = []
-
-
-        if invalid_df(faculty_df):
-            return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
-                                status.HTTP_406_NOT_ACCEPTABLE) 
-
-        for index, row in faculty_df.iterrows():
-            try:
-                if "professor" in row["title"].lower():
-                    non_canon_name = row["name"]
-                    email = row["email"]
-                    teacher = Teacher.objects.get(Q(non_canon=non_canon_name) | Q(email=email))
-                    updates.append(teacher.non_canon)
-                    updates_teacher.append(teacher)
-            
-            except Exception as _:
-                failed.append(non_canon_name) 
-
-        update_faculty_dict = {"faculty": "True"}
-        for teacher in updates_teacher:                
-            serializer = TeacherSerializer(teacher, data=update_faculty_dict, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-            else:
-                # I don't think we should ever be able to get here but leaving it here just in case
-                print(f"log we failed to update, but this shouldn't be possible {teacher.non_canon}")
-                failed.append(teacher.non_canon)
-                updates.remove(teacher.non_canon)
-
-        return Response({"msg": "updated teachers",
-                "updated": updates,
-                "failed": failed
-                },
-                status.HTTP_202_ACCEPTED)
-
-
-    return Response({"error": "Unsupported HTTP method for endpoint"}, 
+    if request.method != 'PATCH':
+        return Response({"error": "Unsupported HTTP method for endpoint"}, 
                 status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+
+    FILE = serializer.validated_data["file"]   
+    try:
+        faculty_df = file_to_df(FILE, VALID_EXTENSIONS)
+    except APIException as e:
+        return Response({"error": f"{e}"}, 
+            status=status.HTTP_406_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": f"problem reading the file {FILE.name}",
+                            "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    updates = []
+    updates_teacher = []
+    failed = []
+
+
+    if invalid_df(faculty_df):
+        return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
+                            status.HTTP_406_NOT_ACCEPTABLE) 
+
+    for index, row in faculty_df.iterrows():
+        try:
+            if "professor" in row["title"].lower():
+                non_canon_name = row["name"]
+                email = row["email"]
+                teacher = Teacher.objects.get(Q(non_canon=non_canon_name) | Q(email=email))
+                updates.append(teacher.non_canon)
+                updates_teacher.append(teacher)
+        
+        except Exception as _:
+            failed.append(non_canon_name) 
+
+    update_faculty_dict = {"faculty": "True"}
+    for teacher in updates_teacher:                
+        serializer = TeacherSerializer(teacher, data=update_faculty_dict, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            # I don't think we should ever be able to get here but leaving it here just in case
+            print(f"log we failed to update, but this shouldn't be possible {teacher.non_canon}")
+            failed.append(teacher.non_canon)
+            updates.remove(teacher.non_canon)
+
+    return Response({"msg": "updated teachers",
+            "updated": updates,
+            "failed": failed
+            },
+            status.HTTP_202_ACCEPTED)
+
 
 
 
@@ -406,14 +402,15 @@ def teacher_bulk_update(request):
             serializer = TeacherSerializer(teacher, data=update_data, partial=True)
             
             if serializer.is_valid():
-                serializer.save()
-                success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}",
-                                "teacher_data": serializer.data})
-                #save new names in history table
-                if "canon" in update_data:
-                    history_save_name(teacher, update_data["canon"], True)
-                if "non_canon" in update_obj["update_data"]:
-                    history_save_name(teacher, update_data["non_canon"], False)
+                with transaction.atomic():
+                    serializer.save()
+                    #save new names in history table
+                    if "canon" in update_data:
+                        history_save_name(teacher, update_data["canon"], True)
+                    if "non_canon" in update_obj["update_data"]:
+                        history_save_name(teacher, update_data["non_canon"], False)
+                    success.append({"msg": f"success updating teacher with lookup: {update_obj['lookup']}",
+                                    "teacher_data": serializer.data})
             else:
                 failed.append({"msg": f"failed to update teacher with lookup: {update_obj['lookup']}",
                         "error": f"{serializer.errors}"})
