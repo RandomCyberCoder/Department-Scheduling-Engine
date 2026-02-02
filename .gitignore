@@ -25,4 +25,4 @@ venv*
 
 #project schedule
 java/hello-world/src/main/resources/*
-java/hello-world/src/main/java/org/acme/schooltimetabling/generated
+*.generated

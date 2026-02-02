@@ -88,7 +88,9 @@ public class TimetableApp {
             });
         }
 
-        storeResults(solution);
+//        storeResults(solution);
+        ResultSaver resultSaver = new ResultSaver(solution);
+        resultSaver.saveSolution();
 
         return;
     }
