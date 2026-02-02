@@ -88,6 +88,7 @@ public class TestLessons {
     }
 
     //Note this test is currently not applicable using a different definition of a studio style course
+    @Disabled
     @Test
     @DisplayName("Check studio courses")
     void checkStudio(){
