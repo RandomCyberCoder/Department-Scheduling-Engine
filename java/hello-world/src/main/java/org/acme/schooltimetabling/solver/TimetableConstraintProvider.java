@@ -20,7 +20,8 @@ import java.util.*;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final float FLOAT_TIME_DELTA = 0.01f;
-
+    /*TODO MAKE SURE THAT STUDIO CLASSES TIMESLOT IS CHECKED FOR BACK TO BACK. THIS MIGHT BE IMPLICIT RIGHT NOW BUT NOT
+    SURE IF THIS IS A GOOD ASSUMPTION */
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 

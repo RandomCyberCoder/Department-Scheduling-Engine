@@ -14,17 +14,9 @@ import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-
-import java.io.FileOutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class TimetableApp {
@@ -94,98 +86,4 @@ public class TimetableApp {
 
         return;
     }
-
-    private static void storeResults(Timetable solution) throws Exception{
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet solutionSpreadsheet = workbook.createSheet("Solution");
-        XSSFSheet leftOutSpreadsheet = workbook.createSheet("LeftOut");
-        List<Lesson> solutionLessons = solution.getLessons();
-        int solutionRow = 1;
-        int leftOutRow = 1;
-        for(XSSFSheet sheet: List.of(solutionSpreadsheet, leftOutSpreadsheet)){
-            Row row = sheet.createRow(0);
-            Cell cell;
-
-            cell = row.createCell(0);
-            cell.setCellValue("Instructor Name");
-            sheet.setColumnWidth(0,9000);
-
-            cell = row.createCell(1);
-            cell.setCellValue("Course Name");
-            sheet.setColumnWidth(1,4000);
-
-            cell = row.createCell(2);
-            cell.setCellValue("Lesson planning ID");
-            sheet.setColumnWidth(2,6000);
-
-
-            cell = row.createCell(3);
-            cell.setCellValue("Linker");
-            sheet.setColumnWidth(3, 2000);
-
-            cell = row.createCell(4);
-            cell.setCellValue("Has a lab/act");
-            sheet.setColumnWidth(4,6000);
-
-            cell = row.createCell(5);
-            cell.setCellValue("Room");
-            sheet.setColumnWidth(5,6000);
-
-            cell = row.createCell(6);
-            cell.setCellValue("Lecture Time");
-            sheet.setColumnWidth(6,10000);
-
-            cell = row.createCell(7);
-            cell.setCellValue("Lab Time");
-            sheet.setColumnWidth(7,10000);
-        }
-
-        for(Lesson lesson: solutionLessons){
-            //teacher, course name, lab, timeslot lec range, timeslot lab/act range
-            Row row = solutionSpreadsheet.createRow(solutionRow++);
-            Cell cell;
-            cell = row.createCell(0);
-            cell.setCellValue(lesson.getTeacherName());
-
-            cell = row.createCell(1);
-            cell.setCellValue(lesson.getCourseName());
-
-            cell = row.createCell(2);
-            cell.setCellValue(lesson.getId());
-
-            if(lesson.getLinker() != null){
-                cell = row.createCell(3);
-                cell.setCellValue(lesson.getLinker());
-            }
-
-            cell = row.createCell(4);
-            cell.setCellValue(lesson.hasLabAct);
-
-            if(lesson.getTimeslot() != null && lesson.getRoom() != null){
-
-                cell = row.createCell(5);
-                cell.setCellValue(lesson.getRoom().getName());
-
-                cell = row.createCell(6);
-                cell.setCellValue(lesson.getTimeslot().toStringLec());
-
-                cell = row.createCell(7);
-                cell.setCellValue(lesson.getTimeslot().toStringLabAct());
-            }
-        }
-
-        Path path = Paths.get(
-                Timetable.class.getProtectionDomain()
-                        .getCodeSource()
-                        .getLocation()
-                        .toURI()
-        ).getParent().getParent();
-        System.out.println(path);
-        String fileLocation = path + "/src/main/java/org/acme/schooltimetabling/generated/temp.xlsx";
-
-        FileOutputStream outputStream = new FileOutputStream(fileLocation);
-        workbook.write(outputStream);
-        workbook.close();
-    }
-
 }

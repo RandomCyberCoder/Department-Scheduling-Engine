@@ -1,6 +1,7 @@
 package org.acme.schooltimetabling.helperClasses;
 
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
@@ -29,14 +30,15 @@ public class ResultSaver {
     private static final Map<LocalTime, Integer> TIME_ROW_MAP;
     private Map<String, Integer> TEACHER_COL_MAP;
     private Timetable solToPrint = null;
-    private CellStyle cellStyle = null;
+    private CellStyle headerCellStyle = null;
+    private CellStyle lessonCellStyle = null;
 
     static {
         ROOM_COL_MAP = new HashMap<>();
         int colIdx = 0;
         for(String roomName: Constants.POSSIBLE_ROOMS){
             if(Objects.equals(roomName, Constants.LEC_ONLY)) continue;
-            ROOM_COL_MAP.put(roomName, colIdx++);
+            ROOM_COL_MAP.put(roomName, START_COLUMN + colIdx++ * COLUMN_SPACING);
         }
 
         //first two rows (0 and 1) are for the headers
@@ -65,16 +67,19 @@ public class ResultSaver {
         TEACHER_COL_MAP = new HashMap<>();
         for(Lesson lesson: lessonList){
             if(!TEACHER_COL_MAP.containsKey(lesson.getTeacherObj().getName())){
-                TEACHER_COL_MAP.put(lesson.getTeacherObj().getName(), rowNum++);
+                TEACHER_COL_MAP.put(lesson.getTeacherObj().getName(),
+                        START_COLUMN + rowNum++ * COLUMN_SPACING);
             }
         }
     }
 
-    public void saveSolution(){
+    public void saveSolution() throws Exception{
         final XSSFWorkbook workbook = new XSSFWorkbook();
-        cellStyle = workbook.createCellStyle();
-        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+        lessonCellStyle = workbook.createCellStyle();
+        lessonCellStyle.setWrapText(true);
         final XSSFSheet roomSheet = workbook.createSheet("Room Usage");
         final XSSFSheet teacherSheet = workbook.createSheet("Teacher schedule");
         final XSSFSheet lessonListSheet = workbook.createSheet("List View");
@@ -88,7 +93,6 @@ public class ResultSaver {
         }
         catch (Exception e){
             LOGGER.error(String.format("Unable to save output after retries :( . Related error: %s", e.getMessage()));
-
         }
     }
 
@@ -169,15 +173,81 @@ public class ResultSaver {
     }
 
     private void teacherView(XSSFSheet teacherSheet){
-        setupShtHdrs(teacherSheet, TEACHER_COL_MAP.keySet().iterator(), TEACHER_COL_MAP);
+        Map<Integer, Row> rowsBuilt = new HashMap<>();
+        setupShtHdrs(teacherSheet, rowsBuilt, TEACHER_COL_MAP.keySet().iterator(), TEACHER_COL_MAP);
+        List<Lesson> lessonList = solToPrint.getLessons();
+        for(Lesson lesson: lessonList){
+            Timeslot ts = lesson.getTimeslot();
+            Teacher teacher = lesson.getTeacherObj();
+            //lecture
+            if(lesson.isHasLecture()){
+                String lecStr = lecToStr(lesson);
+                fillTimeCell(teacherSheet, rowsBuilt, lecStr, TEACHER_COL_MAP.get(teacher.getName()), ts.getLecDays(),
+                        ts.getStartTimeLec(), ts.getEndTimeLec());
+            }
+            //lab
+            if(lesson.isHasLabAct()){
+                String labStr = labToStr(lesson);
+                fillTimeCell(teacherSheet, rowsBuilt, labStr, TEACHER_COL_MAP.get(teacher.getName()), ts.getNonLecDays(),
+                        ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
+            }
+
+        }
     }
 
     private void roomView(XSSFSheet roomSheet){
-        setupShtHdrs(roomSheet, ROOM_COL_MAP.keySet().iterator(), ROOM_COL_MAP);
+        Map<Integer, Row> rowsBuilt = new HashMap<>();
+        setupShtHdrs(roomSheet, rowsBuilt, ROOM_COL_MAP.keySet().iterator(), ROOM_COL_MAP);
+        List<Lesson> lessonList = solToPrint.getLessons();
+        String labStr = "";
+        for(Lesson lesson: lessonList){
+            Timeslot ts = lesson.getTimeslot();
+            labStr =  labToStr(lesson);
+            fillTimeCell(roomSheet, rowsBuilt, labStr, ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getNonLecDays(),
+                            ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
 
+        }
     }
 
-    private void setupShtHdrs(XSSFSheet sheet, Iterator<String> entities, Map<String, Integer> entityColMap){
+    /**
+     *
+     * @param sheet
+     * @param rowMap map of row num to Row if created. This is important because if you remake the {@link Row} for row number
+     *               that has had one built for already it will delete the old contents
+     * @param cellVal
+     * @param entityStrtCol column idx from map
+     * @param start start time (inclusive)
+     * @param end end time (exclusive)
+     */
+    private void fillTimeCell(XSSFSheet sheet, Map<Integer, Row> rowMap, String cellVal, int entityStrtCol,
+                              EnumSet<Days> days, LocalTime start, LocalTime end){
+        final int T_OFFSET = 1;
+        final int W_OFFSET = 2;
+        final int R_OFFSET = 3;
+        final int F_OFFSET = 4;
+        final int frstRw = TIME_ROW_MAP.get(start);
+        //minus 30 minutes because end time is exclusive
+        final int lstRw = TIME_ROW_MAP.get(end.minusMinutes(30));
+        final int strtCol = entityStrtCol;
+        for(Days day: days){
+            int useCol;
+
+            if(day == Days.MONDAY) useCol = strtCol;
+            else if(day == Days.TUESDAY) useCol = strtCol + T_OFFSET;
+            else if(day == Days.WEDNESDAY) useCol = strtCol + W_OFFSET;
+            else if(day == Days.THURSDAY) useCol = strtCol + R_OFFSET;
+            else useCol = strtCol + F_OFFSET;
+
+            Cell cell = rowMap.get(frstRw).createCell(useCol);
+            cell.setCellValue(cellVal);
+            cell.setCellStyle(lessonCellStyle);
+            CellRangeAddress region = new CellRangeAddress(frstRw, lstRw, useCol, useCol);
+            sheet.addMergedRegion(region);
+        }
+    }
+
+    private void setupShtHdrs(XSSFSheet sheet, Map<Integer, Row> rowMap, Iterator<String> entities, Map<String, Integer> entityColMap){
+        //I don't add these to the
         Row entityRow = sheet.createRow(0);
         Row daysRow = sheet.createRow(1);
 
@@ -186,7 +256,10 @@ public class ResultSaver {
         CellRangeAddress region = new CellRangeAddress(0, 1, 0, 0);
         sheet.addMergedRegion(region);
         for(LocalTime localTime: TIME_ROW_MAP.keySet()){
-            Row row = sheet.createRow(TIME_ROW_MAP.get(localTime));
+            final int TIME_COL = TIME_ROW_MAP.get(localTime);
+            Row row = sheet.createRow(TIME_COL);
+            row.setHeight((short) 2000);
+            rowMap.put(TIME_COL, row);
             Cell cell = row.createCell(0);
             cell.setCellValue(localTime.format(LOCALTIME_FORMATTER));
         }
@@ -197,10 +270,10 @@ public class ResultSaver {
         while(entities.hasNext()) {
             //create entity header
             String entityName = entities.next();
-            int colStartIdx = 1 + entityColMap.get(entityName) * COLUMN_SPACING;
+            int colStartIdx = entityColMap.get(entityName);
             Cell cell = entityRow.createCell(colStartIdx);
             cell.setCellValue(entityName);
-            if(cellStyle != null) cell.setCellStyle(cellStyle);
+            if(headerCellStyle != null) cell.setCellStyle(headerCellStyle);
             CellRangeAddress regionEntity = new CellRangeAddress(
                     0,  // first row
                     0,  // last row (same row)
@@ -212,6 +285,7 @@ public class ResultSaver {
             //create days sub header for entity
             for(int i = 0; i < 5; i ++){
                 Cell dayCell = daysRow.createCell(colStartIdx + i);
+                sheet.setColumnWidth(colStartIdx + i, 4000);
                 switch (i) {
                     case 0 -> dayCell.setCellValue("M");
                     case 1 -> dayCell.setCellValue("T");
@@ -221,44 +295,56 @@ public class ResultSaver {
                 }
             }
         }
-
-
     }
 
 
     private void saveSolution(XSSFWorkbook workbook) throws Exception{
         int maxAttempts = 2; // first try + one retry
-        //TODO look into: i think this errors if the file doesn't exists already
-//        for(int attempt = 1; attempt <= maxAttempts; attempt++) {
-//            try{
-                Path path = Paths.get(
-                        Timetable.class.getProtectionDomain()
-                                .getCodeSource()
-                                .getLocation()
-                                .toURI()
-                ).getParent().getParent();
-                System.out.println(path);
-                String fileLocation = path + "/src/main/java/org/acme/schooltimetabling/generated/" +
-                        String.format("%s_solution.xlsx", ScheduleConfig.getCurTerm());
-
+        for(int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try{
                 Path projectRoot = Paths.get(System.getProperty("user.dir"));
                 Path outputDir = projectRoot.resolve("generated");
                 Files.createDirectories(outputDir);
                 Path filePath = outputDir.resolve(
-                        ScheduleConfig.getCurTerm() + "_solution.xlsx"
+                        String.format("%s_%s_solution.xlsx", ScheduleConfig.getCurTerm(),
+                                ScheduleConfig.getDepartment())
                 );
                 FileOutputStream outputStream = new FileOutputStream(filePath.toFile());
                 workbook.write(outputStream);
                 workbook.close();
-//            }
-//            catch (Exception e){
-//                LOGGER.error(String.format("UNABLE TO SAVE SOLUTION. Error: %s", e.getMessage()));
-//                LOGGER.info("Error likely due to file being open. Retrying writing to file when user is ready.");
-//                System.out.println("Press enter when you are ready to retry saving file:");
-//                Scanner scanner = new Scanner(System.in);
-//                scanner.nextLine();
-//            }
-//        }
+                break;
+            }
+            catch (Exception e){
+                LOGGER.error(String.format("UNABLE TO SAVE SOLUTION. Error: %s", e.getMessage()));
+                LOGGER.info("Error likely due to file being open. Retrying writing to file when user is ready.");
+                System.out.println("Press enter when you are ready to retry saving file:");
+                Scanner scanner = new Scanner(System.in);
+                e.printStackTrace();
+                scanner.nextLine();
+            }
+        }
+    }
+
+    private String labToStr(Lesson lesson){
+        Timeslot ts = lesson.getTimeslot();
+        return String.format("%s\n", lesson.getTeacherObj().getName()) +
+                String.format("%s\n", lesson.getCourseName()) +
+                String.format("%s\n", lesson.getRoom().getName()) +
+                String.format("Lab Sec Num: %s\n", lesson.getLabActSection()) +
+                String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLabAct().format(LOCALTIME_FORMATTER),
+                        ts.getEndTimeLabAct().format(LOCALTIME_FORMATTER));
+    }
+
+    private String lecToStr(Lesson lesson){
+        Timeslot ts = lesson.getTimeslot();
+        return String.format("%s\n", lesson.getTeacherObj().getName()) +
+                String.format("%s\n", lesson.getCourseName()) +
+                String.format("%s\n", "University Room") +
+                String.format("Lab Sec Num: %s\n", lesson.getLecSection()) +
+                String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLec().format(LOCALTIME_FORMATTER),
+                        ts.getEndTimeLec().format(LOCALTIME_FORMATTER));
+
+
     }
 
 }

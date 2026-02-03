@@ -25,4 +25,4 @@ venv*
 
 #project schedule
 java/hello-world/src/main/resources/*
-*.generated
+*generated/*
