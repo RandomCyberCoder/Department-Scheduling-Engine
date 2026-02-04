@@ -5,9 +5,12 @@ import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @PlanningEntity
 public class Lesson {
+    private static Logger LOGGER = LoggerFactory.getLogger(Lesson.class);
     /**One unit of lecture is equal to one hour in class*/
     private final int LEC_UNITS_TO_HOURS = 1;
     /**One unit of Activity is equal to two hours in the activity*/
@@ -72,6 +75,7 @@ public class Lesson {
                 , timeslot, room);
         this.linker = linker;
     }
+
     private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
 //        /*calling normal constructor used during setup*/
@@ -148,6 +152,22 @@ public class Lesson {
         this.linker = linker;
     }
 
+    /**
+     * Built using minimum fields needed for excel file print out
+     * @param courseName
+     * @param modifiers
+     * @param teacher
+     * @return
+     */
+    public static Lesson dummyRecord(String courseName, String modifiers, Teacher teacher){
+        return new Lesson(courseName, modifiers, teacher);
+    }
+    private Lesson(String courseName, String modifiers, Teacher teacher){
+        this.courseName = courseName;
+        this.modifiers = modifiers;
+        this.teacherObj = teacher;
+        this.teacherName = teacher.getName();
+    }
     @Override
     public String toString() {
         return courseName + "(" + id + ")" + " instructor: " + teacherObj.getName();

@@ -9,7 +9,7 @@
     </scoreDirectorFactory>
 
     <termination>
-        <secondsSpentLimit>1</secondsSpentLimit>
+        <secondsSpentLimit>10</secondsSpentLimit>
     </termination>
 
     <constructionHeuristic>
@@ -34,7 +34,7 @@
 
     <localSearch>
         <termination>
-<!--            <unimprovedStepCountLimit>3000</unimprovedStepCountLimit>-->
+            <bestScoreLimit>0hard/*medium/*soft</bestScoreLimit>
         </termination>
         <acceptor>
 <!--            <lateAcceptanceSize>100</lateAcceptanceSize>-->

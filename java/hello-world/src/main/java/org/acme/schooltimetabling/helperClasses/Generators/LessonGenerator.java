@@ -26,6 +26,7 @@ public class LessonGenerator extends Generator{
      */
     private static int lessonID = 1;
     private static int availableLinkerID = 1;
+    private static List<Lesson> skippedLessons = new ArrayList<>();
 
     static {
         final String DEPARTMENT = ScheduleConfig.getDepartment().toLowerCase();
@@ -96,12 +97,16 @@ public class LessonGenerator extends Generator{
 
                 /*check if the course is marked for scheduling*/
                 if(skipCourse(courseModifier, courseName, courseConfig)){
-                    continue;
+                    LOGGER.info(String.format("Creating a dummy course for the skipped course %s, to keep a record of it"
+                            , courseName));
+                    newLesson = Lesson.dummyRecord(courseName, courseModifier, getTeacher(teacherHashMap, teacherName));
+                    skippedLessons.add(newLesson);
                 }
-
-                newLesson = generateLesson(teacherHashMap, courseSectionCounter,
-                        course, teacherName);
-                if(newLesson != null) lessons.add(newLesson);
+                else{
+                    newLesson = generateLesson(teacherHashMap, courseSectionCounter,
+                            course, teacherName);
+                    lessons.add(newLesson);
+                }
             }
         }
 
@@ -120,7 +125,7 @@ public class LessonGenerator extends Generator{
      * @param courseSectionCounter HashMap of a course name mapped to its next available section number
      * @param course name of the course whose lesson will be created for
      * @param teacherName name of the teacher who will teach the lesson
-     * @return returns a new lesson to be scheduled or null if the lesson will be skipped
+     * @return returns a new lesson to be scheduled
      * @see Constants#COURSE_CONFIGS
      * @see Constants#COURSE_ID_BIMAP
      */
@@ -138,11 +143,8 @@ public class LessonGenerator extends Generator{
         String courseName = courseDetails.getSecond();
         courseConfig = Constants.COURSE_CONFIGS.get(courseName);
 
-        //check if the course should be scheduled; if not return null
-        if(skipCourse(courseModifier, courseName, courseConfig)){
-            return null;
-        }
 
+        //just in case we have some course config like "various"
         hasLabOrAct = determineLabOrAct(courseConfig);
         sectionNumber = courseSectionCounter.get(courseName);
 
@@ -413,5 +415,8 @@ public class LessonGenerator extends Generator{
      */
     private static int nxtLinkerID(){
             return availableLinkerID++;
-        }
+    }
+
+    public static List<Lesson> getSkippedLessons(){ return skippedLessons; }
+
 }

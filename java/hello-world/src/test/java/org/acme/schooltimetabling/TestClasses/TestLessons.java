@@ -21,41 +21,17 @@ public class TestLessons {
     static void setUp() throws Exception{
         String YAML_FILE_PATH = "constants/config.yaml";
         ScheduleConfig.loadConfig(YAML_FILE_PATH);
-        /*New headers for the survey*/
-        ArrayList<String> newSurveyHeaders = new ArrayList<>(
-                Arrays.asList("id", "start", "complete", "email", "name", "use_old",
-                        "7 AM","8 AM","9 AM","10 AM","11 AM","12 PM","1 PM","2 PM",
-                        "3 PM","4 PM","5 PM","6 PM","7 PM","8 PM","9 PM","7 AM2",
-                        "8 AM2","9 AM2","10 AM2","11 AM2","12 PM2","1 PM2","2 PM2",
-                        "3 PM2","4 PM2","5 PM2","6 PM2","7 PM2","8 PM2","9 PM2",
-                        "mwf_1", "tr_1", "mwf_2", "mwf_tr",
-                        "tr_2", "mwf_3","mwf_2_tr_1", "mwf_1_tr_2",
-                        "tr_3", "mwrf", "mtwr", "mw", "tr",
-                        "back_to_back", "gap", "constraint", "require",
-                        "pref", "comment", "stars")
-        );
-
-
-
-        /*read the current quarter survey
-         * and then create Teacher objects*/
-        String curQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getCurTerm());
-        String prevQuarterSurveyPath = String.format("input/%s-survey.csv", ScheduleConfig.getPrevTerm());
-        System.out.println("Reading the current quarter teacher survey");
-        ArrayList<HashMap<String, String>> curQuarterSurveys = ParseInput.readCSV(curQuarterSurveyPath, newSurveyHeaders);
-        System.out.println("Reading the previous quarter teacher survey");
-        /*read the prev quarter survey*/
-        ArrayList<HashMap<String, String>> prevQuarterSurveys  = ParseInput.readCSV(prevQuarterSurveyPath,newSurveyHeaders);
-        /*teacher name -> teacher object*/
-        HashMap<String, Teacher>teacherHashMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+        Map<String, Teacher> teacherMap = TeacherGenerator.teacherGenDriver();
+        System.out.println(String.format("%s, %s, %s, %s\n", ScheduleConfig.getDepartment(),
+                ScheduleConfig.getCurTerm(), ScheduleConfig.getPrevTerm(),
+                ScheduleConfig.getSeasonTerm()));
 
         /*parse schedules*/
-        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(
-                String.format("input/schedule-%s-%s.json", ScheduleConfig.getCurTerm(),
-                        ScheduleConfig.getDepartment()));
+        List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"
+                , ScheduleConfig.getCurTerm(), ScheduleConfig.getDepartment()));
 
         /*Creating Lessons*/
-        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherHashMap);
+        lessonList = LessonGenerator.generateLessons(parsedSchedules, teacherMap);
     }
 
     @Test

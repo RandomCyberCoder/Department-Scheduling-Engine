@@ -1,11 +1,19 @@
 package org.acme.schooltimetabling.helperClasses;
 
+import ai.timefold.solver.core.api.score.analysis.MatchAnalysis;
+import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+import ai.timefold.solver.core.api.score.stream.DefaultConstraintJustification;
+import ai.timefold.solver.core.api.solver.SolutionManager;
+import ai.timefold.solver.core.api.solver.SolverFactory;
+import ai.timefold.solver.core.config.solver.SolverConfig;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -13,6 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.text.StyledEditorKit;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ResultSaver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultSaver.class);
@@ -84,27 +94,65 @@ public class ResultSaver {
         final XSSFSheet teacherSheet = workbook.createSheet("Teacher schedule");
         final XSSFSheet lessonListSheet = workbook.createSheet("List View");
 
-        roomView(roomSheet);
-        teacherView(teacherSheet);
-        listView(lessonListSheet);
+        List<Lesson> allLessons = solToPrint.getLessons(); // your full list of lessons
+
+        Set<Lesson> penalizedLessons = new HashSet<>();
+        SolverConfig solverConfig = SolverConfig.createFromXmlResource("solverConfig.xml");
+        SolverFactory<Timetable> solverFactory = SolverFactory.create(solverConfig);
+        SolutionManager<Timetable, HardMediumSoftScore> solutionManager = SolutionManager.create(solverFactory);
+        ScoreAnalysis<HardMediumSoftScore> scoreAnalysis = solutionManager.analyze(solToPrint);
+
+        scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
+            // Only consider hard penalties
+            if (constraintAnalysis.score().hardScore() < 0) {
+                System.out.println("This constraint penalized");
+                for (MatchAnalysis<HardMediumSoftScore> match : constraintAnalysis.matches()) {
+                    if (match.score().hardScore() < 0) {
+                        DefaultConstraintJustification justification = (DefaultConstraintJustification) match.justification();
+                        List<Object> facts = justification.getFacts();
+                        // Some justifications are single entities, some are lists
+                        facts.forEach(j -> {
+                            if (j instanceof Lesson lesson) penalizedLessons.add(lesson);
+                            else LOGGER.warn("Found a penalized object wasn't a lesson. Check this or error in printout" +
+                                    " may occur!");
+                        });
+                    }
+                }
+            }
+        });
+        List<Lesson> lessonsWithHardViolations = allLessons.stream()
+                .filter(penalizedLessons::contains)
+                .toList();
+
+        List<Lesson> lessonsWithoutHardViolations = allLessons.stream()
+                .filter(lesson -> !penalizedLessons.contains(lesson))
+                .toList();
+
+
+        roomView(roomSheet, lessonsWithoutHardViolations);
+        teacherView(teacherSheet, lessonsWithoutHardViolations);
+        listView(lessonListSheet, lessonsWithoutHardViolations, lessonsWithHardViolations);
 
         try{
             saveSolution(workbook);
+            LOGGER.info("Solution saved");
         }
         catch (Exception e){
             LOGGER.error(String.format("Unable to save output after retries :( . Related error: %s", e.getMessage()));
         }
     }
 
-    private void listView(XSSFSheet listSheet){
+    private void listView(XSSFSheet listSheet, List<Lesson> validLessons, List<Lesson> invalidLessons){
         List<Lesson> lessonList = solToPrint.getLessons();
         final int COURSE_NAME_COL = 0;
         final int SECTION_NUM_COL = 1;
-        final int INSTRUCTOR_COL = 2;
-        final int ROOM_COL = 3;
-        final int DAYS_COL = 4;
-        final int START_TIME_COL = 5;
-        final int END_TIME_COL = 6;
+        final int MODIFIER_COL = 2;
+        final int INSTRUCTOR_COL = 3;
+        final int ROOM_COL = 4;
+        final int DAYS_COL = 5;
+        final int START_TIME_COL = 6;
+        final int END_TIME_COL = 7;
+        final int COURSE_IS_LEC_COL = 8;
         Row headerRow = listSheet.createRow(0);
         Cell cell;
 
@@ -115,6 +163,10 @@ public class ResultSaver {
         cell = headerRow.createCell(SECTION_NUM_COL);
         cell.setCellValue("Section Number");
         listSheet.setColumnWidth(SECTION_NUM_COL, 4000);
+
+        cell = headerRow.createCell(MODIFIER_COL);
+        cell.setCellValue("Modifier");
+        listSheet.setColumnWidth(MODIFIER_COL, 4000);
 
         cell = headerRow.createCell(INSTRUCTOR_COL);
         cell.setCellValue("Instructor");
@@ -137,26 +189,67 @@ public class ResultSaver {
         cell.setCellValue("End time");
         listSheet.setColumnWidth(END_TIME_COL, 4000);
 
+        cell = headerRow.createCell(COURSE_IS_LEC_COL);
+        cell.setCellValue("Is lecture");
+        listSheet.setColumnWidth(COURSE_IS_LEC_COL, 4000);
+
+        //print out the valid lessons
         int rowIdx = 1;
-        for(Lesson lesson: lessonList){
+        rowIdx = listViewPrntHlpr(listSheet, validLessons, rowIdx);
+
+        //print out the lessons that violated hard constraints
+        rowIdx += 4;
+        Row penalizedRow = listSheet.createRow(rowIdx++);
+        cell = penalizedRow.createCell(0);
+        cell.setCellValue("Penalized lessons. Removed from solution print out");
+        CellRangeAddress region = new CellRangeAddress(penalizedRow.getRowNum(), penalizedRow.getRowNum(), 0, 10);
+        listSheet.addMergedRegion(region);
+        rowIdx = listViewPrntHlpr(listSheet, invalidLessons, rowIdx);
+
+        //print out lessons that got skipped over
+        rowIdx += 2;
+        Row skippedLessonRow = listSheet.createRow(rowIdx++);
+        cell = skippedLessonRow.createCell(0);
+        cell.setCellValue("Lessons that have been skipped over");
+        CellRangeAddress skipRegion = new CellRangeAddress(skippedLessonRow.getRowNum(), skippedLessonRow.getRowNum(),
+                0, 5);
+        listSheet.addMergedRegion(skipRegion);
+        rowIdx = listViewSkipHelper(listSheet, LessonGenerator.getSkippedLessons(), rowIdx);
+
+    }
+
+    private int listViewPrntHlpr(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx) {
+        for(Lesson lesson: lessons){
             final Timeslot lsTs = lesson.getTimeslot();
+            Timeslot.test_minSetUp("1");
             if(lesson.isHasLecture()){
                 Row row = listSheet.createRow(rowIdx++);
-                Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLecSection(), lesson.getTeacherObj().getName(),
-                        lesson.getRoom().getName(), lsTs.getLecDays().toString(), lsTs.getStartTimeLec().toString(),
-                        lsTs.getEndTimeLec().toString()};
+                Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLecSection(), lesson.getModifiers(),
+                        lesson.getTeacherObj().getName(), lesson.getRoom().getName(), lsTs.getLecDays().toString(),
+                        lsTs.getStartTimeLec().toString(), lsTs.getEndTimeLec().toString(), true};
                 lstViewRowHelper(row, vals);
             }
             if(lesson.isHasLabAct()){
                 //lab print out
                 Row row = listSheet.createRow(rowIdx++);
-                Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLabActSection(), lesson.getTeacherObj().getName(),
-                        lesson.getRoom().getName(), lsTs.getNonLecDays().toString(), lsTs.getStartTimeLabAct().toString(),
-                        lsTs.getEndTimeLabAct().toString()};
+                Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLabActSection(), lesson.getModifiers(),
+                        lesson.getTeacherObj().getName(), lesson.getRoom().getName(), lsTs.getNonLecDays().toString(),
+                        lsTs.getStartTimeLabAct().toString(), lsTs.getEndTimeLabAct().toString(), false};
                 lstViewRowHelper(row, vals);
             }
         }
+        return rowIdx;
+    }
 
+    private int listViewSkipHelper(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx){
+        for(Lesson lesson: lessons){
+            Row row = listSheet.createRow(rowIdx++);
+            Object[] vals = new Object[]{lesson.getCourseName(), "N/A", lesson.getModifiers(),
+                    lesson.getTeacherObj().getName(), "N/A", "N/A", "N/A", "N/A", "N/A"};
+            lstViewRowHelper(row, vals);
+        }
+
+        return rowIdx;
     }
 
     private void lstViewRowHelper(Row row, Object[] vals) {
@@ -169,14 +262,19 @@ public class ResultSaver {
             else if (val instanceof Integer) {
                 rowCell.setCellValue((Integer) val);
             }
+            else if (val instanceof Boolean){
+                rowCell.setCellValue(val.toString());
+            }
+            else{
+                LOGGER.error("Dev error: wasn't able to ");
+            }
         }
     }
 
-    private void teacherView(XSSFSheet teacherSheet){
+    private void teacherView(XSSFSheet teacherSheet, List<Lesson> validLessons){
         Map<Integer, Row> rowsBuilt = new HashMap<>();
         setupShtHdrs(teacherSheet, rowsBuilt, TEACHER_COL_MAP.keySet().iterator(), TEACHER_COL_MAP);
-        List<Lesson> lessonList = solToPrint.getLessons();
-        for(Lesson lesson: lessonList){
+        for(Lesson lesson: validLessons){
             Timeslot ts = lesson.getTimeslot();
             Teacher teacher = lesson.getTeacherObj();
             //lecture
@@ -195,14 +293,14 @@ public class ResultSaver {
         }
     }
 
-    private void roomView(XSSFSheet roomSheet){
+    private void roomView(XSSFSheet roomSheet, List<Lesson> validLessons){
         Map<Integer, Row> rowsBuilt = new HashMap<>();
         setupShtHdrs(roomSheet, rowsBuilt, ROOM_COL_MAP.keySet().iterator(), ROOM_COL_MAP);
-        List<Lesson> lessonList = solToPrint.getLessons();
         String labStr = "";
-        for(Lesson lesson: lessonList){
+        for(Lesson lesson: validLessons){
             Timeslot ts = lesson.getTimeslot();
             labStr =  labToStr(lesson);
+            if(lesson.getRoom().getName().equals(Constants.LEC_ONLY)) continue;
             fillTimeCell(roomSheet, rowsBuilt, labStr, ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getNonLecDays(),
                             ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
 
@@ -319,7 +417,6 @@ public class ResultSaver {
                 LOGGER.info("Error likely due to file being open. Retrying writing to file when user is ready.");
                 System.out.println("Press enter when you are ready to retry saving file:");
                 Scanner scanner = new Scanner(System.in);
-                e.printStackTrace();
                 scanner.nextLine();
             }
         }

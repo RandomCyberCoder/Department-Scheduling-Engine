@@ -2,7 +2,7 @@ package org.acme.schooltimetabling;
 
 import ai.timefold.solver.core.api.score.analysis.MatchAnalysis;
 import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
-import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
@@ -62,8 +62,8 @@ public class TimetableApp {
         Timetable solution = solver.solve(timetable);
 
         //analyzing the solution
-        SolutionManager<Timetable, HardSoftLongScore> solutionManager = SolutionManager.create(solverFactory);
-        ScoreAnalysis<HardSoftLongScore> scoreAnalysis = solutionManager.analyze(solution);
+        SolutionManager<Timetable, HardMediumSoftScore> solutionManager = SolutionManager.create(solverFactory);
+        ScoreAnalysis<HardMediumSoftScore> scoreAnalysis = solutionManager.analyze(solution);
 
         //short summary of violated constraints in the solution
         LOGGER.info(scoreAnalysis.summarize());
@@ -73,7 +73,7 @@ public class TimetableApp {
             scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
                 LOGGER.info("Constraint: " + constraintRef.constraintId());
                 LOGGER.info(" Score: " + constraintAnalysis.score());
-                for (MatchAnalysis<HardSoftLongScore> match : constraintAnalysis.matches()) {
+                for (MatchAnalysis<HardMediumSoftScore> match : constraintAnalysis.matches()) {
                     LOGGER.info("  Match score: " + match.score());
                     LOGGER.info("  Justification: " + match.justification());
                 }
