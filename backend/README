@@ -1,10 +1,10 @@
-lets use poetry for dependency management
+#Command to backup
+docker exec postgres-service pg_dump -Fc -U admin scheduling > db.dump
 
+#Command to restore
+docker exec -i postgres-service pg_restore -d postgres -U admin --clean --create < db.dump
 
-docker compose to deploy/setup database and backend
+Note that when using the command the db you connect to can't be scheduling. It must be some other db. If you want to know what db's are available
+run the command 'docker exec -it postgres-service psql -U admin -d scheduling' to open connection and shell then type '\l' to see the available DBs.
 
-
-use docker volumes to mount a direcotyr or volume for DB
-
-
-use something similar for backend
+Note that when restoring to the scheduling database, you can't have any connection open to it.
