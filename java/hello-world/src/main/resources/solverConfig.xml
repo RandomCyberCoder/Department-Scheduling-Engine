@@ -37,9 +37,8 @@
             <bestScoreLimit>0hard/*medium/*soft</bestScoreLimit>
         </termination>
         <acceptor>
-<!--            <lateAcceptanceSize>100</lateAcceptanceSize>-->
 <!--                <entityTabuRatio>0.05</entityTabuRatio>-->
-                <simulatedAnnealingStartingTemperature>5hard/0medium/20soft</simulatedAnnealingStartingTemperature>
+                <simulatedAnnealingStartingTemperature>5hard/0medium/30soft</simulatedAnnealingStartingTemperature>
         </acceptor>
         <moveSelector>
             <changeMoveSelector>
