@@ -3,7 +3,7 @@
 <solver>
     <randomSeed>auto</randomSeed>
     <solutionClass>org.acme.schooltimetabling.domain.Timetable</solutionClass>
-    <entityClass>org.acme.schooltimetabling.domain.Lesson</entityClass>
+    <entityClass>org.acme.schooltimetabling.domain.lesson.Lesson</entityClass>
     <scoreDirectorFactory>
         <constraintProviderClass>org.acme.schooltimetabling.solver.TimetableConstraintProvider</constraintProviderClass>
     </scoreDirectorFactory>
@@ -13,8 +13,9 @@
     </termination>
 
     <constructionHeuristic>
+<!--        <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>-->
         <entitySelector>
-            <entityClass>org.acme.schooltimetabling.domain.Lesson</entityClass>
+            <entityClass>org.acme.schooltimetabling.domain.lesson.Lesson</entityClass>
             <selectionOrder>RANDOM</selectionOrder>
         </entitySelector>
         <moveSelector>

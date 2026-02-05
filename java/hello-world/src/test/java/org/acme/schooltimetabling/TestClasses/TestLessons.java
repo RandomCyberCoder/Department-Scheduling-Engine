@@ -2,7 +2,7 @@ package org.acme.schooltimetabling.TestClasses;
 
 import com.google.common.collect.BiMap;
 import org.acme.schooltimetabling.constants.Constants;
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;

@@ -1,6 +1,6 @@
-package org.acme.schooltimetabling;
+package org.acme.schooltimetabling.domain.lesson;
 
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 
 import java.util.Comparator;
 

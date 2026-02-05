@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
 import org.acme.schooltimetabling.constants.Constants;
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;

@@ -7,15 +7,12 @@ import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
-import org.acme.schooltimetabling.constants.LogSetUp;
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.*;
 
-import java.time.Duration;
 import java.util.*;
 
 public class TimetableConstraintProvider implements ConstraintProvider {

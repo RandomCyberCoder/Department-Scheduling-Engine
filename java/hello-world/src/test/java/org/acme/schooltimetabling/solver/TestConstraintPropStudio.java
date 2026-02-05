@@ -3,16 +3,14 @@ package org.acme.schooltimetabling.solver;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
-import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.acme.schooltimetabling.solver.ConstraintTestHelper;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;

@@ -1,9 +1,11 @@
-package org.acme.schooltimetabling.domain;
+package org.acme.schooltimetabling.domain.lesson;
 
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.domain.Room;
+import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

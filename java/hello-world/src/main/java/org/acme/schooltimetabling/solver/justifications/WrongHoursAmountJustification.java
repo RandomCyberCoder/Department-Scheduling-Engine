@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.solver.justifications;
 
 import ai.timefold.solver.core.api.score.stream.ConstraintJustification;
-import org.acme.schooltimetabling.domain.Lesson;
+import org.acme.schooltimetabling.domain.lesson.Lesson;
 
 public record WrongHoursAmountJustification(Lesson lesson1, String description) implements ConstraintJustification{
     public WrongHoursAmountJustification(Lesson lesson1){
