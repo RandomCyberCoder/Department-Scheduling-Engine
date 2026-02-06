@@ -3,6 +3,7 @@ package org.acme.schooltimetabling.helperClasses;
 import ai.timefold.solver.core.api.score.analysis.MatchAnalysis;
 import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+import ai.timefold.solver.core.api.score.stream.ConstraintJustification;
 import ai.timefold.solver.core.api.score.stream.DefaultConstraintJustification;
 import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.SolverFactory;
@@ -14,6 +15,7 @@ import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
+import org.acme.schooltimetabling.solver.justifications.WrongHoursAmountJustification;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -103,11 +105,22 @@ public class ResultSaver {
         scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
             // Only consider hard penalties
             if (constraintAnalysis.score().hardScore() < 0) {
-                System.out.println("This constraint penalized");
                 for (MatchAnalysis<HardMediumSoftScore> match : constraintAnalysis.matches()) {
                     if (match.score().hardScore() < 0) {
-                        DefaultConstraintJustification justification = (DefaultConstraintJustification) match.justification();
-                        List<Object> facts = justification.getFacts();
+                        ConstraintJustification justification = match.justification();
+                        List<Object> facts = new ArrayList<>();
+
+                        if (justification instanceof DefaultConstraintJustification d) {
+                            facts.addAll(d.getFacts());
+                        } else if (justification instanceof WrongHoursAmountJustification w) {
+                            facts.add(w.lesson1());
+                        } else {
+                            // Fallback: log unknown justification
+                            LOGGER.warn("Unknown justification type: " + justification.getClass() +
+                                    "  Skipping any penalized classes. Likely to lead to bad invalid solution printout." +
+                                    " Add justification to solution printout");
+                        }
+
                         // Some justifications are single entities, some are lists
                         facts.forEach(j -> {
                             if (j instanceof Lesson lesson) penalizedLessons.add(lesson);
@@ -412,7 +425,7 @@ public class ResultSaver {
             }
             catch (Exception e){
                 LOGGER.error(String.format("UNABLE TO SAVE SOLUTION. Error: %s", e.getMessage()));
-                LOGGER.info("Error likely due to file being open. Retrying writing to file when user is ready.");
+                LOGGER.warn("Error likely due to file being open. Retrying writing to file when user is ready.");
                 System.out.println("Press enter when you are ready to retry saving file:");
                 Scanner scanner = new Scanner(System.in);
                 scanner.nextLine();
@@ -435,7 +448,7 @@ public class ResultSaver {
         return String.format("%s\n", lesson.getTeacherObj().getName()) +
                 String.format("%s\n", lesson.getCourseName()) +
                 String.format("%s\n", "University Room") +
-                String.format("Lab Sec Num: %s\n", lesson.getLecSection()) +
+                String.format("Lecture Sec Num: %s\n", lesson.getLecSection()) +
                 String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLec().format(LOCALTIME_FORMATTER),
                         ts.getEndTimeLec().format(LOCALTIME_FORMATTER));
 
