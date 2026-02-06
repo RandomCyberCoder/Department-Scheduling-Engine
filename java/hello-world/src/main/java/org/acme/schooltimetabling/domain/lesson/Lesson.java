@@ -10,7 +10,8 @@ import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@PlanningEntity
+@PlanningEntity(difficultyComparatorClass = LessonComparator.class)
+//@PlanningEntity(comparator = LessonComparator.class)
 public class Lesson {
     private static Logger LOGGER = LoggerFactory.getLogger(Lesson.class);
     /**One unit of lecture is equal to one hour in class*/

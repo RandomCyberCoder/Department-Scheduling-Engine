@@ -13,53 +13,39 @@
     </termination>
 
     <constructionHeuristic>
-<!--        <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>-->
-        <entitySelector>
-            <entityClass>org.acme.schooltimetabling.domain.lesson.Lesson</entityClass>
-            <selectionOrder>RANDOM</selectionOrder>
-        </entitySelector>
-        <moveSelector>
+        <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
+        <entitySorterManner>DESCENDING_IF_AVAILABLE</entitySorterManner>
+
+<!--    Cartesian product scales poorly, but I doubt it will ever be a problem for something of our size,
+        However, if it ever does, just remove it and you still get a good starting state-->
+        <cartesianProductMoveSelector>
             <changeMoveSelector>
-                <valueSelector variableName="room">
-                    <selectionOrder>RANDOM</selectionOrder>
-                </valueSelector>
+                <valueSelector variableName="timeslot"/>
             </changeMoveSelector>
             <changeMoveSelector>
-                <valueSelector variableName="timeslot">
-                    <selectionOrder>RANDOM</selectionOrder>
-                </valueSelector>
+                <valueSelector variableName="room"/>
             </changeMoveSelector>
-        </moveSelector>
+        </cartesianProductMoveSelector>
     </constructionHeuristic>
 
 
     <localSearch>
+<!--    terminate after all hard constraints are solved, with any medium or soft score-->
         <termination>
             <bestScoreLimit>0hard/*medium/*soft</bestScoreLimit>
         </termination>
         <acceptor>
-<!--                <entityTabuRatio>0.05</entityTabuRatio>-->
-                <simulatedAnnealingStartingTemperature>5hard/0medium/30soft</simulatedAnnealingStartingTemperature>
+<!--        adding entity tabu helps a lot, the lower, the better. Using entity size rather than ratio is better
+            from my experiments-->
+            <entityTabuSize>1</entityTabuSize>
+            <simulatedAnnealingStartingTemperature>2hard/0medium/30soft</simulatedAnnealingStartingTemperature>
         </acceptor>
-        <moveSelector>
-            <changeMoveSelector>
-                <valueSelector variableName="room">
-                    <selectionOrder>ORIGINAL</selectionOrder>
-                </valueSelector>
-            </changeMoveSelector>
-        </moveSelector>
-        <moveSelector>
-            <changeMoveSelector>
-                <valueSelector variableName="timeslot">
-                    <selectionOrder>ORIGINAL</selectionOrder>
-                </valueSelector>
-            </changeMoveSelector>
-        </moveSelector>
 
-
-<!--        <forager>-->
-<!--            <acceptedCountLimit>500</acceptedCountLimit>-->
-<!--        </forager>-->
+<!--    from experiments, the lower this number the better, but too low seems to end up in hard constraints violated-->
+<!--    10 seems to be around the sweet spot   -->
+        <forager>
+            <acceptedCountLimit>10</acceptedCountLimit>
+        </forager>
     </localSearch>
 
 
