@@ -5,32 +5,31 @@ import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
+import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimetableConstraintProvider.class);
     private static final float FLOAT_TIME_DELTA = 0.01f;
     /*TODO MAKE SURE THAT STUDIO CLASSES TIMESLOT IS CHECKED FOR BACK TO BACK. THIS MIGHT BE IMPLICIT RIGHT NOW BUT NOT
     SURE IF THIS IS A GOOD ASSUMPTION */
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
-//Disconnected courses being left out during this change.
-
-//        //studio class specific constraints
-//        /*NOTE left out due to studio space being different from what I originally thought
-//        * the true studio constraint can just be taken into account in other constraints*/
-//        Constraint[] studioConstraint = new Constraint[]{
-//                studioSpace(constraintFactory),
-//                studioLabAfterLesson(constraintFactory),
-//        };
+        Constraint[] studioConstraint = new Constraint[]{
+                studioLabAfterLec(constraintFactory)
+        };
 
         //mutability
         List<Constraint> solver_constraints = new ArrayList<>(Arrays.asList(
@@ -49,14 +48,13 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 inPrimeTime(constraintFactory)
         ));
 
-//Disconnected courses being left out during this change.
 
-//        //add studio specific constraints for studio courses
-//        if(LessonGenerator.OLD_studio_detected){
-//            LogSetUp.LOGGER.info("Studio classes detected. Adding studio specific constraints.");
-//            solver_constraints.addAll(Arrays.asList(studioConstraint));
-//        }
-//        else LogSetUp.LOGGER.info("No studio classes detected, leaving out studio specific constraints");
+        //add studio specific constraints for studio courses
+        if(LessonGenerator.proper_studio_detected || Constants.TESTING){
+            LOGGER.info("Studio classes detected. Adding studio specific constraints.");
+            solver_constraints.addAll(Arrays.asList(studioConstraint));
+        }
+        else LOGGER.info("No studio classes detected, leaving out studio specific constraints");
 
         return solver_constraints.toArray(new Constraint[0]);
     }
@@ -283,61 +281,89 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     }
 
 
-
+    private static final int NO_NEXT_BIT_SET = -1;
 
     /**
-     * Checks studio courses' lab/act portion occurs on one day with consecutive time
+     * This constraint will look at studio courses and penalize and studio lessons whose lecture blocks are not
+     * immediately followed by a lab/act block
      * @param constraintFactory constraint factory
-     * @return constraint penalizing studio courses not using studio time
+     * @return penalizes lessons that don't have timeslots that have lab time right after the lecture ends
      */
-    Constraint studioSpace(ConstraintFactory constraintFactory){
-        return  constraintFactory.forEach(Lesson.class)
-                .filter(lesson -> {
-                    //only check lab/act portion of the studio style split
-                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) ||
-                            !lesson.isHasLabAct() ||
-                            Constants.TESTING) return false;
+    Constraint studioLabAfterLec(ConstraintFactory constraintFactory){
+            return constraintFactory.forEach(Lesson.class)
+                    .filter(lesson -> {
+                        if(!lesson.isStudio()) return false;
+                        final BitSet lecBs = lesson.getTimeslot().getLectureBitSet();
+                        final BitSet labActBs = lesson.getTimeslot().getLabActBitSet();
+                        int end;
+                        //for all lecture blocks, check that a lab starts right after it
+                        for(int idx = lecBs.nextSetBit(0); idx != NO_NEXT_BIT_SET; idx = lecBs.nextSetBit(end + 1)){
+                            end = lecBs.nextClearBit(idx) - 1;
+                            boolean labStart = labActBs.get(end + 1);
+                            //penalize this lesson for having a timeslot that doesn't have a lab right after lecture
+                            if(!labStart) return true;
+                        }
 
-
-                    //"lecture" portion will be used for lab/act space
-                    //The timeslot should only have the lecture portion set. For a single day
-                    return !lesson.getTimeslot().isContinuous();
-
-                })
-                .penalize(HardMediumSoftScore.ONE_HARD)
-                .asConstraint("Studio space must be consecutive on a single day");
+                        return false;
+                    })
+                    .penalize(HardMediumSoftScore.ONE_HARD)
+                    .asConstraint("Studio lab right after lecture");
     }
 
-
-    /**
-     * For studio courses, it makes sure that at least one lecture occurs before the lab occurs
-     * //TODO check with beard. Not sure if this is actually a thing but leaving it here just in case
-     * @param constraintFactory
-     * @return constraint penalizing studio courses that have their lab time before any lecture has taken place
-     */
-    Constraint studioLabAfterLesson(ConstraintFactory constraintFactory){
-        //filter for studio only courses
-        //just check the first bit of the lab vs lec bitset. if lab comes before penalty
-        return constraintFactory.forEachUniquePair(Lesson.class,
-                        Joiners.equal(Lesson::getLinker),
-                        //skip non-studio classes
-                        Joiners.filtering((lesson, lesson2) -> lesson.isStudio() && lesson.isStudio())
-                )
-                .filter((lesson, lesson2) -> {
-                    //NOTE: one lesson will be the lec and the other one will be the lab/act
-
-                    //if first lesson is the lec, get the lecture bitset else use lesson2's bitset
-                    final BitSet lecBS = lesson.isHasLecture() ? lesson.getTimeslot().getLectureBitSet() :
-                            lesson2.getTimeslot().getLectureBitSet();
-                    //if first lesson is the lab, get the lecture (yes the lecture) bitset else use lesson2's bitset
-                    final BitSet labBS = lesson.isHasLabAct() ? lesson.getTimeslot().getLectureBitSet() :
-                            lesson2.getTimeslot().getLectureBitSet();
-
-                    return labBS.nextSetBit(0) <= lecBS.nextSetBit(0);
-                })
-                .penalize(HardMediumSoftScore.ONE_HARD)
-                .asConstraint("Studio Penalty: lab before all lecture");
-    }
+//THE COMMENTED CODE BELOW ARE OLD CONSTRAINTS FROM WHEN I WAS DISCONNECTING LABS AND LECTURE. MIGHT BE USEFUL LATER
+//    /**
+//     * Checks studio courses' lab/act portion occurs on one day with consecutive time
+//     * @param constraintFactory constraint factory
+//     * @return constraint penalizing studio courses not using studio time
+//     */
+//    Constraint studioSpace(ConstraintFactory constraintFactory){
+//        return  constraintFactory.forEach(Lesson.class)
+//                .filter(lesson -> {
+//                    //only check lab/act portion of the studio style split
+//                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) ||
+//                            !lesson.isHasLabAct() ||
+//                            Constants.TESTING) return false;
+//
+//
+//                    //"lecture" portion will be used for lab/act space
+//                    //The timeslot should only have the lecture portion set. For a single day
+//                    return !lesson.getTimeslot().isContinuous();
+//
+//                })
+//                .penalize(HardMediumSoftScore.ONE_HARD)
+//                .asConstraint("Studio space must be consecutive on a single day");
+//    }
+//
+//
+//    /**
+//     * For studio courses, it makes sure that at least one lecture occurs before the lab occurs
+//     * //TODO check with beard. Not sure if this is actually a thing but leaving it here just in case
+//     * @param constraintFactory
+//     * @return constraint penalizing studio courses that have their lab time before any lecture has taken place
+//     */
+//    Constraint studioLabAfterLesson(ConstraintFactory constraintFactory){
+//        //filter for studio only courses
+//        //just check the first bit of the lab vs lec bitset. if lab comes before penalty
+//        return constraintFactory.forEachUniquePair(Lesson.class,
+//                        Joiners.equal(Lesson::getLinker),
+//                        //skip non-studio classes
+//                        Joiners.filtering((lesson, lesson2) -> lesson.isStudio() && lesson.isStudio())
+//                )
+//                .filter((lesson, lesson2) -> {
+//                    //NOTE: one lesson will be the lec and the other one will be the lab/act
+//
+//                    //if first lesson is the lec, get the lecture bitset else use lesson2's bitset
+//                    final BitSet lecBS = lesson.isHasLecture() ? lesson.getTimeslot().getLectureBitSet() :
+//                            lesson2.getTimeslot().getLectureBitSet();
+//                    //if first lesson is the lab, get the lecture (yes the lecture) bitset else use lesson2's bitset
+//                    final BitSet labBS = lesson.isHasLabAct() ? lesson.getTimeslot().getLectureBitSet() :
+//                            lesson2.getTimeslot().getLectureBitSet();
+//
+//                    return labBS.nextSetBit(0) <= lecBS.nextSetBit(0);
+//                })
+//                .penalize(HardMediumSoftScore.ONE_HARD)
+//                .asConstraint("Studio Penalty: lab before all lecture");
+//    }
 
 
     /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours

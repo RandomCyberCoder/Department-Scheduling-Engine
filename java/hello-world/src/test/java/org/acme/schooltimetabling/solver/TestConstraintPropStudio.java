@@ -213,4 +213,56 @@ public class TestConstraintPropStudio {
                 .penalizesBy(NO_PENALTY);
 
     }
+
+    @Test
+    @DisplayName("Penalty: studio w/o lab after lec")
+    void penProp_labNotAfterLec() throws Exception{
+        EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
+        EnumSet<Days> F = EnumSet.of(Days.FRIDAY);
+        BitSet bs_MW_9AM_3Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 3,
+                MW);
+        BitSet bs_MW_11AM_3Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("11:00AM", formatter), 3,
+                MW);
+        BitSet bs_F_12PM_4Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("12:00PM", formatter), 4, F);
+        Timeslot ts_MW_9AM_3Blcks_MW_11AM_3Blcks = Timeslot.test_lecLabBitAndDays(1, bs_MW_9AM_3Blcks, bs_MW_11AM_3Blcks,
+                MW, MW);
+        Timeslot ts_MW_9AM_3Blcks_F_12PM_4Blcks = Timeslot.test_lecLabBitAndDays(2, bs_MW_9AM_3Blcks, bs_F_12PM_4Blcks,
+                MW, F);
+        Lesson st1_sameDay = Lesson.test_buildLesson("1", 1, ConstraintTestHelper.DUMMY_STUDIO, "", "",
+                "3-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
+                ConstraintTestHelper.DUMMY_TEACHER, ts_MW_9AM_3Blcks_MW_11AM_3Blcks, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson st2_diffDay = Lesson.test_buildLesson("2", 3, ConstraintTestHelper.DUMMY_STUDIO, "", "",
+                "3-0-1", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
+                ConstraintTestHelper.DUMMY_TEACHER, ts_MW_9AM_3Blcks_F_12PM_4Blcks, ConstraintTestHelper.DUMMY_ROOM);
+        constraintVerifier.verifyThat(TimetableConstraintProvider::studioLabAfterLec)
+                .given(st1_sameDay, st2_diffDay)
+                .penalizesBy(2);
+
+    }
+
+    @Test
+    @DisplayName("No Penalty: studio with lab after lec")
+    void noPenProp_labAfterLec() throws Exception{
+        EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
+        EnumSet<Days> F = EnumSet.of(Days.FRIDAY);
+        BitSet bs_MW_9AM_3Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 3,
+                MW);
+        BitSet bs_MW_1030AM_3Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:30AM", formatter), 3,
+                MW);
+        BitSet bs_F_12PM_4Blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("12:00PM", formatter), 4, F);
+        Timeslot ts_MW_9AM_3Blcks_F_12PM_4Blcks = Timeslot.test_lecLabBitAndDays(2, bs_MW_9AM_3Blcks, bs_F_12PM_4Blcks,
+                MW, F);
+        Timeslot ts_MW_9AM_3Blcks_MW_1030AM_3Blcks = Timeslot.test_lecLabBitAndDays(1, bs_MW_9AM_3Blcks, bs_MW_1030AM_3Blcks,
+                MW, MW);
+
+        Lesson st1_sameDay = Lesson.test_buildLesson("1", 1, ConstraintTestHelper.DUMMY_STUDIO, "", "",
+                "3-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
+                ConstraintTestHelper.DUMMY_TEACHER, ts_MW_9AM_3Blcks_MW_1030AM_3Blcks, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson normLssn1 = Lesson.test_buildLesson("2", 1, "non-studio", "", "",
+                "3-0-1", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_MW_9AM_3Blcks_F_12PM_4Blcks,
+                ConstraintTestHelper.DUMMY_ROOM);
+        constraintVerifier.verifyThat(TimetableConstraintProvider::studioLabAfterLec)
+                .given(st1_sameDay, normLssn1)
+                .penalizesBy(NO_PENALTY);
+    }
 }

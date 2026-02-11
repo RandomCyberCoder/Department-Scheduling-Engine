@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
+    public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
     /**
      * Keeps track of the next available section number available for a course
@@ -105,6 +106,7 @@ public class LessonGenerator extends Generator{
                 else{
                     newLesson = generateLesson(teacherHashMap, courseSectionCounter,
                             course, teacherName);
+                    if(newLesson.isStudio()) proper_studio_detected = true;
                     lessons.add(newLesson);
                 }
             }

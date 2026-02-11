@@ -54,6 +54,8 @@ public class ConstraintTestHelper {
                 TEST_RANDOM_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_RANDOM_LAB_ROOM));
         TEST_ROOM_SPECIFIC = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM)),
                 TEST_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM));
+
+        Constants.TESTING = true;
     }
     public static void load(){
 
