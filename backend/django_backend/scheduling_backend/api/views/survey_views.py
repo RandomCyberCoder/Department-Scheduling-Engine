@@ -123,12 +123,28 @@ def survey_file_upload(request: Request) -> Response:
 
     #note that the name in the survey is expected to be the non-canon name
     #field names have the same name as the model field names
-    AVAIL_FIELDS = ["mwf_7_am", "mwf_8_am", "mwf_9_am", "mwf_10_am", "mwf_11_am", "mwf_12_pm", "mwf_1_pm", "mwf_2_pm",
-                            "mwf_3_pm", "mwf_4_pm", "mwf_5_pm", "mwf_6_pm", "mwf_7_pm", "mwf_8_pm", "mwf_9_pm",
-                            "tr_7_am", "tr_8_am", "tr_9_am", "tr_10_am", "tr_11_am", "tr_12_pm", "tr_1_pm", "tr_2_pm", 
-                            "tr_3_pm", "tr_4_pm", "tr_5_pm", "tr_6_pm", "tr_7_pm", "tr_8_pm", "tr_9_pm"]
-    PREF_FIELDS = ["mwf_1", "tr_1", "mwf_2", "mwf_tr", "tr_2", "mwf_3", "mwf_2_tr_1", "mwf_1_tr_2", "tr_3", "mwrf", "mtwr", "mw",
-                   "tr", "back_to_back", "gap"]
+    AVAIL_FIELDS = ["m_7_am","m_8_am","m_9_am","m_10_am","m_11_am","m_12_pm",
+                    "m_1_pm","m_2_pm","m_3_pm","m_4_pm","m_5_pm","m_6_pm",
+                    "m_7_pm","m_8_pm","m_9_pm",
+
+                    "t_7_am","t_8_am","t_9_am","t_10_am","t_11_am","t_12_pm",
+                    "t_1_pm","t_2_pm","t_3_pm","t_4_pm","t_5_pm","t_6_pm",
+                    "t_7_pm","t_8_pm","t_9_pm",
+
+                    "w_7_am","w_8_am","w_9_am","w_10_am","w_11_am","w_12_pm",
+                    "w_1_pm","w_2_pm","w_3_pm","w_4_pm","w_5_pm","w_6_pm",
+                    "w_7_pm","w_8_pm","w_9_pm",
+
+                    "r_7_am","r_8_am","r_9_am","r_10_am","r_11_am","r_12_pm",
+                    "r_1_pm","r_2_pm","r_3_pm","r_4_pm","r_5_pm","r_6_pm",
+                    "r_7_pm","r_8_pm","r_9_pm",
+
+                    "f_7_am","f_8_am","f_9_am","f_10_am","f_11_am","f_12_pm",
+                    "f_1_pm","f_2_pm","f_3_pm","f_4_pm","f_5_pm","f_6_pm",
+                    "f_7_pm","f_8_pm","f_9_pm"
+                    ]
+    PREF_FIELDS = ["pref_minDays", "pref_5days", "pref_TPD", "back_to_back", "gap", "lecAct_1hrLec", "lecAct_2hrAct",
+                   "lecAct_noPref", "lecAct_notSure"]
     ADDITIONAL_FIELDS = ["constraint", "require", "pref", "comment", "stars"]
     #order of array extension here matters
     EMAIL_FILED = "email"
@@ -156,11 +172,11 @@ def survey_file_upload(request: Request) -> Response:
         PREV_TERM = serializer.validated_data["prev_term"]
 
         df = file_to_df(FILE, VALID_EXTENSIONS)
-        
         #check number of columns expected
         if len(df.columns) != len(REPLACEMENT_FIELDNAMES):
-            raise APIException(detail=f"Number of columns expected is {len(REPLACEMENT_FIELDNAMES)}; " +
-                                f"given {len(df.columns)}")
+            return Response({
+                "msg": f"Number of columns expected is {len(REPLACEMENT_FIELDNAMES)}; given {len(df.columns)}"
+            }, status.HTTP_400_BAD_REQUEST)
         #normalize df
         df.columns = REPLACEMENT_FIELDNAMES
         df.drop(DROP_FIELDS, axis=1, inplace=True)
@@ -174,23 +190,23 @@ def survey_file_upload(request: Request) -> Response:
                 .astype(str)
                 .str.strip()
             )
+        #This is commented out right now because I have the model default these fields to the values below
         #normalize time availability/pref fields; blank fields marked as a conflict
-        for field in AVAIL_FIELDS:
-            df[field] = (
-                df[field]
-                .replace({"": DEFAULT_AVAIL})
-            )
+        # for field in AVAIL_FIELDS:
+        #     df[field] = (
+        #         df[field]
+        #         .replace({"": DEFAULT_AVAIL})
+        #     )
             
-        for field in PREF_FIELDS:
-            df[field] = (
-                df[field]
-                .replace({"": DEFAULT_PREF})
-            )
+        # for field in PREF_FIELDS:
+        #     df[field] = (
+        #         df[field]
+        #         .replace({"": DEFAULT_PREF})
+        #     )
 
     except Exception as e:
         return Response({"error": f"problem reading the file {FILE.name}",
                             "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     success = []
     failed = []
     for idx, row in df.iterrows():
@@ -211,7 +227,8 @@ def survey_file_upload(request: Request) -> Response:
                 })
                 continue
             #SKIP generic timeslots
-            if "generic" in SURVEY_NAME.lower():
+            name_normalized = SURVEY_NAME.lower()
+            if "generic" in name_normalized or "morning" in name_normalized or "afternoon" in name_normalized:
                 failed.append({
                     "msg": f"SKIPPED: survey entry with name '{SURVEY_NAME}' skiped to being GENERIC",
                     "teacher_file_idx": idx,

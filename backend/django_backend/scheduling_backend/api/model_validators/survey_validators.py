@@ -9,9 +9,10 @@ def avail_vailidator(value):
     Raises:
         ValidationError: invalid value
     """
-    valid_values = ["Preferred", "Acceptable", "Conflict"]
+    DEFAULT = "Conflict"
+    valid_values = ["Preferred", "Acceptable", DEFAULT, ""]
     if value not in valid_values:
-        raise ValidationError(f"Acceptable values are {valid_values}")
+        raise ValidationError(f"Acceptable values are {valid_values}; Note the empty string will default to f{DEFAULT}")
 
 def pref_validator(value):
     """Ensures the value is one of the following: **Agree**, **Neutral**, or **Disagree**
@@ -22,9 +23,10 @@ def pref_validator(value):
     Raises:
         ValidationError: invalid value
     """
-    valid_value = ["Agree", "Disagree", "Neutral"]
+    DEFAULT = "Disagree"
+    valid_value = ["Agree", DEFAULT, "Neutral", ""]
     if value not in valid_value:
-        raise ValidationError(f"set up pref validator {valid_value}")
+        raise ValidationError(f"set up pref validator {valid_value}; Note the empty string will default to f{DEFAULT}")
 
 def term_checker(value):
     """Does a bit of valiaiton for the term code Assumes the last digit for the term has the following 
