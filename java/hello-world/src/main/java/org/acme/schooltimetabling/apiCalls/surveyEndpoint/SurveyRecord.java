@@ -20,10 +20,25 @@ public class SurveyRecord {
     private static final Logger LOGGER = LoggerFactory.getLogger(SurveyRecord.class);
     /*Column names in the DB*/
     private final Set<String> timePrefKeys = Set.of(
-            "mwf_7_am", "mwf_8_am", "mwf_9_am", "mwf_10_am", "mwf_11_am", "mwf_12_pm", "mwf_1_pm", "mwf_2_pm",
-            "mwf_3_pm", "mwf_4_pm", "mwf_5_pm", "mwf_6_pm", "mwf_7_pm", "mwf_8_pm", "mwf_9_pm",
-            "tr_7_am", "tr_8_am", "tr_9_am", "tr_10_am", "tr_11_am", "tr_12_pm", "tr_1_pm", "tr_2_pm",
-            "tr_3_pm", "tr_4_pm", "tr_5_pm", "tr_6_pm", "tr_7_pm", "tr_8_pm", "tr_9_pm"
+            "M_7_AM","M_8_AM","M_9_AM","M_10_AM","M_11_AM","M_12_PM",
+            "M_1_PM","M_2_PM","M_3_PM","M_4_PM","M_5_PM","M_6_PM",
+            "M_7_PM","M_8_PM","M_9_PM",
+
+            "T_7_AM","T_8_AM","T_9_AM","T_10_AM","T_11_AM","T_12_PM",
+            "T_1_PM","T_2_PM","T_3_PM","T_4_PM","T_5_PM","T_6_PM",
+            "T_7_PM","T_8_PM","T_9_PM",
+
+            "W_7_AM","W_8_AM","W_9_AM","W_10_AM","W_11_AM","W_12_PM",
+            "W_1_PM","W_2_PM","W_3_PM","W_4_PM","W_5_PM","W_6_PM",
+            "W_7_PM","W_8_PM","W_9_PM",
+
+            "R_7_AM","R_8_AM","R_9_AM","R_10_AM","R_11_AM","R_12_PM",
+            "R_1_PM","R_2_PM","R_3_PM","R_4_PM","R_5_PM","R_6_PM",
+            "R_7_PM","R_8_PM","R_9_PM",
+
+            "F_7_AM","F_8_AM","F_9_AM","F_10_AM","F_11_AM","F_12_PM",
+            "F_1_PM","F_2_PM","F_3_PM","F_4_PM","F_5_PM","F_6_PM",
+            "F_7_PM","F_8_PM","F_9_PM"
     );
     private Teacher teacher_rep = null;
     @JsonProperty("id")

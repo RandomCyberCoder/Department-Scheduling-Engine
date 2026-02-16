@@ -3,8 +3,6 @@ package org.acme.schooltimetabling.apiCalls.surveyEndpoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.acme.schooltimetabling.apiCalls.ApiConstants;
-import org.acme.schooltimetabling.domain.teacher.Teacher;
-import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import retrofit2.Call;
 import retrofit2.Response;

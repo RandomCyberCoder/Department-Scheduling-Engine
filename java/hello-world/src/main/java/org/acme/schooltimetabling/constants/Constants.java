@@ -101,7 +101,7 @@ public class Constants {
     static{
         int counter;
 
-        COURSE_CONFIGS = ParseInput.readCourseConfigs("constants/configurations.tsv");
+        COURSE_CONFIGS = ParseInput.readCourseConfigs("constants/semester-configurations.tsv");
 
         COURSE_ID_BIMAP = Generator.genCourseToIdMapping(COURSE_CONFIGS.keySet().iterator());
 
@@ -125,27 +125,28 @@ public class Constants {
         COURSE_TO_ROOMS = new HashMap<>();
 
         if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
-            List<String> introCourses = List.of("csc101", "csc202", "csc203", "csc357");
-            Set<String> introRooms = Set.of("301", "302", "232A");
+            List<String> introCourses = List.of("csc1001", "csc2002", "csc2050");
+            Set<String> introRooms = Set.of("Room 301", "Room 302", "Room 232A");
 
-            List<String> graphicCourses = List.of("csc474", "csc476", "csc378", "csc582");
-            Set<String> graphicRooms = Set.of("255");
+            //TODO non_sec_courses
+            List<String> non_sec_courses = List.of("csc2050", "csc3300");
+            Set<String> non_sec_rooms = Set.of("Room 301", "Room 302", "Room 232A", "Room 255", "Room 256", "Room 257",
+                    "Room 20-127");
 
-            List<String> securityCourses = List.of("csc320", "csc321", "csc421", "csc521");
-            Set<String> securityRooms = Set.of("192-206", "192-333");
+            List<String> graphicCourses = List.of("csc4710", "csc4730", "csc4740", "csc4760");
+            Set<String> graphicRooms = Set.of("Room 255");
 
-            List<String> phoenixCourses = List.of("csc325");
-            Set<String> phoenixRooms = Set.of("192-333");
+            List<String> securityCourses = List.of("csc3210", "csc4210", "csc4212", "csc4214", "csc4230");
+            Set<String> securityRooms = Set.of("Room 192-206", "Room 192-333");
 
-            List<String> hwSecurityCourses = List.of("csc524");
-            Set<String> hwSecurityRooms = Set.of("192-206");
+            List<String> phoenixCourses = List.of("csc3250");
+            Set<String> phoenixRooms = Set.of("Room 192-333");
 
-            List<String> seCourses = List.of("csc305", "csc307", "csc309", "csc402", "csc405", "csc406");
-            Set<String> seRooms = Set.of("256");
+            List<String> hwSecurityCourses = List.of("csc5281");
+            Set<String> hwSecurityRooms = Set.of("Room 192-206");
 
-            List<String> uiCourses = List.of("csc484");
-            Set<String> uiRooms = Set.of("257");
-
+            List<String> seCourses = List.of("csc5281");
+            Set<String> seRooms = Set.of("Room 192-333");
 
             introCourses.forEach(course -> COURSE_TO_ROOMS.put(course, introRooms));
             graphicCourses.forEach(course -> COURSE_TO_ROOMS.put(course, graphicRooms));
@@ -153,7 +154,7 @@ public class Constants {
             phoenixCourses.forEach(course -> COURSE_TO_ROOMS.put(course, phoenixRooms));
             hwSecurityCourses.forEach(course -> COURSE_TO_ROOMS.put(course, hwSecurityRooms));
             seCourses.forEach(course -> COURSE_TO_ROOMS.put(course, seRooms));
-            uiCourses.forEach(course -> COURSE_TO_ROOMS.put(course, uiRooms));
+            non_sec_courses.forEach(course -> COURSE_TO_ROOMS.put(course, non_sec_rooms));
 
             POSSIBLE_ROOMS = Stream.of(
                             introRooms,
@@ -162,7 +163,7 @@ public class Constants {
                             phoenixRooms,
                             hwSecurityRooms,
                             seRooms,
-                            uiRooms
+                            non_sec_rooms
                     )
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
@@ -177,24 +178,25 @@ public class Constants {
 
         }
         else{
-            List<String> microControllerCourses = List.of("cpe316", "cpe439");
-            Set<String> microControllerRooms = Set.of("20-132");
+            List<String> microControllerCourses = List.of("cpe3160", "cpe4390");
+            Set<String> microControllerRooms = Set.of("Room 20-132");
 
-            List<String> capstoneCourses = List.of("cpe350", "cpe450");
-            Set<String> capstoneRooms = Set.of("20-145");
+            List<String> capstoneCourses = List.of("cpe4260", "cpe4261");
+            Set<String> capstoneRooms = Set.of("Room 20-145");
 
-            List<String> generalCpeCourses = List.of(
-                    "cpe133", "cpe233", "cpe333", "cpe414", "cpe416",
-                    "cpe442", "cpe446", "cpe521", "cpe522", "cpe523", "cpe542"
-            );
-            Set<String> generalCpeRooms = Set.of("20-132", "20-100", "14-303");
+            List<String> generalCpeCourses = List.of("cpe2301", "cpe3300");
+            Set<String> generalCpeRooms = Set.of("Room 20-132", "Room 20-100");
 
-            List<String> cscStyleCourses = List.of("cpe225", "cpe315", "cpe321", "cpe426", "cpe515");
-            Set<String> cscStyleRooms = Set.of("14-303");
+            List<String> roboticsCourses = List.of("cpe4160");
+            Set<String> roboticsRooms = Set.of("Room 20-100", "Room 20-145");
+
+            List<String> cscStyleCourses = List.of("cpe4190", "cpe4280", "cpe4420", "cpe4390", "cpe4669");
+            Set<String> cscStyleRooms = Set.of("Room 20-121", "Room 14-303");
 
             microControllerCourses.forEach(course -> COURSE_TO_ROOMS.put(course, microControllerRooms));
             capstoneCourses.forEach(course -> COURSE_TO_ROOMS.put(course, capstoneRooms));
             generalCpeCourses.forEach(course -> COURSE_TO_ROOMS.put(course, generalCpeRooms));
+            roboticsCourses.forEach(course -> COURSE_TO_ROOMS.put(course, roboticsRooms));
             cscStyleCourses.forEach(course -> COURSE_TO_ROOMS.put(course, cscStyleRooms));
 
             POSSIBLE_ROOMS = Stream.of(
@@ -209,10 +211,10 @@ public class Constants {
             //All studio style course for the CSC department go here
             //Enter them as a list into the Stream.of() as a parameter
             STUDIO_STYLE_COURSES = Stream.of(
-                    microControllerCourses
-                    , generalCpeCourses
-                    , capstoneCourses
-//                    , cscStyleCourses
+                            microControllerCourses
+                            , capstoneCourses
+                            , generalCpeCourses
+                            , cscStyleCourses
                     )
                     .flatMap(Collection::stream)
                     .collect(Collectors.toSet());
