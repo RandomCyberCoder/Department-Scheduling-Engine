@@ -237,7 +237,7 @@ public class Constants {
 
         FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
 
-        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_use.xlsx");
+        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_new.xlsx");
     }
 
     private Constants(){
@@ -269,7 +269,7 @@ public class Constants {
             try{
                 List<TeacherRecord> teacherRecords = TeacherCalls.getAllTeachers();
                 for(TeacherRecord record: teacherRecords){
-                    instructorNameMapping.put(record.getNonCanon(), record.getNonCanon());
+                    instructorNameMapping.put(record.getNonCanon(), record.getCanon());
                 }
                 LOGGER.info("Succeeded generating teacher name mapping using DB");
                 return instructorNameMapping;
@@ -278,7 +278,7 @@ public class Constants {
                 instructorNameMapping = HashBiMap.create();
             }
         }
-
+        System.out.println("reading teacher name file");
         final int NAME_CELL_POS = 1;
         final int CANON_CELL_POS = 2;
         boolean headerRead = false;
@@ -297,6 +297,7 @@ public class Constants {
             }
         }
         catch (Exception e){
+            e.printStackTrace();
             Constants.LOGGER.error("Critical issue reading file containing mapping of instructor names");
             Constants.LOGGER.error(String.format("Error reading the file %s", resourceFilePath));
             System.exit(ParseInput.PROGRAM_FAILURE);

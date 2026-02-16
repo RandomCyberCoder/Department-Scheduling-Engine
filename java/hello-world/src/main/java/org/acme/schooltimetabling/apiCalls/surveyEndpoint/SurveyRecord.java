@@ -79,18 +79,18 @@ public class SurveyRecord {
         return  teacher_rep;
     }
 
-    private Teacher createTeacherRep()throws Exception{
+    private Teacher createTeacherRep(){
         BitSet conflict = new BitSet();
         BitSet preferences = new BitSet();
         BitSet acceptable = new BitSet();
 
         for(String timePrefKey: timePrefKeys){
-            String val = extraFields.get(timePrefKey).toString().toLowerCase();
-            BitSet bsRep = fieldNameToBitSet(timePrefKey);
-            if(val.equals("preferred")){
+            String val = extraFields.get(timePrefKey).toString();
+            BitSet bsRep = BitSetHelper.srvHdrToBs(timePrefKey);
+            if(val.equalsIgnoreCase("preferred")){
                 preferences.or(bsRep);
             }
-            else if(val.equals("acceptable")){
+            else if(val.equalsIgnoreCase("acceptable")){
                 acceptable.or(bsRep);
             }
             else {
@@ -101,30 +101,6 @@ public class SurveyRecord {
         Teacher teacher = new Teacher(TeacherGenerator.getNextTeacherID(), nonCanonName, preferences, acceptable, conflict);
         if(teacherRecord.isFaculty()) teacher = new Faculty(teacher);
         return teacher;
-    }
-
-    private BitSet fieldNameToBitSet(String fieldName) throws Exception{
-        final int DAYS_IDX = 0;
-        final int HOUR_IDX = 1;
-        final int MERIDIEM_IDX = 2;
-        final int ONE_HOUR_BLOCK = 2;
-        final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("h:mma");
-
-        String[] fieldNameParsed = fieldName.split("_");
-        String formattedTime = String.format("%d:00%s", Integer.valueOf(fieldNameParsed[HOUR_IDX]),
-                fieldNameParsed[MERIDIEM_IDX].toUpperCase());
-        LocalTime localTime = LocalTime.parse(formattedTime, FORMATTER);
-        EnumSet<Days> days = EnumSet.noneOf(Days.class);
-
-        for(Character day: fieldNameParsed[DAYS_IDX].toUpperCase().toCharArray()){
-            if(day == 'M') days.add(Days.MONDAY);
-            else if(day == 'T') days.add(Days.TUESDAY);
-            else if(day == 'W') days.add(Days.WEDNESDAY);
-            else if(day == 'R') days.add(Days.THURSDAY);
-            else if(day == 'F') days.add(Days.FRIDAY);
-        }
-
-        return BitSetHelper.timeSlotBitSet(localTime, ONE_HOUR_BLOCK, days);
     }
 
     /**

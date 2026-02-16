@@ -1,17 +1,15 @@
 package org.acme.schooltimetabling.helperClasses;
 import org.acme.schooltimetabling.constants.Days;
-import org.apache.poi.hssf.record.CFHeaderRecord;
-import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STUnsignedDecimalNumber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
-import java.time.temporal.ChronoField;
+import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
-import java.time.LocalDateTime;
-import java.time.DayOfWeek;
 import java.util.EnumSet;
 
 public class BitSetHelper {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(BitSetHelper.class);
     private static final int MONDAY_OFFSET = 0;
     private static final int TUESDAY_OFFSET = 30;
     private static final int WEDNESDAY_OFFSET = 60;
@@ -51,7 +49,7 @@ public class BitSetHelper {
      * @return BitSet with <i>n</i> bits set starting from <i>startTime</i> for given days
      * @throws Exception
      */
-    public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days) throws Exception{
+    public static BitSet timeSlotBitSet(LocalTime startTime, int numberOfBlocks, EnumSet<Days> days){
         final int LST_POSSIBLE_HR = 22;
         final int FIRST_POSSIBLE_HR = 7;
         /* Each hour has two 30-minute blocks*/
@@ -59,7 +57,7 @@ public class BitSetHelper {
         BitSet bitSet = new BitSet();
         //TODO so it's not so wierd of mapping values. Do math such as hour-7 and multiply by 2 to get offset
         int startHour = startTime.getHour();
-        if(startHour < FIRST_POSSIBLE_HR || startHour > LST_POSSIBLE_HR) throw new Exception(String.format(
+        if(startHour < FIRST_POSSIBLE_HR || startHour > LST_POSSIBLE_HR) throw new RuntimeException(String.format(
                 "There was an error reading the time '%s'", startTime));
         int dayOffset = (startHour - FIRST_POSSIBLE_HR) * HOUR_OFFSET;
 
@@ -87,6 +85,35 @@ public class BitSetHelper {
         return bitSet;
     }
 
+
+    /**
+     *
+     * @param dayTime
+     * @return
+     */
+    public static BitSet srvHdrToBs(String dayTime){
+        final int DAYS_IDX = 0;
+        final int HOUR_IDX = 1;
+        final int MERIDIEM_IDX = 2;
+        final int ONE_HOUR_BLOCK = 2;
+        final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("h:mma");
+        String[] fieldNameParsed = dayTime.split("_");
+        String formattedTime = String.format("%d:00%s", Integer.valueOf(fieldNameParsed[HOUR_IDX]),
+                fieldNameParsed[MERIDIEM_IDX].toUpperCase());
+        LocalTime localTime = LocalTime.parse(formattedTime, FORMATTER);
+        EnumSet<Days> days = EnumSet.noneOf(Days.class);
+
+        for(Character day: fieldNameParsed[DAYS_IDX].toUpperCase().toCharArray()){
+            if(day == 'M') days.add(Days.MONDAY);
+            else if(day == 'T') days.add(Days.TUESDAY);
+            else if(day == 'W') days.add(Days.WEDNESDAY);
+            else if(day == 'R') days.add(Days.THURSDAY);
+            else if(day == 'F') days.add(Days.FRIDAY);
+        }
+
+        return BitSetHelper.timeSlotBitSet(localTime, ONE_HOUR_BLOCK, days);
+    }
+
     /**
      * Returns a bitset with one hour worth of bits set starting from the time
      * in the <i>header</i> parameter. Format for header is '&lt;time&gt; &lt;PM/AM&gt;'.
@@ -97,7 +124,7 @@ public class BitSetHelper {
      * @return A BitSet with one hour worth of bits set starting from the time of <i>header</i>
      * @throws Exception
      */
-    public static BitSet surveyBitset(String header) throws Exception{
+    public static BitSet old_surveyBitset(String header) throws Exception{
         /*bitset for a day is broken into 30min blocks starting from
         * 7:00 AM - 10:00 PM for a total of 30 30-minute blocks per day*/
         BitSet bitset = new BitSet();

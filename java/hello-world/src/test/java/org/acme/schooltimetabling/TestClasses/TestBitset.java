@@ -2,7 +2,6 @@ package org.acme.schooltimetabling.TestClasses;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,7 +50,7 @@ public class TestBitset {
     void MWF_surveyBitset(){
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.surveyBitset("9 AM");
+            checkbitset = BitSetHelper.old_surveyBitset("9 AM");
         }
         catch (Exception e){
             //shouldn't throw an error
@@ -66,7 +65,7 @@ public class TestBitset {
     void MWF_night_surveyBitset(){
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.surveyBitset("9 PM");
+            checkbitset = BitSetHelper.old_surveyBitset("9 PM");
         }
         catch (Exception e){
             //shouldn't throw an error
@@ -81,7 +80,7 @@ public class TestBitset {
     void TH_surveyBitset(){
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.surveyBitset("10 AM2");
+            checkbitset = BitSetHelper.old_surveyBitset("10 AM2");
         }
         catch (Exception e){
             //shouldn't throw an error
@@ -96,7 +95,7 @@ public class TestBitset {
     void TH_night_surveyBitset(){
         BitSet checkbitset = null;
         try{
-            checkbitset = BitSetHelper.surveyBitset("9 PM2");
+            checkbitset = BitSetHelper.old_surveyBitset("9 PM2");
         }
         catch (Exception e){
             //shouldn't throw an error
