@@ -7,6 +7,7 @@ import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -36,6 +37,8 @@ public class TimetableApp {
         LOGGER.info(String.format("%s, %s, %s, %s\n", ScheduleConfig.getDepartment(),
                 ScheduleConfig.getCurTerm(), ScheduleConfig.getPrevTerm(),
                 ScheduleConfig.getSeasonTerm()));
+        LOGGER.info("Loading critical constants");
+        Constants.load();
 
         Map<String, Teacher> teacherMap = TeacherGenerator.teacherGenDriver();
         /*generate timeslots*/

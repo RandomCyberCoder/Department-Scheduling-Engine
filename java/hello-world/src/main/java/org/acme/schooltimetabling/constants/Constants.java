@@ -304,4 +304,6 @@ public class Constants {
 
         return instructorNameMapping;
     }
+
+    public static void load(){}
 }
