@@ -22,8 +22,7 @@ import java.util.*;
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableConstraintProvider.class);
     private static final float FLOAT_TIME_DELTA = 0.01f;
-    /*TODO MAKE SURE THAT STUDIO CLASSES TIMESLOT IS CHECKED FOR BACK TO BACK. THIS MIGHT BE IMPLICIT RIGHT NOW BUT NOT
-    SURE IF THIS IS A GOOD ASSUMPTION */
+    /*TODO make a constraint for  preferred times. Also modify the solver config to use hill climbing first*/
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 

@@ -81,7 +81,7 @@ public class LessonGenerator extends Generator{
             /*This is a list courses that will be scheduled*/
             List<String> coursesToSchedule;
 
-            List<String> potentialCourses = getPotentialCourses(schedule, CURRENT_TERM);
+            List<String> potentialCourses = getPotentialCourses(schedule, ScheduleConfig.getSeasonTerm().toLowerCase());
 
             /*filter out the courses that aren't currently in the department we
              * want to schedule*/
@@ -180,8 +180,9 @@ public class LessonGenerator extends Generator{
         Teacher teacher = teacherHashMap.get(teacherName);
         if(teacher == null){
             if(Constants.DEBUG){
-                LOGGER.warn(String.format("Couldn't find a teacher object for '%s';" +
-                        "Creating one for them with now.", teacherName));
+                LOGGER.warn(String.format("Couldn't find a teacher object for '%s'. Most likely due to them not having" +
+                        " a survey filled out;" +
+                        "Creating one for them with now with no conflict, pref, or acceptable times.", teacherName));
             }
 
             //create teacher object
@@ -200,14 +201,14 @@ public class LessonGenerator extends Generator{
      * <p>Extracts the list of courses that will be potentially scheduled</p>
      *
      * @param schedule ScheduleFormat object that contains instructor name and courses they will teach
-     * @param CURRENT_TERM term to schedule for
+     * @param season season we are scheduling; i.e. fall, winter, spring
      * @return List of potential courses to be scheduled
      */
-    private static List<String> getPotentialCourses(ScheduleFormat schedule, String CURRENT_TERM) {
-        if("fall".equalsIgnoreCase(CURRENT_TERM)){
+    private static List<String> getPotentialCourses(ScheduleFormat schedule, String season) {
+        if("fall".equalsIgnoreCase(season)){
             return schedule.getFall();
         }
-        else if("winter".equalsIgnoreCase(CURRENT_TERM)){
+        else if("winter".equalsIgnoreCase(season)){
             return schedule.getWinter();
         }
         else{
@@ -274,6 +275,14 @@ public class LessonGenerator extends Generator{
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Skipping course due to configuration: name '%s', configuration '%s'"
                         , name, config));
+            }
+            return true;
+        }
+
+        if(!Constants.CHOSEN_CONFIGURATIONS.contains(config)){
+            if(Constants.DEBUG){
+                LOGGER.warn(String.format("Skipping course because it's not in the configurations that are being" +
+                        " scheduled. Course info: name '%s', config '%s'", name, config));
             }
             return true;
         }

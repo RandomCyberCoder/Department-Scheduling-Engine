@@ -59,6 +59,10 @@ public class Constants {
      */
     public static final Set<String> SKIP_CONFIGURATIONS;
     /**
+     * Set of course configuration we only want to schedule
+     */
+    public static final Set<String> CHOSEN_CONFIGURATIONS;
+    /**
      * Lecture only room name
      */
     public static final String LEC_ONLY = "LECTURE_ONLY";
@@ -118,7 +122,8 @@ public class Constants {
         SKIP_SCHEDULE =  Set.of("Remote", "SecondSplit", "HandSchedule",
                 "Double", "Triple");
 
-        SKIP_CONFIGURATIONS = Set.of("various", "non-standard", "0-0-2", "1-2-0");
+        SKIP_CONFIGURATIONS = Set.of();
+        CHOSEN_CONFIGURATIONS = Set.of("3-1-0", "2-0-1", "1-0-0", "3-0-0", "4-0-0");
 
         /*Determine what rooms will be used for labs depending on department being
         * scheduled*/

@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
-
+//TODO MAKE SURE THE THAT TIMESLOTS BEING GENERATED DON'T TAKE INTO ACCOUNT THE ENDING LIKE IF IT ENDS AT 11:00AM THAT THE 11AM ISN'T MARKED FOR THE LEC OR LAB/ACT BIT
 public class TimeslotGenerator extends Generator{
     private final static Logger LOGGER = LoggerFactory.getLogger(TimeslotGenerator.class);
 

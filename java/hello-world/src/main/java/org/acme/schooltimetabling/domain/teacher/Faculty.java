@@ -36,27 +36,27 @@ public class Faculty extends Teacher{
         final EnumSet<Days> FACULTY_DAYS = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
 
         try{
-            /*CSC faculty times*/
-            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
-                facultyTimes = List.of(
-                        LocalTime.parse("1:00PM", formatter),
-                        LocalTime.parse("2:00PM", formatter)
-                );
-            }
-            else{
-                /*CPE faculty times*/
-                facultyTimes = List.of(
-                        LocalTime.parse("12:00PM", formatter),
-                        LocalTime.parse("1:00PM", formatter),
-                        LocalTime.parse("2:00PM", formatter)
-                );
-            }
-
-            /*create the BitSet for faculty conflict*/
-            for(LocalTime localTime: facultyTimes) {
-                BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, FACULTY_DAYS);
-                FACULTY_CONFLICT.or(temp);
-            }
+//            /*CSC faculty times*/
+//            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
+//                facultyTimes = List.of(
+//                        LocalTime.parse("1:00PM", formatter),
+//                        LocalTime.parse("2:00PM", formatter)
+//                );
+//            }
+//            else{
+//                /*CPE faculty times*/
+//                facultyTimes = List.of(
+//                        LocalTime.parse("12:00PM", formatter),
+//                        LocalTime.parse("1:00PM", formatter),
+//                        LocalTime.parse("2:00PM", formatter)
+//                );
+//            }
+//
+//            /*create the BitSet for faculty conflict*/
+//            for(LocalTime localTime: facultyTimes) {
+//                BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, FACULTY_DAYS);
+//                FACULTY_CONFLICT.or(temp);
+//            }
         }
         catch (Exception e){
             Faculty.LOGGER.error("Problem creating BitSet mask for the faculty tenure conflict.");

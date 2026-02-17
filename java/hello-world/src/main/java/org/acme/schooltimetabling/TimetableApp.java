@@ -24,7 +24,7 @@ public class TimetableApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
     private static final String YAML_FILE_PATH = "constants/config.yaml";
-    private static final boolean PRINT_DETAILED_SUMMARY = false;
+    private static final boolean PRINT_DETAILED_SUMMARY = true;
     
 
     public static void main(String[] args) throws Exception{
@@ -43,13 +43,12 @@ public class TimetableApp {
         Map<String, Teacher> teacherMap = TeacherGenerator.teacherGenDriver();
         /*generate timeslots*/
         LOGGER.info("Creating timeslot objects");
-        timeslotList = TimeslotGenerator.generateTimeslots(
-                String.format("constants/%s_possibleTimes.csv", ScheduleConfig.getDepartment()));
+        timeslotList = TimeslotGenerator.generateTimeslots("constants/possibleTimes.csv");
 
         /*parse schedules*/
         /*read from the file who will be teaching what for this quarter*/
         List<ScheduleFormat> parsedSchedules = ParseInput.readScheduleClasses(String.format("input/schedule-%s-%s.json"
-                , ScheduleConfig.getCurTerm(), ScheduleConfig.getDepartment()));
+                , ScheduleConfig.getCurTerm(), ScheduleConfig.getDepartment().toLowerCase()));
 
         LOGGER.info("Creating lesson objects");
         /*Creating Lessons*/
@@ -74,6 +73,8 @@ public class TimetableApp {
         //print a detailed summary for every constraint a list of all the instances of it being violated
         if(PRINT_DETAILED_SUMMARY){
             scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
+                //skip printing detailed summary for anything that isn't given a hard penalty
+                if(constraintAnalysis.score().hardScore() == 0) return;
                 LOGGER.info("Constraint: " + constraintRef.constraintId());
                 LOGGER.info(" Score: " + constraintAnalysis.score());
                 for (MatchAnalysis<HardMediumSoftScore> match : constraintAnalysis.matches()) {

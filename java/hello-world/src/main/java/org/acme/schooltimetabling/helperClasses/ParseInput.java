@@ -161,7 +161,7 @@ public final class ParseInput {
 
             while((lineRead = buf.readLine()) != null){
                 lineProcessed = lineRead.split("\t");
-                course = lineProcessed[COURSE_NAME_COLUMN].toLowerCase();
+                course = lineProcessed[COURSE_NAME_COLUMN];
                 configuration = lineProcessed[COURSE_CONFIG_COLUMN];
                 courseConfigs.put(course, configuration);
             }

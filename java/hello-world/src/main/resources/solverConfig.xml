@@ -9,7 +9,7 @@
     </scoreDirectorFactory>
 
     <termination>
-        <secondsSpentLimit>10</secondsSpentLimit>
+        <secondsSpentLimit>15</secondsSpentLimit>
     </termination>
 
     <constructionHeuristic>
@@ -28,7 +28,6 @@
         </cartesianProductMoveSelector>
     </constructionHeuristic>
 
-
     <localSearch>
 <!--    terminate after all hard constraints are solved, with any medium or soft score-->
         <termination>
@@ -36,8 +35,8 @@
         </termination>
         <acceptor>
 <!--        adding entity tabu helps a lot, the lower, the better. Using entity size rather than ratio is better
-            from my experiments-->
-            <entityTabuSize>1</entityTabuSize>
+            from my experiments. Upon the semester switch adding tabu could harm the solution quality-->
+<!--            <entityTabuSize>1</entityTabuSize>-->
             <simulatedAnnealingStartingTemperature>2hard/0medium/30soft</simulatedAnnealingStartingTemperature>
         </acceptor>
 
