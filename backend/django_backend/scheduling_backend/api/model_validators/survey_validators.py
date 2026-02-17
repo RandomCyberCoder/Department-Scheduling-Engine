@@ -10,7 +10,7 @@ def avail_vailidator(value):
         ValidationError: invalid value
     """
     DEFAULT = "Conflict"
-    valid_values = ["Preferred", "Acceptable", DEFAULT, ""]
+    valid_values = ["Preferred", "Acceptable", DEFAULT]
     if value not in valid_values:
         raise ValidationError(f"Acceptable values are {valid_values}; Note the empty string will default to f{DEFAULT}")
 
@@ -24,7 +24,7 @@ def pref_validator(value):
         ValidationError: invalid value
     """
     DEFAULT = "Disagree"
-    valid_value = ["Agree", DEFAULT, "Neutral", ""]
+    valid_value = ["Agree", DEFAULT, "Neutral"]
     if value not in valid_value:
         raise ValidationError(f"set up pref validator {valid_value}; Note the empty string will default to f{DEFAULT}")
 

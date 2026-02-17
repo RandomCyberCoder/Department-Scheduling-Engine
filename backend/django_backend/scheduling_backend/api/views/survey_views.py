@@ -123,26 +123,28 @@ def survey_file_upload(request: Request) -> Response:
 
     #note that the name in the survey is expected to be the non-canon name
     #field names have the same name as the model field names
-    AVAIL_FIELDS = ["m_7_am","m_8_am","m_9_am","m_10_am","m_11_am","m_12_pm",
-                    "m_1_pm","m_2_pm","m_3_pm","m_4_pm","m_5_pm","m_6_pm",
-                    "m_7_pm","m_8_pm","m_9_pm",
+    AVAIL_FIELDS = [
+                    "M_7_AM","M_8_AM","M_9_AM","M_10_AM","M_11_AM","M_12_PM",
+                    "M_1_PM","M_2_PM","M_3_PM","M_4_PM","M_5_PM","M_6_PM",
+                    "M_7_PM","M_8_PM","M_9_PM",
 
-                    "t_7_am","t_8_am","t_9_am","t_10_am","t_11_am","t_12_pm",
-                    "t_1_pm","t_2_pm","t_3_pm","t_4_pm","t_5_pm","t_6_pm",
-                    "t_7_pm","t_8_pm","t_9_pm",
+                    "T_7_AM","T_8_AM","T_9_AM","T_10_AM","T_11_AM","T_12_PM",
+                    "T_1_PM","T_2_PM","T_3_PM","T_4_PM","T_5_PM","T_6_PM",
+                    "T_7_PM","T_8_PM","T_9_PM",
 
-                    "w_7_am","w_8_am","w_9_am","w_10_am","w_11_am","w_12_pm",
-                    "w_1_pm","w_2_pm","w_3_pm","w_4_pm","w_5_pm","w_6_pm",
-                    "w_7_pm","w_8_pm","w_9_pm",
+                    "W_7_AM","W_8_AM","W_9_AM","W_10_AM","W_11_AM","W_12_PM",
+                    "W_1_PM","W_2_PM","W_3_PM","W_4_PM","W_5_PM","W_6_PM",
+                    "W_7_PM","W_8_PM","W_9_PM",
 
-                    "r_7_am","r_8_am","r_9_am","r_10_am","r_11_am","r_12_pm",
-                    "r_1_pm","r_2_pm","r_3_pm","r_4_pm","r_5_pm","r_6_pm",
-                    "r_7_pm","r_8_pm","r_9_pm",
+                    "R_7_AM","R_8_AM","R_9_AM","R_10_AM","R_11_AM","R_12_PM",
+                    "R_1_PM","R_2_PM","R_3_PM","R_4_PM","R_5_PM","R_6_PM",
+                    "R_7_PM","R_8_PM","R_9_PM",
 
-                    "f_7_am","f_8_am","f_9_am","f_10_am","f_11_am","f_12_pm",
-                    "f_1_pm","f_2_pm","f_3_pm","f_4_pm","f_5_pm","f_6_pm",
-                    "f_7_pm","f_8_pm","f_9_pm"
-                    ]
+                    "F_7_AM","F_8_AM","F_9_AM","F_10_AM","F_11_AM","F_12_PM",
+                    "F_1_PM","F_2_PM","F_3_PM","F_4_PM","F_5_PM","F_6_PM",
+                    "F_7_PM","F_8_PM","F_9_PM"
+                ]
+
     PREF_FIELDS = ["pref_minDays", "pref_5days", "pref_TPD", "back_to_back", "gap", "lecAct_1hrLec", "lecAct_2hrAct",
                    "lecAct_noPref", "lecAct_notSure"]
     ADDITIONAL_FIELDS = ["constraint", "require", "pref", "comment", "stars"]
@@ -190,19 +192,19 @@ def survey_file_upload(request: Request) -> Response:
                 .astype(str)
                 .str.strip()
             )
-        #This is commented out right now because I have the model default these fields to the values below
-        #normalize time availability/pref fields; blank fields marked as a conflict
-        # for field in AVAIL_FIELDS:
-        #     df[field] = (
-        #         df[field]
-        #         .replace({"": DEFAULT_AVAIL})
-        #     )
             
-        # for field in PREF_FIELDS:
-        #     df[field] = (
-        #         df[field]
-        #         .replace({"": DEFAULT_PREF})
-        #     )
+        #normalize time availability/pref fields; blank fields marked as a conflict
+        for field in AVAIL_FIELDS:
+            df[field] = (
+                df[field]
+                .replace({"": DEFAULT_AVAIL})
+            )
+            
+        for field in PREF_FIELDS:
+            df[field] = (
+                df[field]
+                .replace({"": DEFAULT_PREF})
+            )
 
     except Exception as e:
         return Response({"error": f"problem reading the file {FILE.name}",
