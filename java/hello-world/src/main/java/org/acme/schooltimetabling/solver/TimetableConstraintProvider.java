@@ -11,6 +11,7 @@ import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
+import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.*;
@@ -41,6 +42,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 wrongRoomType(constraintFactory),
 
                 // Medium Constraints
+                prefTime(constraintFactory),
 
                 // Soft constraints
                 outPrimeTime(constraintFactory),
@@ -58,6 +60,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         return solver_constraints.toArray(new Constraint[0]);
     }
 
+    //-------------------------------------- Hard Constraints --------------------------------------
 
     /**
      * <p>This constraint makes sure if an instructor is teaching multiple instances of a course that
@@ -364,6 +367,25 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 //                .asConstraint("Studio Penalty: lab before all lecture");
 //    }
 
+    //-------------------------------------- Medium Constraints --------------------------------------
+
+    Constraint prefTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .reward(HardMediumSoftScore.ONE_MEDIUM, lesson -> {
+                    final Timeslot ts = lesson.getTimeslot();
+                    final Teacher teacher = lesson.getTeacherObj();
+                    final BitSet tmp = new BitSet();
+                    tmp.or(ts.getLectureBitSet());
+                    tmp.or(ts.getLabActBitSet());
+                    tmp.and(teacher.getPreferences());
+
+                    //reward per hour rather than per 30-minute block
+                    return tmp.cardinality() / 2;
+                })
+                .asConstraint("Reward 30min blocks in prof's pref times");
+    }
+
+    //-------------------------------------- Soft Constraints --------------------------------------
 
     /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours
      * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/universityscheduling/documents/academic/SchedulingTimePattern112017.pdf
