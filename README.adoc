@@ -1,1 +1,3 @@
 document here
+
+I currently only take into account lessons have some lecture aspect to it

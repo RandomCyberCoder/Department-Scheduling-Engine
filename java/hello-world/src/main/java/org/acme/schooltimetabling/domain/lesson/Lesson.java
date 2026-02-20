@@ -31,7 +31,7 @@ public class Lesson {
     public String courseName, teacherName, modifiers;
     public int courseID, lecSection, labActSection;
     public boolean hasLecture, hasLabAct;
-    public int lec_hours, lab_activity_hours;
+    public int lecHours, labActHours;
     public Teacher teacherObj;
     private Integer linker = null;
 
@@ -90,14 +90,14 @@ public class Lesson {
         int lecUnits = Integer.parseInt(units[0]);
         int labUnits = Integer.parseInt(units[1]);
         int actUnits = Integer.parseInt(units[2]);
-        lec_hours = lecUnits * LEC_UNITS_TO_HOURS;
+        lecHours = lecUnits * LEC_UNITS_TO_HOURS;
         /*Note that I don't actually consider a scenario where a course has both a
          * lab and an activity, not sure if that's possible. I do this, so I don't have to check for a
          * lab/activity specifically*/
-        lab_activity_hours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
+        labActHours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
         /*mark true if lecture or lab/act exists; false otherwise*/
         this.hasLecture = lecUnits != NO_HOURS;
-        this.hasLabAct = lab_activity_hours != NO_HOURS;
+        this.hasLabAct = labActHours != NO_HOURS;
         this.id = Id;
         this.lecSection = lecSection;
         this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
@@ -135,14 +135,14 @@ public class Lesson {
         int lecUnits = Integer.parseInt(units[0]);
         int labUnits = Integer.parseInt(units[1]);
         int actUnits = Integer.parseInt(units[2]);
-        lec_hours = lecUnits * LEC_UNITS_TO_HOURS;
+        lecHours = lecUnits * LEC_UNITS_TO_HOURS;
         /*Note that I don't actually consider a scenario where a course has both a
         * lab and an activity, not sure if that's possible. I do this, so I don't have to check for a
         * lab/activity specifically*/
-        lab_activity_hours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
+        labActHours = labUnits * LAB_UNITS_TO_HOURS + actUnits * ACTIVITY_UNITS_TO_HOURS;
         /*mark true if lecture or lab/act exists; false otherwise*/
         this.hasLecture = lecUnits != NO_HOURS;
-        this.hasLabAct = lab_activity_hours != NO_HOURS;
+        this.hasLabAct = labActHours != NO_HOURS;
         this.id = Id;
         this.lecSection = lecSection;
         this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
@@ -234,12 +234,12 @@ public class Lesson {
         return hasLabAct;
     }
 
-    public int getLec_hours() {
-        return lec_hours;
+    public int getLecHours() {
+        return lecHours;
     }
 
-    public int getLab_activity_hours() {
-        return lab_activity_hours;
+    public int getLabActHours() {
+        return labActHours;
     }
 
     public Teacher getTeacherObj() {

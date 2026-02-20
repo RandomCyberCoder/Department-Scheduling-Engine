@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.domain.teacher;
 
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import org.acme.schooltimetabling.TimetableApp;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
@@ -36,6 +37,13 @@ public class Faculty extends Teacher{
         final EnumSet<Days> FACULTY_DAYS = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
 
         try{
+            //set special bits for testing
+            if(Constants.TESTING){
+                LocalTime localTime = LocalTime.parse("9:00PM", formatter);
+                BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR,
+                        EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY));
+                FACULTY_CONFLICT.or(temp);
+            }
 //            /*CSC faculty times*/
 //            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
 //                facultyTimes = List.of(

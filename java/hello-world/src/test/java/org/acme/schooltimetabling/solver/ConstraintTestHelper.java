@@ -3,7 +3,9 @@ package org.acme.schooltimetabling.solver;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Room;
+import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 
 import java.util.BitSet;
 import java.util.EnumSet;
@@ -16,17 +18,18 @@ public class ConstraintTestHelper {
     public final static Room DUMMY_ROOM = new Room("1", "dummyRoom", 1);
     public final static Teacher DUMMY_TEACHER = new Teacher(
             1, "dummyInstructor", EMPTY_BS, EMPTY_BS, EMPTY_BS);
+    public final static Timeslot DUMMY_TS = Timeslot.test_minSetUp("1");
 
     public final static int DUMMY_LINKER = 1;
     /**
      * Test: room name; will be used by a specific course {@link #TEST_L_W_LAB_SPECIFIC}
      */
-    public final static String TEST_LAB_ROOM = "LabRoom";
+    public final static String TEST_LAB_ROOM_SPECIFIC = "LabRoom";
     /**
      * Test: name of lab room not assigned to an course specifically
      */
     public final static String TEST_RANDOM_LAB_ROOM = "Random lab room";
-    public final static Set<String> TEST_SET_LAB_ROOMS = Set.of(TEST_LAB_ROOM);
+    public final static Set<String> TEST_SET_LAB_ROOMS = Set.of(TEST_LAB_ROOM_SPECIFIC);
     /**
      * Test: name of a course that has a specific lab*/
     public final static String TEST_L_W_LAB_SPECIFIC = "Lab/Act course";
@@ -38,22 +41,28 @@ public class ConstraintTestHelper {
      * Room that is used for a course specifically and can also be used by an lab
      */
     public static Room TEST_ROOM_SPECIFIC;
+    public static String NON_STUDIO_SPECIFIC = "non stdio course with a specific room";
 
     static{
-        Constants.POSSIBLE_ROOMS.add(TEST_LAB_ROOM);
+        Constants.POSSIBLE_ROOMS.add(TEST_LAB_ROOM_SPECIFIC);
+        Constants.ROOM_TO_ID_BIMAP.put(TEST_LAB_ROOM_SPECIFIC, 1000);
+
         Constants.POSSIBLE_ROOMS.add(TEST_RANDOM_LAB_ROOM);
         Constants.ROOM_TO_ID_BIMAP.put(TEST_RANDOM_LAB_ROOM, 1001);
-        Constants.ROOM_TO_ID_BIMAP.put(TEST_LAB_ROOM, 1000);
 
         Constants.COURSE_ID_BIMAP.put(DUMMY_STUDIO, 2000);
+        Constants.COURSE_ID_BIMAP.put(NON_STUDIO_SPECIFIC, 2001);
+
         Constants.STUDIO_STYLE_COURSES.add(DUMMY_STUDIO);
         Constants.STUDIO_STYLE_COURSES.add(TEST_L_W_LAB_SPECIFIC);
+
         Constants.COURSE_TO_ROOMS.put(TEST_L_W_LAB_SPECIFIC, TEST_SET_LAB_ROOMS);
+        Constants.COURSE_TO_ROOMS.put(NON_STUDIO_SPECIFIC, TEST_SET_LAB_ROOMS);
 
         TEST_ROOM_RANDO_LAB = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_RANDOM_LAB_ROOM)),
                 TEST_RANDOM_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_RANDOM_LAB_ROOM));
-        TEST_ROOM_SPECIFIC = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM)),
-                TEST_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM));
+        TEST_ROOM_SPECIFIC = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM_SPECIFIC)),
+                TEST_LAB_ROOM_SPECIFIC, Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM_SPECIFIC));
 
         Constants.TESTING = true;
     }

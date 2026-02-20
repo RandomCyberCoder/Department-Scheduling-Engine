@@ -24,39 +24,8 @@ import java.util.EnumSet;
 public class TestConstraints {
     ConstraintVerifier<TimetableConstraintProvider, Timetable> constraintVerifier = ConstraintVerifier.build(
             new TimetableConstraintProvider(), Timetable.class, Lesson.class);
-
+    final static int NO_PENALTY = 0;
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
-//    private static final EnumSet<Days> NO_DAYS = EnumSet.noneOf(Days.class);
-//    private static final BitSet EMPTY_BS = new BitSet();
-//    private final static String DUMMY_STUDIO = "dummyStudioCourse";
-//    private final static Room DUMMY_ROOM = new Room("1", "dummyRoom", 1);
-//    private final static Teacher DUMMY_TEACHER = new Teacher(
-//            1, "dummyInstructor", EMPTY_BS, EMPTY_BS, EMPTY_BS);
-//
-//    private final static int DUMMY_LINKER = 1;
-//    /**
-//     * Test: room name; will be used by a specific course {@link #TEST_L_W_LAB_SPECIFIC}
-//     */
-//    private final static String TEST_LAB_ROOM = "LabRoom";
-//    /**
-//     * Test: name of lab room not assigned to an course specifically
-//     */
-//    private final static String TEST_RANDOM_LAB_ROOM = "Random lab room";
-//    private final static Set<String> TEST_SET_LAB_ROOMS = Set.of(TEST_LAB_ROOM);
-//    /**
-//     * Test: name of a course that has a specific lab*/
-//    private final static String TEST_L_W_LAB_SPECIFIC = "Lab/Act course";
-//    /**
-//     * Room that can be used by any lab
-//     */
-//    private static Room TEST_ROOM_RANDO_LAB;
-//    /**
-//     * Room that is used for a course specifically and can also be used by an lab
-//     */
-//    private static Room TEST_ROOM_SPECIFIC;
-
-
-
 
     @BeforeAll
     static void setUp(){
@@ -64,25 +33,7 @@ public class TestConstraints {
         ScheduleConfig.loadConfig(YAML_FILE_PATH);
         LessonGenerator.OLD_studio_detected = true;
         ConstraintTestHelper.load();
-        /*This is set for special behavior needed for testing*/
-//        Constants.TESTING = true;
-//        Constants.POSSIBLE_ROOMS.add(TEST_LAB_ROOM);
-//        Constants.POSSIBLE_ROOMS.add(TEST_RANDOM_LAB_ROOM);
-//        Constants.ROOM_TO_ID_BIMAP.put(TEST_RANDOM_LAB_ROOM, 1001);
-//        Constants.ROOM_TO_ID_BIMAP.put(TEST_LAB_ROOM, 1000);
-//
-//        Constants.COURSE_ID_BIMAP.put(DUMMY_STUDIO, 2000);
-//        Constants.STUDIO_STYLE_COURSES.add(DUMMY_STUDIO);
-//        Constants.STUDIO_STYLE_COURSES.add(TEST_L_W_LAB_SPECIFIC);
-//        Constants.COURSE_TO_ROOMS.put(TEST_L_W_LAB_SPECIFIC, TEST_SET_LAB_ROOMS);
-//
-//        TEST_ROOM_RANDO_LAB = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_RANDOM_LAB_ROOM)),
-//                TEST_RANDOM_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_RANDOM_LAB_ROOM));
-//        TEST_ROOM_SPECIFIC = new Room(Integer.toString(Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM)),
-//                TEST_LAB_ROOM, Constants.ROOM_TO_ID_BIMAP.get(TEST_LAB_ROOM));
     }
-
-
 
 
     @Test
@@ -169,21 +120,33 @@ public class TestConstraints {
 
     @Test
     @DisplayName("Faculty override conflict & timeslot conflict")
-    void facultyAndTimeslot() throws Exception{
-        EnumSet<Days> enumSet = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
-        Room room = new Room("1", "dummyRoom", 1);
+    void facultyAndTimeslot(){
+        //NOTE: the faculty class sets bits from 9pm-10pm MWF a faculty time only during testing
+        EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
 
-        Teacher teacher2 = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
+        Teacher teacher = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
                 ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
-        BitSet ts2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("1:00PM", formatter)
-                , 1, enumSet);
-        Timeslot timeslot2 = Timeslot.test_lecLabBitAndDays(1, ts2, ConstraintTestHelper.EMPTY_BS, enumSet, enumSet);
-        Lesson lesson2 = Lesson.test_buildLesson("1", 1, "dummyName", "noName",
-                "", "3-1-0", 2,  teacher2, timeslot2, room);
+        BitSet bs_9pm_2blcks_MW = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00PM", formatter)
+                , 2, MW);
+        BitSet bs_8pm_2blcks_MW = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00PM", formatter)
+                , 2, MW);
+        Timeslot ts_9pm_2bl = Timeslot.test_lecLabBitAndDays(1, bs_9pm_2blcks_MW, ConstraintTestHelper.EMPTY_BS, MW,
+                ConstraintTestHelper.NO_DAYS);
+        Timeslot ts_8pm_2bl_9pm_2bl = Timeslot.test_lecLabBitAndDays(2, bs_8pm_2blcks_MW, bs_9pm_2blcks_MW, MW, MW);
+        Timeslot ts_8pm_2bl = Timeslot.test_lecLabBitAndDays(1, bs_8pm_2blcks_MW, ConstraintTestHelper.EMPTY_BS, MW,
+                ConstraintTestHelper.NO_DAYS);
+        Lesson lesson1 = Lesson.test_buildLesson("1", 1, "", "", "",
+                "3-1-0", 1, teacher, ts_9pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lesson2 = Lesson.test_buildLesson("2", 1, "dummyName", "noName",
+                "", "3-1-0", 2,  teacher, ts_8pm_2bl_9pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
+
+        //no penalty
+        Lesson lesson3 = Lesson.test_buildLesson("3", 1, "dummyName", "noName",
+                "", "3-0-0", 2,  teacher, ts_8pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
 
         constraintVerifier.verifyThat(TimetableConstraintProvider::teacherLessonConflict)
-                .given(lesson2)
-                .penalizesBy(1);
+                .given(lesson1, lesson2, lesson3)
+                .penalizesBy(2);
     }
 
 
@@ -306,8 +269,7 @@ public class TestConstraints {
 
     @Test
     @DisplayName("Correct time slot hours for course type")
-    void timeslotAndLessonTimeMatch() throws Exception{ //TODO test with studio split
-        // TODO IMPLEMENT CONSTRAINT STILL!!!
+    void timeslotAndLessonTimeMatch(){
         EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY,Days.FRIDAY);
         EnumSet<Days> days2 = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         EnumSet<Days> days3 = EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY);
@@ -433,52 +395,45 @@ public class TestConstraints {
 
 
     @Test
-    @DisplayName("CSC Lesson should be in the right Room")
-    void lessonRoomCheck(){
-        /*TODO make this not rely on this assumption. GETTING ANNYOING. USE WHAT WE HAVE DONE FOR STUDIO COURSES
-        *  IN THE SETUP*/
+    @DisplayName("Penalty: Lesson should be in the right Room")
+    void penLessonRoomCheck(){
+        //Lesson requires a specific room
+        Lesson lesson1 = Lesson.test_buildLesson("1", 1, ConstraintTestHelper.NON_STUDIO_SPECIFIC, "",
+                "", "2-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.NON_STUDIO_SPECIFIC),
+                ConstraintTestHelper.DUMMY_TEACHER, ConstraintTestHelper.DUMMY_TS, ConstraintTestHelper.TEST_ROOM_RANDO_LAB);
 
-        //NOTE: this test assumes the department being scheduled is "CSC"
-        int room301ID = Constants.ROOM_TO_ID_BIMAP.get("301");
-        int lecOnlyID = Constants.ROOM_TO_ID_BIMAP.get(Constants.LEC_ONLY);
-        /*Tests assumes that we are scheduling the CSC courses*/
-        Room room1 = new Room(Integer.toString(room301ID), "301", 3);
-        Room room2 = new Room("9999", "badRoom", 9999);
-        Room lecOnlyRoom = new Room(Integer.toString(lecOnlyID), Constants.LEC_ONLY, lecOnlyID);
-//        Teacher DUMMY_TEACHER = new Teacher(1, "noName", EMPTY_BS, EMPTY_BS, EMPTY_BS);
-        Timeslot DUMMY_TS = Timeslot.test_minSetUp("1");
-
-        Lesson lesson1 = Lesson.test_buildLesson("1", 1, "csc101", "noName"
-                , "", "0-1-1", 1, ConstraintTestHelper.DUMMY_TEACHER, DUMMY_TS, room1);
-        Lesson lesson2 = Lesson.test_buildLesson("2", 1, "csc101", "noName"
-                , "", "0-1-1", 1, ConstraintTestHelper.DUMMY_TEACHER, DUMMY_TS, room2);
-        Lesson lesson3 = Lesson.test_buildLesson("3", 1, "csc101", "noName"
-                , "", "0-1-1", 1, ConstraintTestHelper.DUMMY_TEACHER, DUMMY_TS, lecOnlyRoom);
-        Lesson lesson4 = Lesson.test_buildLesson("4", 1, "csc445", "noName"
-                , "", "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, DUMMY_TS, lecOnlyRoom);
-        Lesson lesson5 = Lesson.test_buildLesson("5", 1, "csc445", "noName"
-                , "", "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, DUMMY_TS, room1);
-
-//NOTE LEFT out on purpose. While true Studio classes fix are made; These are quasi studio types???
-//        //Test Studio splits
-//        //(lab) no penalty
-//        Lesson st_lab_spe_correct = Lesson.test_buildLesson("6", 1, TEST_L_W_LAB_SPECIFIC, "noName",
-//                "", "0-1-0", 1, DUMMY_TEACHER, DUMMY_TS, TEST_ROOM_SPECIFIC, DUMMY_LINKER);
-//        //penalty +1 (lab)
-//        Lesson st_lab_spe_wrong = Lesson.test_buildLesson("7", 1, TEST_L_W_LAB_SPECIFIC, "noName",
-//                "", "0-1-0", 1, DUMMY_TEACHER, DUMMY_TS, TEST_ROOM_RANDO_LAB, DUMMY_LINKER);
-//        //no penalty (lec)
-//        Lesson st_lec_right = Lesson.test_buildLesson("8", 1, TEST_L_W_LAB_SPECIFIC, "noName",
-//                "", "3-0-0", 1, DUMMY_TEACHER, DUMMY_TS, lecOnlyRoom, DUMMY_LINKER);
-//        //penalty +1 (lec)
-//        Lesson st_lec_wrong = Lesson.test_buildLesson("9", 1, TEST_L_W_LAB_SPECIFIC, "noName",
-//                "", "3-0-0", 1, DUMMY_TEACHER, DUMMY_TS, TEST_ROOM_RANDO_LAB, DUMMY_LINKER);
+        //lecture only room needs to be in lecture room
+        Lesson lesson2 = Lesson.test_buildLesson("1", 1, "some only lec course", "",
+                "", "1-0-0", 1111, ConstraintTestHelper.DUMMY_TEACHER,
+                ConstraintTestHelper.DUMMY_TS, ConstraintTestHelper.TEST_ROOM_RANDO_LAB);
 
         constraintVerifier.verifyThat(TimetableConstraintProvider::wrongRoomType)
-                .given(lesson1, lesson2, lesson3, lesson4, lesson5
-//                        ,st_lab_spe_correct, st_lab_spe_wrong, st_lec_wrong, st_lec_right
+                .given(lesson1, lesson2
                 )
-                .penalizesBy(3);
+                .penalizesBy(2);
+    }
+
+
+
+    @Test
+    @DisplayName("No Penalty: Lesson should be in the right Room")
+    void noPenLessonRoomCheck(){
+        //recreating the lecture only room
+        final int LEC_ONLY_ID = Constants.ROOM_TO_ID_BIMAP.get(Constants.LEC_ONLY);
+        final Room LEC_ONLY_ROOM = new Room(Integer.toString(LEC_ONLY_ID), "LEC_ONLY", LEC_ONLY_ID);
+        Lesson lesson1 = Lesson.test_buildLesson("1", 1, ConstraintTestHelper.NON_STUDIO_SPECIFIC, "",
+                "", "2-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.NON_STUDIO_SPECIFIC),
+                ConstraintTestHelper.DUMMY_TEACHER, ConstraintTestHelper.DUMMY_TS, ConstraintTestHelper.TEST_ROOM_SPECIFIC);
+
+        //lecture only room needs to be in lecture room
+        Lesson lesson2 = Lesson.test_buildLesson("1", 1, "some only lec course", "",
+                "", "1-0-0", 1111, ConstraintTestHelper.DUMMY_TEACHER,
+                ConstraintTestHelper.DUMMY_TS, LEC_ONLY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::wrongRoomType)
+                .given(lesson1, lesson2
+                )
+                .penalizesBy(NO_PENALTY);
     }
 
 
