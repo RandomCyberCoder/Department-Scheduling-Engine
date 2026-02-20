@@ -1,4 +1,9 @@
 from django.urls import path
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 from .views.teacher_views import (
     get_teachers, 
     create_teacher,
@@ -18,6 +23,10 @@ from .views.history_views import(
 
 #routes for api
 urlpatterns = [
+    #authentication endpoints
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
     #teacher endpoints
     path('teachers/', get_teachers, name='get_user'),
     path('teachers/create/', create_teacher, name='create_teacher'),
