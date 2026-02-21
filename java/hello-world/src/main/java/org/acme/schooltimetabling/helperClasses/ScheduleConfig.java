@@ -8,12 +8,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
 import java.util.EnumSet;
-
 import org.slf4j.Logger;
-import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.introspector.BeanAccess;
 
 /**
  * <p>This is a singleton class that will hold the configuration once it is loaded in
@@ -25,8 +21,8 @@ public class ScheduleConfig {
     public String department;
     public String curTerm;
     public String prevTerm;
-    public   String seasonTerm;
-    public boolean aggressiveSolver;
+    public String seasonTerm;
+    public String aggressiveChoice;
     public boolean testing;
     public boolean useApi;
     public String compressStart;
@@ -127,9 +123,9 @@ public class ScheduleConfig {
         return HOLDER.scheduleConfig.seasonTerm;
     }
 
-    public static boolean isAggressiveSolver() {
+    public static String getAggressiveChoice() {
         if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
-        return HOLDER.scheduleConfig.aggressiveSolver;
+        return HOLDER.scheduleConfig.aggressiveChoice;
     }
 
     public static boolean isTesting() {

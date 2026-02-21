@@ -1,7 +1,6 @@
 package org.acme.schooltimetabling.solver;
 
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.*;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
@@ -9,7 +8,6 @@ import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
-import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.solver.justifications.*;
@@ -22,7 +20,6 @@ import java.util.*;
 public class TimetableConstraintProvider implements ConstraintProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableConstraintProvider.class);
     private static final float FLOAT_TIME_DELTA = 0.01f;
-    /*TODO make a constraint for  preferred times. Also modify the solver config to use hill climbing first*/
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
@@ -55,15 +52,37 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         }
         else LOGGER.info("No studio classes detected, leaving out studio specific constraints");
 
-
+        final List<String> AGRSV_CHOICES_AVAILABLE = List.of("AGGRESSIVE", "AGGRESSIVE_BOTH", "AGGRESSIVE_PENALTY",
+                "AGGRESSIVE_REWARD");
         //Add prime-time constraints based on is we want to use the aggressive solver
-        if(!ScheduleConfig.isAggressiveSolver() || ScheduleConfig.isTesting()){
+        String AGGRESSIVE_CHOICE = ScheduleConfig.getAggressiveChoice();
+        if(ScheduleConfig.isTesting()){
+            //add them all in for testing purposes
+            solver_constraints.addAll(List.of(
+                    outPrimeTime(constraintFactory),
+                    inPrimeTime(constraintFactory),
+                    primeTime50Plus(constraintFactory),
+                    outBestTime(constraintFactory),
+                    inBestTime(constraintFactory)
+            ));
+        }
+        else if(AGRSV_CHOICES_AVAILABLE.contains(AGGRESSIVE_CHOICE)){
+            List<Constraint> chosenThings = new ArrayList<>(List.of(primeTime50Plus(constraintFactory)));
+            if ("AGGRESSIVE_BOTH".equals(AGGRESSIVE_CHOICE) || "AGGRESSIVE_PENALTY".equals(AGGRESSIVE_CHOICE)) {
+                chosenThings.add(outBestTime(constraintFactory));
+            }
+            if ("AGGRESSIVE_BOTH".equals(AGGRESSIVE_CHOICE) || "AGGRESSIVE_REWARD".equals(AGGRESSIVE_CHOICE)) {
+                chosenThings.add(inBestTime(constraintFactory));
+            }
+            solver_constraints.addAll(chosenThings);
+        }
+        else if(AGGRESSIVE_CHOICE.equals("NONE")){
             solver_constraints.addAll(Arrays.asList(outPrimeTime(constraintFactory), inPrimeTime(constraintFactory)));
         }
-        if(ScheduleConfig.isAggressiveSolver() || ScheduleConfig.isTesting()){
-            solver_constraints.addAll(Arrays.asList(primeTime50Plus(constraintFactory),
-                    outBestTime(constraintFactory)
-            ));
+        else{
+            LOGGER.error("Valid aggressive solver choices are: 'AGGRESSIVE', 'AGGRESSIVE_BOTH', 'AGGRESSIVE_PENALTY', " +
+                    "'AGGRESSIVE_REWARD', and 'NONE'. TERMINATING PROGRAM");
+            System.exit(1);
         }
 
         return solver_constraints.toArray(Constraint[]::new);
