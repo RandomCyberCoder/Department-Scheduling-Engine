@@ -15,6 +15,7 @@ public class BitSetHelper {
     private static final int WEDNESDAY_OFFSET = 60;
     private static final int THURSDAY_OFFSET = 90;
     private static final int FRIDAY_OFFSET = 120;
+    private static final int NUM_OF_BITS = 150;
     private static final int PRIME_TIME_DAY_START_OFFSET = 4;
     private static final int PRIME_TIME_DAY_END_OFFSET = 16;
     private static final int MAX_BITS_PER_DAY = 30;
@@ -36,7 +37,7 @@ public class BitSetHelper {
 
         NON_PRIME_TIME_MASK = (BitSet) PRIME_TIME_MASK.clone();
         /* The bits not set in the prime time bitset mask should be set*/
-        NON_PRIME_TIME_MASK.flip(0, NON_PRIME_TIME_MASK.length());
+        NON_PRIME_TIME_MASK.flip(0, NUM_OF_BITS);
         /* Setting the rest of the bits that could not be set by simply flipping*/
         NON_PRIME_TIME_MASK.set(FRIDAY_OFFSET + PRIME_TIME_DAY_END_OFFSET, FRIDAY_OFFSET + MAX_BITS_PER_DAY);
     }

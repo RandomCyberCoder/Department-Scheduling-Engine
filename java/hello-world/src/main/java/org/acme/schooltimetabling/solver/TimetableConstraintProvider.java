@@ -11,6 +11,7 @@ import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.solver.justifications.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 studioLabAfterLec(constraintFactory)
         };
 
-        //mutability
+        //universal constraints
         List<Constraint> solver_constraints = new ArrayList<>(Arrays.asList(
                 // Hard constraints
                 sameClassSameDays(constraintFactory),
@@ -45,6 +46,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 // Soft constraints
         ));
 
+        //-------------------------- solution specific constraints --------------------------
 
         //add studio specific constraints for studio courses
         if(LessonGenerator.proper_studio_detected || Constants.TESTING){
@@ -54,20 +56,23 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         else LOGGER.info("No studio classes detected, leaving out studio specific constraints");
 
 
-        //Add primetime constraints
-        //TODO add a variable in the yaml config to decide which one to use
-        if(false || Constants.TESTING){
+        //Add prime-time constraints based on is we want to use the aggressive solver
+        if(!ScheduleConfig.isAggressiveSolver() || ScheduleConfig.isTesting()){
             solver_constraints.addAll(Arrays.asList(outPrimeTime(constraintFactory), inPrimeTime(constraintFactory)));
         }
-        if(true || Constants.TESTING){
-            solver_constraints.add(primeTime50Plus(constraintFactory));
+        if(ScheduleConfig.isAggressiveSolver() || ScheduleConfig.isTesting()){
+            solver_constraints.addAll(Arrays.asList(primeTime50Plus(constraintFactory),
+                    outBestTime(constraintFactory)
+            ));
         }
 
         return solver_constraints.toArray(Constraint[]::new);
     }
 
-    //-------------------------------------- Hard Constraints --------------------------------------
 
+
+
+    //-------------------------------------- Hard Constraints --------------------------------------
 
     /**
      * <p>This constraint will penalize solutions that have more then 50% of the lecture blocks (each block being
@@ -435,6 +440,22 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .penalize(HardMediumSoftScore.ONE_SOFT
                         , lesson -> lesson.maskInPT().cardinality())
                 .asConstraint("Penalizing for being in prime time");
+    }
+
+    Constraint inBestTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    return lesson.maskInCmprs().cardinality() > 0;
+                })
+                .reward(HardMediumSoftScore.ONE_SOFT)
+                .asConstraint("Reward time in preferred time interval");
+    }
+
+    Constraint outBestTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> lesson.maskOutCmprs().cardinality() > 0)
+                .penalize(HardMediumSoftScore.ONE_SOFT)
+                .asConstraint("Penalize time out of preferred time interval");
     }
 
 }

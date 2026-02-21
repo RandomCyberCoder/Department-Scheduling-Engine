@@ -8,6 +8,7 @@ import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,6 +258,10 @@ public class Lesson {
         return Constants.STUDIO_STYLE_COURSES.contains(this.courseName);
     }
 
+    /**
+     * Masks the lecture bitset with {@link BitSetHelper#PRIME_TIME_MASK}
+     * @return a BitSet with any lecture bits set during primetime
+     */
     public BitSet maskInPT(){
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
@@ -266,6 +271,10 @@ public class Lesson {
         return copy;
     }
 
+    /**
+     * Masks the lecture bitset with {@link BitSetHelper#NON_PRIME_TIME_MASK}
+     * @return a BitSet with any lecture bits set out of primetime
+     */
     public BitSet maskOutPT(){
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
@@ -275,21 +284,22 @@ public class Lesson {
         return copy;
     }
 
+    public BitSet maskInCmprs(){//if the lesson has gone through the solver the timeslot will be null;
+        if(timeslot == null) return null;
+        BitSet copy = new BitSet();
+        copy.or(timeslot.getLectureBitSet());
+        copy.or(timeslot.getLabActBitSet());
+        copy.and(ScheduleConfig.getCompressInMask());
+        return copy;
+    }
 
-    /**
-     * Helper function for masking a lesson's lecture bit set with one of the two prime time masks.
-     * This function assumes the lesson has a lecture.
-     *
-     * @param lesson lesson we are considering
-     * @param mask Bitset to mask the lecture bitset
-     * @return returns a bitset that has lecture bits masked
-     */
-    private BitSet helperPrimeTime(Lesson lesson, BitSet mask){
-        BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
-        BitSet copy = lecBitSet.get(0
-                , lecBitSet.length());
-        copy.and(mask);
-
+    public BitSet maskOutCmprs(){
+        //if the lesson has gone through the solver the timeslot will be null;
+        if(timeslot == null) return null;
+        BitSet copy = new BitSet();
+        copy.or(timeslot.getLectureBitSet());
+        copy.or(timeslot.getLabActBitSet());
+        copy.and(ScheduleConfig.getCompressOutMask());
         return copy;
     }
 }
