@@ -57,35 +57,17 @@ public class TestConstraints {
         Lesson ls3 = Lesson.test_buildLesson("3", 3, "csc201", "dummyInstructor", "",
                 "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot3, ConstraintTestHelper.DUMMY_ROOM);
 
-
-//NOTE LEFT out on purpose. While true Studio classes fix are made; These are quasi studio types???
-//        //studio check (NOTE i'm leaving these out on purpose for now)
-//        //penalize st_ls4-st_ls5 combo. Penalty +1
-//        Timeslot ts_MW = Timeslot.test_CreateWithDaysOnly(3, MW, NO_DAYS);
-//        Timeslot ts_MWF = Timeslot.test_CreateWithDaysOnly(4, MWF, NO_DAYS);
-//        Timeslot ts_T = Timeslot.test_CreateWithDaysOnly(5, soloT, NO_DAYS);
-//        Lesson st_ls4 = Lesson.test_buildLesson("4", 1, DUMMY_STUDIO, "", "",
-//                "3-0-0", Constants.COURSE_ID_BIMAP.get(DUMMY_STUDIO), DUMMY_TEACHER, ts_MW, DUMMY_ROOM, DUMMY_LINKER);
-//        Lesson st_ls5 = Lesson.test_buildLesson("5", 1, DUMMY_STUDIO, "", "",
-//                "3-0-0", Constants.COURSE_ID_BIMAP.get(DUMMY_STUDIO), DUMMY_TEACHER, ts_MWF, DUMMY_ROOM, DUMMY_LINKER);
-//        Lesson st_ls6_lab = Lesson.test_buildLesson("6", 1, DUMMY_STUDIO, "", "",
-//                "0-0-1", Constants.COURSE_ID_BIMAP.get(DUMMY_STUDIO), DUMMY_TEACHER, ts_T, DUMMY_ROOM, DUMMY_LINKER);
-
         constraintVerifier.verifyThat(TimetableConstraintProvider::sameClassSameDays)
-                .given(ls1, ls2, ls3
-//                        , st_ls4, st_ls5, st_ls6_lab
-                )
+                .given(ls1, ls2, ls3)
                 /*Note this takes into account weight of rewards*/
                 .penalizesBy(2);
 
     }
 
 
-
-
     @Test
     @DisplayName("teacher conflict times & timeslot conflict")
-    void teacherAndTimeslot() throws Exception{
+    void teacherAndTimeslot(){
         //No penalty for teacher1
         EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         BitSet teacher1Bits = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter)
@@ -114,8 +96,6 @@ public class TestConstraints {
                 .given(lesson1, lesson2)
                 .penalizesBy(1);
     }
-
-
 
 
     @Test
@@ -150,12 +130,9 @@ public class TestConstraints {
     }
 
 
-
-
     @Test
     @DisplayName("Test: teacher can't teach two lessons at the same time")
-    void teacherLessonSameTime() throws Exception{
-//        Room DUMMY_ROOM = new Room("1", "dummyRoom", 1);
+    void teacherLessonSameTime(){
         Teacher teacher1 = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
                 ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
 
@@ -191,23 +168,17 @@ public class TestConstraints {
                 ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
         Lesson lesson3 = Lesson.test_buildLesson("3", 3, "dummyName", "noName",
                 "", "3-1-0", 3,  teacher2, ts_1PM_MWF_blks4, ConstraintTestHelper.DUMMY_ROOM);
-//        Lesson st_lesson4 = Lesson.test_buildLesson("4", 4, "dummmyName", "noName",
-//                "", "0-1-0", 1, teacher2, ts3, TestConstraints.DUMMY_ROOM);
 
-        //penalizes lesson1 and lesson2 grouping; penalizes lesson3 and st_lesson4 grouping
+        //penalizes lesson1 and lesson2 grouping
         constraintVerifier.verifyThat(TimetableConstraintProvider::lessonConflict)
-                .given(lesson1, lesson2, lesson3
-//                        , st_lesson4
-                )
+                .given(lesson1, lesson2, lesson3)
                 .penalizesBy(1);
     }
 
 
-
-
     @Test
     @DisplayName("A room accommodates only one lesson at a time")
-    void roomMultiLessons() throws Exception{
+    void roomMultiLessons(){
         EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY,Days.FRIDAY);
         EnumSet<Days> M = EnumSet.of(Days.MONDAY);
         EnumSet<Days> TR = EnumSet.of(Days.TUESDAY, Days.THURSDAY);
@@ -245,26 +216,10 @@ public class TestConstraints {
         Lesson lesson3 = Lesson.test_buildLesson("3", 3, "dummyName", "noName"
                 , "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot3, room);
 
-
-        //make a studio split
-        //no penalty (this is a lecture only)
-//        Lesson st_lec = Lesson.test_buildLesson("1", 1, "dummyName", "noName", "",
-//                "3-0-0", 1, DUMMY_TEACHER, st_ts_conflict, room, DUMMY_LINKER);
-//        //penalty 1+ (lab)
-//        Lesson st_lab_collision = Lesson.test_buildLesson("1", 1, "dummyName", "noName", "",
-//                "0-1-0", 1, DUMMY_TEACHER, st_ts_conflict, room, DUMMY_LINKER);
-//        //no penalty
-//        Lesson st_lab_no_collision = Lesson.test_buildLesson("1", 1, "dummyName", "noName", "",
-//                "0-1-0", 1, DUMMY_TEACHER, st_ts_no_conflict, room, DUMMY_LINKER);
-
         constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
-                .given(lesson1, lesson2, lesson3
-//                        , st_lec, st_lab_collision, st_lab_no_collision
-                )
+                .given(lesson1, lesson2, lesson3)
                 .penalizesBy(1);
     }
-
-
 
 
     @Test
@@ -343,55 +298,6 @@ public class TestConstraints {
                 .given(lesson1, lesson2, lesson3, lesson4, lesson5, lesson6)
                 .penalizesBy(2);
     }
-
-
-//NOTE LEFT out on purpose. While true Studio classes fix are made; These are quasi studio types???
-//    @Test
-//    @DisplayName("Constraint wrong hours for studio")
-//    void timeslotStudioMath() throws Exception{
-//        //no teache
-//        //no rooom
-//        EnumSet<Days> MTWR = EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY);
-//        EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
-//        EnumSet<Days> M = EnumSet.of(Days.MONDAY);
-//
-//        BitSet bs_M_7_to_11AM = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter),
-//                8, M);
-//        BitSet bs_MW_7_to_9AM = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter),
-//                4, MW);
-//        BitSet bs_MTWR_7_to_8_AM = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter),
-//                2, MTWR);
-//        BitSet bs_M_7_to_8_AM = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter),
-//                2, M);
-//
-//        Timeslot ts_M_7_to_11AM = Timeslot.test_lecLabBitAndDays(1, bs_M_7_to_11AM, EMPTY_BS, M, NO_DAYS);
-//        Timeslot ts_MW_7_to_9AM = Timeslot.test_lecLabBitAndDays(2, bs_MW_7_to_9AM, EMPTY_BS, M, NO_DAYS);
-//        Timeslot ts_MTWR_7_to_8_AM = Timeslot.test_lecLabBitAndDays(3, bs_MTWR_7_to_8_AM, EMPTY_BS, MTWR, NO_DAYS);
-//        Timeslot ts_M_7_to_8_AM = Timeslot.test_lecLabBitAndDays(4, bs_M_7_to_8_AM, EMPTY_BS, M, NO_DAYS);
-//
-//        //no penalty; lab section hours continuous
-//        Lesson st_lab_right_hrs = Lesson.test_buildLesson("1", 1, DUMMY_STUDIO, "", "",
-//                "0-0-2", 1, DUMMY_TEACHER, ts_M_7_to_11AM, DUMMY_ROOM, DUMMY_LINKER);
-//        //penalty +1; lab section hours not continuous
-//        Lesson st_lab_wrong_hrs = Lesson.test_buildLesson("2", 1, DUMMY_STUDIO, "", "",
-//                "0-0-2", 1, DUMMY_TEACHER, ts_MW_7_to_9AM, DUMMY_ROOM, DUMMY_LINKER);
-//        //penalty +1; lec only non-studio course has continuous lecture time
-//        Lesson ls_lec_only_wrong_ts = Lesson.test_buildLesson("3", 1, "notStudio", "", "",
-//                "4-0-0", 1, DUMMY_TEACHER, ts_M_7_to_11AM, DUMMY_ROOM);
-//        //no penalty; hours spread out
-//        Lesson ls_lec_only_right_ts = Lesson.test_buildLesson("4", 1, "notStudio", "", "",
-//                "4-0-0", 1, DUMMY_TEACHER, ts_MTWR_7_to_8_AM, DUMMY_ROOM);
-//
-//        //no penalty
-//        Lesson st_lec_only_oneHR_right = Lesson.test_buildLesson("5", 1, DUMMY_STUDIO, "", "",
-//                "1-0-0", 1, DUMMY_TEACHER, ts_M_7_to_8_AM, DUMMY_ROOM, 2);
-//
-//        constraintVerifier.verifyThat(TimetableConstraintProvider::wrongHoursAmount)
-//                .given(st_lab_right_hrs, st_lab_wrong_hrs,
-//                        ls_lec_only_wrong_ts, ls_lec_only_right_ts,
-//                        st_lec_only_oneHR_right)
-//                .penalizesBy(2);
-//    }
 
 
     @Test
@@ -535,7 +441,7 @@ public class TestConstraints {
 
     @Test
     @DisplayName("PrimeTime reward")
-    void primeTimeReward() throws Exception{
+    void primeTimeReward(){
         EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY,Days.FRIDAY);
 
         /*8-9 MWF; Lecture time completely in prime time*/
@@ -555,33 +461,16 @@ public class TestConstraints {
         Lesson lesson2 = Lesson.test_buildLesson("2", 1, "someCourse", "noName", "",
                 "1-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot2, ConstraintTestHelper.DUMMY_ROOM);
 
-//NOTE LEFT out on purpose. While true Studio classes fix are made; These are quasi studio types???
-//        //simulate studio lab/act split
-//        EnumSet<Days> oneDay = EnumSet.of(Days.MONDAY);
-//        BitSet onlyLecSetOneDay = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter), 6,
-//                oneDay);
-//        Timeslot timeslot3 = Timeslot.test_lecLabBitAndDays(1, onlyLecSetOneDay, EMPTY_BS, oneDay, NO_DAYS);
-//        Lesson st_lesson3 = Lesson.test_buildLesson("3", 2, "someCourse", "noName", "",
-//                "0-1-0", 1, DUMMY_TEACHER, timeslot3, DUMMY_ROOM, DUMMY_LINKER);
-//        Lesson st_lesson4 = Lesson.test_buildLesson("4", 2, "someCourse", "noName", "",
-//                "3-0-0", 1, DUMMY_TEACHER, timeslot3, DUMMY_ROOM, DUMMY_LINKER);
-
         constraintVerifier.verifyThat(TimetableConstraintProvider::outPrimeTime)
-                .given(lesson, lesson2
-//                        , st_lesson3, st_lesson4
-                )
+                .given(lesson, lesson2)
                 /*Note this takes into account weight of rewards*/
-                .rewardsWith(12 + 0
-//                        + 0 + 4
-                );
+                .rewardsWith(12 + 0);
     }
-
-
 
 
     @Test
     @DisplayName("PrimeTime penalty")
-    void primeTimePenalty() throws Exception{EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
+    void primeTimePenalty(){EnumSet<Days> days = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         EnumSet<Days> days2 = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
 
         /*7-9:30 MW; Lecture time completely in prime time*/
@@ -601,23 +490,59 @@ public class TestConstraints {
         Lesson lesson2 = Lesson.test_buildLesson("2", 1, "someCourse", "noName", "",
                 "1-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot2, ConstraintTestHelper.DUMMY_ROOM);
 
-//NOTE LEFT out on purpose. While true Studio classes fix are made; These are quasi studio types???
-//        //studio lesson lab/act split
-//        EnumSet<Days> M = EnumSet.of(Days.MONDAY);
-//        BitSet onlyLecSetOneDay = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter), 6,
-//                M);
-//        Timeslot timeslot3 = Timeslot.test_lecLabBitAndDays(1, onlyLecSetOneDay, EMPTY_BS, M, NO_DAYS);
-//        Lesson lesson3 = Lesson.test_buildLesson("3", 2, "someCourse", "noName", "",
-//                "0-1-0", 1, DUMMY_TEACHER, timeslot3, DUMMY_ROOM, DUMMY_LINKER);
-
-
         constraintVerifier.verifyThat(TimetableConstraintProvider::inPrimeTime)
-                .given(lesson1, lesson2
-//                        , lesson3
-                )
+                .given(lesson1, lesson2)
                 /*Note this takes into account weight of rewards*/
-                .penalizesBy(  2 + 6
-//                        + 0
-                );
+                .penalizesBy(2 + 6);
+    }
+
+    @Test
+    @DisplayName("no penalty Primetime hard constraint")
+    void hardPrimeTimeNoPenalty(){
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        BitSet bs_8am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet bs_9am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, MWF);
+        BitSet bs_2pm_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("2:00PM", formatter), 2, MWF);
+
+        Timeslot ts_8am_2blcks_9am_2blcks = Timeslot.test_lecLabBitAndDays(1, bs_8am_2blcks, bs_9am_2blcks, MWF, MWF);
+        Timeslot ts_2pm_2blcks = Timeslot.test_lecLabBitAndDays(2, bs_2pm_2blcks, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson lessonOutPrimeTime = Lesson.test_buildLesson("1", 1, "", "",
+                "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER,
+                ts_8am_2blcks_9am_2blcks, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lessonInPrimeTime = Lesson.test_buildLesson("2", 1, "", "",
+                "", "3-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER,
+                ts_2pm_2blcks, ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::primeTime50Plus)
+                .given(lessonOutPrimeTime, lessonInPrimeTime)
+                .penalizesBy(0);
+    }
+
+    @Test
+    @DisplayName("penalty Primetime hard constraint")
+    void hardPrimeTimePenalty(){
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        BitSet bs_8am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet bs_9am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, MWF);
+        BitSet bs_130pm_3blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("1:30PM", formatter), 3, MWF);
+
+        Timeslot ts_8am_2blcks_9am_2blcks = Timeslot.test_lecLabBitAndDays(1, bs_8am_2blcks, bs_9am_2blcks, MWF, MWF);
+        Timeslot ts_130pm_3blcks = Timeslot.test_lecLabBitAndDays(2, bs_130pm_3blcks, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson lessonOutPrimeTime = Lesson.test_buildLesson("1", 1, "", "",
+                "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER,
+                ts_8am_2blcks_9am_2blcks, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lessonInPrimeTime = Lesson.test_buildLesson("2", 1, "", "",
+                "", "3-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER,
+                ts_130pm_3blcks, ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::primeTime50Plus)
+                .given(lessonOutPrimeTime, lessonInPrimeTime)
+                .penalizesBy(1);
     }
 }
+
+

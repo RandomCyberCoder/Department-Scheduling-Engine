@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <solver>
-    <randomSeed>auto</randomSeed>
     <solutionClass>org.acme.schooltimetabling.domain.Timetable</solutionClass>
     <entityClass>org.acme.schooltimetabling.domain.lesson.Lesson</entityClass>
     <scoreDirectorFactory>
         <constraintProviderClass>org.acme.schooltimetabling.solver.TimetableConstraintProvider</constraintProviderClass>
     </scoreDirectorFactory>
-
+    <!--Random seed is used for heuristics and meta heuristics; setting it doesn't really matter I think-->
+    <randomSeed>auto</randomSeed>
+    <!--stricter modes cause the solver to become slower, but can be used in dev for error-detection;
+    use NON_REPRODUCIBLE if you don't reproducibility. For dev use PHASE_ASSERT (the default) or just comment
+     out the environment mode; see https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/running-the-solver#environmentModeBestPractices-->
+    <environmentMode>NON_REPRODUCIBLE</environmentMode>
     <termination>
         <secondsSpentLimit>100</secondsSpentLimit>
     </termination>

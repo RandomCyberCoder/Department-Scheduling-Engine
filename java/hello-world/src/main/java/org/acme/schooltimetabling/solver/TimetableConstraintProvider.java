@@ -1,10 +1,8 @@
 package org.acme.schooltimetabling.solver;
 
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import ai.timefold.solver.core.api.score.stream.Constraint;
-import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
-import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
-import ai.timefold.solver.core.api.score.stream.Joiners;
+import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.*;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
@@ -17,7 +15,7 @@ import org.acme.schooltimetabling.solver.justifications.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
-
+import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.*;
 import java.util.*;
 
 public class TimetableConstraintProvider implements ConstraintProvider {
@@ -42,11 +40,9 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 wrongRoomType(constraintFactory),
 
                 // Medium Constraints
-                prefTime(constraintFactory),
+                prefTime(constraintFactory)
 
                 // Soft constraints
-                outPrimeTime(constraintFactory),
-                inPrimeTime(constraintFactory)
         ));
 
 
@@ -57,10 +53,43 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         }
         else LOGGER.info("No studio classes detected, leaving out studio specific constraints");
 
+
+        //Add primetime constraints
+        //TODO add a variable in the yaml config to decide which one to use
+        if(false || Constants.TESTING){
+            solver_constraints.addAll(Arrays.asList(outPrimeTime(constraintFactory), inPrimeTime(constraintFactory)));
+        }
+        if(true || Constants.TESTING){
+            solver_constraints.add(primeTime50Plus(constraintFactory));
+        }
+
         return solver_constraints.toArray(Constraint[]::new);
     }
 
     //-------------------------------------- Hard Constraints --------------------------------------
+
+
+    /**
+     * <p>This constraint will penalize solutions that have more then 50% of the lecture blocks (each block being
+     * 30 minutes) in primetime</p>
+     * <p>This constraint is an alternative to using the pair of constraints {@link #inPrimeTime} and
+     * {@link #outPrimeTime}.</p>
+     * @param constraintFactory constraint factory
+     * @return constraint
+     */
+    Constraint primeTime50Plus(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .groupBy(sum(lesson -> {
+                   BitSet inPrime = lesson.maskInPT();
+                   BitSet outPrime = lesson.maskOutPT();
+                   return inPrime.cardinality() - outPrime.cardinality();
+                }))
+                .filter(
+                        //if the number of blocks in primetime is greater than those out; penalize by one hard
+                        blocks -> blocks > 0)
+                .penalize(HardMediumSoftScore.ONE_HARD)
+                .asConstraint("50%+ lecture time outside of primetime");
+    }
 
     /**
      * <p>This constraint makes sure if an instructor is teaching multiple instances of a course that
@@ -365,23 +394,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
     //-------------------------------------- Soft Constraints --------------------------------------
 
-    /**
-     * Helper function for masking a lesson's lecture bit set with one of the two prime time masks.
-     * This function assumes the lesson has a lecture.
-     *
-     * @param lesson lesson we are considering
-     * @param mask Bitset to mask the lecture bitset
-     * @return returns a bitset that has lecture bits masked
-     */
-    private BitSet helperPrimeTime(Lesson lesson, BitSet mask){
-        BitSet lecBitSet = lesson.getTimeslot().getLectureBitSet();
-        BitSet copy = lecBitSet.get(0
-                , lecBitSet.length());
-        copy.and(mask);
-
-        return copy;
-    }
-
     /*at least 50 percent of the time for scheduled Department courses should be outside Prime Time hours
      * https://content-calpoly-edu.s3.amazonaws.com/registrar/1/images/Semester%20Scheduling%20Time%20Patterns%20w%20Footer_12.16.25.pdf
      * lets make this a positive score and */
@@ -397,10 +409,10 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .filter(lesson -> {
                     if(!lesson.hasLecture) return false;
 
-                    return helperPrimeTime(lesson, BitSetHelper.NON_PRIME_TIME_MASK).cardinality() != 0;
+                    return lesson.maskOutPT().cardinality() != 0;
                 })
                 .reward(HardMediumSoftScore.ONE_SOFT
-                        , lesson -> helperPrimeTime(lesson, BitSetHelper.NON_PRIME_TIME_MASK).cardinality())
+                        , lesson -> lesson.maskOutPT().cardinality())
                 .asConstraint("Rewarding for being outside of prime time");
     }
 
@@ -418,10 +430,10 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     /*if the lesson has a lecture then we are guaranteed the lecture bitset is being
                     * used for the lecture portion*/
-                    return helperPrimeTime(lesson, BitSetHelper.PRIME_TIME_MASK).cardinality() != 0;
+                    return lesson.maskInPT().cardinality() != 0;
                 })
                 .penalize(HardMediumSoftScore.ONE_SOFT
-                        , lesson -> helperPrimeTime(lesson, BitSetHelper.PRIME_TIME_MASK).cardinality())
+                        , lesson -> lesson.maskInPT().cardinality())
                 .asConstraint("Penalizing for being in prime time");
     }
 

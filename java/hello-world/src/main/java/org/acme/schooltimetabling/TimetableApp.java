@@ -70,6 +70,23 @@ public class TimetableApp {
         //short summary of violated constraints in the solution
         LOGGER.info(scoreAnalysis.summarize());
 
+        /*tally up how many 30minute lecture blocks are in/out of primetime and print out. Mostly to verify
+        * the aggressive primetime scheduling hard constraint*/
+        int blcksOutPT = 0;
+        int blcksInPT = 0;
+        for(Lesson lesson : solution.getLessons()){
+            blcksInPT += lesson.maskInPT().cardinality();
+            blcksOutPT += lesson.maskOutPT().cardinality();
+        }
+        LOGGER.info(String.format("Number of 30-minute blocks in prime time: %d;  Number of 30-minute blocks " +
+                "out of prime time: %d", blcksInPT, blcksOutPT));
+        //notify user that primetime hard constraint failed. It shouldn't fail based on my test but just in case.
+        if(blcksInPT > blcksOutPT){
+            LOGGER.error("FAILED TO MEET SCHEDULE 50%+ OF LECTURE TIME OUTSIDE OF PRIMETIME. SWITCH TO " +
+                    "NON-AGGRESSIVE SOLVER IF POSSIBLE. WHILE CONSTRAINT IS INVESTIGATED");
+        }
+
+
         //print a detailed summary for every constraint a list of all the instances of it being violated
         if(PRINT_DETAILED_SUMMARY){
             scoreAnalysis.constraintMap().forEach((constraintRef, constraintAnalysis) -> {
