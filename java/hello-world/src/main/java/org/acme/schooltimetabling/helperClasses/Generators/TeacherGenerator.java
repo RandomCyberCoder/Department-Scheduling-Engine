@@ -97,72 +97,6 @@ public class TeacherGenerator extends Generator{
         return teacherMap;
     }
 
-    /**
-     * Generates the Teacher/Faculty object for the instructor's survey entry. It
-     * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
-     * for the instructor
-     *
-     * @param surveyEntry The HashMap representation of the instructor's survey entry
-     * @return Faculty object if teacher is found to be a faculty member; otherwise a
-     * Teacher object is returned
-     * @throws
-     * @see #nextTeacherID*/
-    private static Teacher generateTeacher(HashMap<String, String> surveyEntry) throws Exception{
-        String instructorName = surveyEntry.get("name");
-        String canonName = Constants.TEACHER_NAME_TO_CANON.get(instructorName);
-        BitSet preferred = new BitSet();
-        BitSet acceptable = new BitSet();
-        BitSet conflicts = new BitSet();
-        /*List of the time headers that are key's in the survey
-         * entry HashMaps*/
-        /*make it unmodifiable because this list should never change*/
-        final List<String> surveyTimes =
-                Collections.unmodifiableList(new ArrayList<>(Arrays.asList(
-                        "M_7_AM","M_8_AM","M_9_AM","M_10_AM","M_11_AM","M_12_PM",
-                        "M_1_PM","M_2_PM","M_3_PM","M_4_PM","M_5_PM","M_6_PM",
-                        "M_7_PM","M_8_PM","M_9_PM",
-                        "T_7_AM","T_8_AM","T_9_AM","T_10_AM","T_11_AM","T_12_PM",
-                        "T_1_PM","T_2_PM","T_3_PM","T_4_PM","T_5_PM","T_6_PM",
-                        "T_7_PM","T_8_PM","T_9_PM",
-                        "W_7_AM","W_8_AM","W_9_AM","W_10_AM","W_11_AM","W_12_PM",
-                        "W_1_PM","W_2_PM","W_3_PM","W_4_PM","W_5_PM","W_6_PM",
-                        "W_7_PM","W_8_PM","W_9_PM",
-                        "R_7_AM","R_8_AM","R_9_AM","R_10_AM","R_11_AM","R_12_PM",
-                        "R_1_PM","R_2_PM","R_3_PM","R_4_PM","R_5_PM","R_6_PM",
-                        "R_7_PM","R_8_PM","R_9_PM",
-                        "F_7_AM","F_8_AM","F_9_AM","F_10_AM","F_11_AM","F_12_PM",
-                        "F_1_PM","F_2_PM","F_3_PM","F_4_PM","F_5_PM","F_6_PM",
-                        "F_7_PM","F_8_PM","F_9_PM")));
-
-        if(canonName == null){
-            LOGGER.error(String.format("Couldn't find canon name for %s. SKIPPING", instructorName));
-            return null;
-        }
-
-        for(String time : surveyTimes){
-            /*lower case for future-proof*/
-            String availability = surveyEntry.get(time).toLowerCase();
-
-            BitSet bitsetAvailability = BitSetHelper.srvHdrToBs(time);
-
-            /*add the bitset to the right bitset. Default is a conflict,
-            * if the person doesn't choose acceptable, preferred or conflict
-            * we assume the time slot is a conflict*/
-            switch (availability){
-                case "acceptable" -> acceptable.or(bitsetAvailability);
-                case "preferred" -> preferred.or(bitsetAvailability);
-                default -> conflicts.or(bitsetAvailability);
-            }
-        }
-
-        String[] splitName = canonName.split(",");
-
-        if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
-            LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
-            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
-        }
-        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);
-    }
 
     /**
      * Returns a hashmap of the teacher's canon name mapped to their teacher's object. If the person is a faculty
@@ -175,8 +109,7 @@ public class TeacherGenerator extends Generator{
      * @throws
      * */
     public static HashMap<String, Teacher> generateTeachers(List<HashMap<String, String>> curQuarterSurvey,
-                                                     List<HashMap<String, String>> prevQuarterSurvey) throws Exception
-    {
+                                                     List<HashMap<String, String>> prevQuarterSurvey){
         /* This Hash map will map the teacher's name to the teacher's object */
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
         final String BLEED_FORWARD_STRING = "Yes, use the same as last term";
@@ -251,6 +184,75 @@ public class TeacherGenerator extends Generator{
 
         return teacherHashMap;
     }
+
+
+    /**
+     * Generates the Teacher/Faculty object for the instructor's survey entry. It
+     * will initialize the preferred, acceptable, and conflicts <code>BitSet</code>
+     * for the instructor
+     *
+     * @param surveyEntry The HashMap representation of the instructor's survey entry
+     * @return Faculty object if teacher is found to be a faculty member; otherwise a
+     * Teacher object is returned
+     * @throws
+     * @see #nextTeacherID*/
+    private static Teacher generateTeacher(HashMap<String, String> surveyEntry){
+        String instructorName = surveyEntry.get("name");
+        String canonName = Constants.TEACHER_NAME_TO_CANON.get(instructorName);
+        BitSet preferred = new BitSet();
+        BitSet acceptable = new BitSet();
+        BitSet conflicts = new BitSet();
+        /*List of the time headers that are key's in the survey
+         * entry HashMaps*/
+        /*make it unmodifiable because this list should never change*/
+        final List<String> surveyTimes =
+                Collections.unmodifiableList(new ArrayList<>(Arrays.asList(
+                        "M_7_AM","M_8_AM","M_9_AM","M_10_AM","M_11_AM","M_12_PM",
+                        "M_1_PM","M_2_PM","M_3_PM","M_4_PM","M_5_PM","M_6_PM",
+                        "M_7_PM","M_8_PM","M_9_PM",
+                        "T_7_AM","T_8_AM","T_9_AM","T_10_AM","T_11_AM","T_12_PM",
+                        "T_1_PM","T_2_PM","T_3_PM","T_4_PM","T_5_PM","T_6_PM",
+                        "T_7_PM","T_8_PM","T_9_PM",
+                        "W_7_AM","W_8_AM","W_9_AM","W_10_AM","W_11_AM","W_12_PM",
+                        "W_1_PM","W_2_PM","W_3_PM","W_4_PM","W_5_PM","W_6_PM",
+                        "W_7_PM","W_8_PM","W_9_PM",
+                        "R_7_AM","R_8_AM","R_9_AM","R_10_AM","R_11_AM","R_12_PM",
+                        "R_1_PM","R_2_PM","R_3_PM","R_4_PM","R_5_PM","R_6_PM",
+                        "R_7_PM","R_8_PM","R_9_PM",
+                        "F_7_AM","F_8_AM","F_9_AM","F_10_AM","F_11_AM","F_12_PM",
+                        "F_1_PM","F_2_PM","F_3_PM","F_4_PM","F_5_PM","F_6_PM",
+                        "F_7_PM","F_8_PM","F_9_PM")));
+
+        if(canonName == null){
+            LOGGER.error(String.format("Couldn't find canon name for %s. SKIPPING", instructorName));
+            return null;
+        }
+
+        for(String time : surveyTimes){
+            /*lower case for future-proof*/
+            String availability = surveyEntry.get(time).toLowerCase();
+
+            BitSet bitsetAvailability = BitSetHelper.srvHdrToBs(time);
+
+            /*add the bitset to the right bitset. Default is a conflict,
+             * if the person doesn't choose acceptable, preferred or conflict
+             * we assume the time slot is a conflict*/
+            switch (availability){
+                case "acceptable" -> acceptable.or(bitsetAvailability);
+                case "preferred" -> preferred.or(bitsetAvailability);
+                default -> conflicts.or(bitsetAvailability);
+            }
+        }
+
+        String[] splitName = canonName.split(",");
+
+        if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
+            LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
+            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
+        }
+        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);
+    }
+
 
     /**
      * The class keeps an internal counter for the next available teacher ID. The next valid teacher ID

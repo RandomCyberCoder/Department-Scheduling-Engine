@@ -79,9 +79,9 @@ public final class ParseInput {
      * </p>
      *
      * @param filePath file path of the current quarter's instructor survey
-     * @param replacementHeaders an ArrayList<String> of headers to replace the current csv headers
-     *                           if you don't want replacement headers pass <code>null</code>
-     * return An ArrayList where each element is a row in the CSV
+     * @param replacementHeaders an ArrayList<String> of headers to replace the current csv headers.
+     *                           If you don't want replacement headers pass <code>null</code>
+     * @return An ArrayList where each element is a row in the CSV
      * */
     public static ArrayList<HashMap<String, String>> readCSV(String filePath, ArrayList<String> replacementHeaders){
         ArrayList<HashMap<String, String>> csvRead = new ArrayList<>();

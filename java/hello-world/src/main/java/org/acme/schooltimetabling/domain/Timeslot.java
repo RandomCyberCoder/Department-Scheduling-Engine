@@ -133,8 +133,6 @@ public class Timeslot {
     }
 
 
-
-    /*TODO add sanity checker here to throw an error if the second time slot overlaps with the first*/
     public Timeslot(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
                     String days2, String startTime2, String endTime2, float lecture_hours2, float total_hours2)
             throws Exception{
@@ -177,7 +175,7 @@ public class Timeslot {
         /*LocalTime is immutable so doing this won't modify startTimeLec*/
         this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
         /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
-        this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(lecHours * 2),
+        this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(this.lecHours * 2),
                 this.lecDays);
 
         /* initialize the lab/activity members based off if the timeslot is for
@@ -226,7 +224,7 @@ public class Timeslot {
             this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
             /* create BitSet for the lab/lec */
             this.nonLecDays = this.lecDays;
-            this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lecHours * 2),
+            this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(this.lecHours * 2),
                     this.nonLecDays);
             this.labActHours = this.lecHours;
         }
@@ -238,8 +236,6 @@ public class Timeslot {
         if(!onlyLec){
             this.allTimesBitSet.or(this.labActBitSet);
         }
-
-        //TODO we could add some logic here to verify the timeslot. When others besides me make the timeslots
     }
 
 

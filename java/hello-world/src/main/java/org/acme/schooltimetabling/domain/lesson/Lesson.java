@@ -161,9 +161,9 @@ public class Lesson {
 
     /**
      * Built using minimum fields needed for excel file print out
-     * @param courseName
-     * @param modifiers
-     * @param teacher
+     * @param courseName name of the course
+     * @param modifiers course modifiers
+     * @param teacher teacher object for who was meant to teach this
      * @return
      */
     public static Lesson dummyRecord(String courseName, String modifiers, Teacher teacher){
@@ -284,6 +284,11 @@ public class Lesson {
         return copy;
     }
 
+    /**
+     * Combines the lecture and lab/act BitSets and masks them to have only the bits that are within the time interval
+     * we want to compress everything into
+     * @return a bitset containing lecture and lab/act bits in compressed time interval
+     */
     public BitSet maskInCmprs(){//if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
         BitSet copy = new BitSet();
@@ -293,6 +298,12 @@ public class Lesson {
         return copy;
     }
 
+
+    /**
+     * Combines the lecture and lab/act BitSets and masks them to have only the bits that are outside the time interval
+     * we want to compress everything into
+     * @return a bitset containing lecture and lab/act bits outside the compressed time interval
+     */
     public BitSet maskOutCmprs(){
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;

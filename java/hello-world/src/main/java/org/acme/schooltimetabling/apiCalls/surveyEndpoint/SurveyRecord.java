@@ -74,7 +74,7 @@ public class SurveyRecord {
      * @return Teacher representation of the survey. In other words, they have their preferences set.
      * @throws Exception
      */
-    public Teacher toTeacher() throws Exception{
+    public Teacher toTeacher(){
         if(teacher_rep == null) teacher_rep = createTeacherRep();
         return  teacher_rep;
     }

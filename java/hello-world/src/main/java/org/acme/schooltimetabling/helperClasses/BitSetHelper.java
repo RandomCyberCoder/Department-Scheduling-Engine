@@ -88,9 +88,9 @@ public class BitSetHelper {
 
 
     /**
-     *
-     * @param dayTime
-     * @return
+     * Give a bitset representation for the survey header column string
+     * @param dayTime header string; i.e. W_3_PM
+     * @return a BitSet representation of the parameter
      */
     public static BitSet srvHdrToBs(String dayTime){
         final int DAYS_IDX = 0;
@@ -110,6 +110,10 @@ public class BitSetHelper {
             else if(day == 'W') days.add(Days.WEDNESDAY);
             else if(day == 'R') days.add(Days.THURSDAY);
             else if(day == 'F') days.add(Days.FRIDAY);
+            else{
+                LOGGER.error("During generation, and invalid day was given. TERMINATING SO IT CAN BE FIXED");
+                System.exit(1);
+            }
         }
 
         return BitSetHelper.timeSlotBitSet(localTime, ONE_HOUR_BLOCK, days);
