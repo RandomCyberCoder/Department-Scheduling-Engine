@@ -68,7 +68,7 @@
 <!--            <entityTabuSize>1</entityTabuSize>-->
 <!--            &lt;!&ndash;using a ration for the values throws an error currently&ndash;&gt;-->
 <!--            <valueTabuSize>3</valueTabuSize>-->
-            <simulatedAnnealingStartingTemperature>3hard/10medium/25soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>2hard/5medium/5soft</simulatedAnnealingStartingTemperature>
         </acceptor>
         <forager>
             <acceptedCountLimit>10</acceptedCountLimit>
