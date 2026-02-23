@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.acme.schooltimetabling.apiCalls.ApiConstants;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SurveyCalls {
+    final static Logger LOGGER = LoggerFactory.getLogger(SurveyCalls.class);
 //    public static void main(String[] args) throws Exception{
 //        termSurveysToRecord();
 //    }
@@ -25,6 +28,10 @@ public class SurveyCalls {
                 "term", ScheduleConfig.getCurTerm()
         ));
         Response<List<Map<String, Object>>> response = callSync.execute();
+        if(!response.isSuccessful() && response.errorBody() != null){
+            LOGGER.error(String.format("Got an error when trying to read from the db; Error: %s; Additional info: %s",
+                    response.errorBody().string(), response.raw().message()));
+        }
         List<Map<String, Object>> surveyMaps = response.body() != null ? response.body() : Collections.emptyList();
 
         List<SurveyRecord> surveyRecords = new ArrayList<>();

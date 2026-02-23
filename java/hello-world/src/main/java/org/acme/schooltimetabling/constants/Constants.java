@@ -273,39 +273,45 @@ public class Constants {
             LOGGER.info("Attempting to read teacher records from DB");
             try{
                 List<TeacherRecord> teacherRecords = TeacherCalls.getAllTeachers();
-                for(TeacherRecord record: teacherRecords){
-                    instructorNameMapping.put(record.getNonCanon(), record.getCanon());
+                if(!teacherRecords.isEmpty()){
+                    for(TeacherRecord record: teacherRecords){
+                        instructorNameMapping.put(record.getNonCanon(), record.getCanon());
+                    }
+                    LOGGER.info("Succeeded generating teacher name mapping using DB");
+                    apiSuccess = true;
                 }
-                LOGGER.info("Succeeded generating teacher name mapping using DB");
-                return instructorNameMapping;
             } catch(Exception e){
                 LOGGER.error("Failed to create teacher mapping using DB. Falling back to file based creation");
                 instructorNameMapping = HashBiMap.create();
             }
         }
-        System.out.println("reading teacher name file");
-        final int NAME_CELL_POS = 1;
-        final int CANON_CELL_POS = 2;
-        boolean headerRead = false;
 
-        try(InputStream inputStream = getResourceAsStream(resourceFilePath);){
-            XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
-            XSSFSheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                if(!headerRead){
-                    headerRead = true;
-                    continue;
+        //Read from files  if reading from api does not work, or we don't want to use it
+        if(!apiSuccess){
+            LOGGER.info("reading teacher name file");
+            final int NAME_CELL_POS = 1;
+            final int CANON_CELL_POS = 2;
+            boolean headerRead = false;
+
+            try(InputStream inputStream = getResourceAsStream(resourceFilePath);){
+                XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+                XSSFSheet sheet = workbook.getSheetAt(0);
+                for (Row row : sheet) {
+                    if(!headerRead){
+                        headerRead = true;
+                        continue;
+                    }
+                    String nonCanonName = row.getCell(NAME_CELL_POS).getStringCellValue().strip();
+                    String canonName = row.getCell(CANON_CELL_POS).getStringCellValue().strip();
+                    instructorNameMapping.put(nonCanonName, canonName);
                 }
-                String nonCanonName = row.getCell(NAME_CELL_POS).getStringCellValue().strip();
-                String canonName = row.getCell(CANON_CELL_POS).getStringCellValue().strip();
-                instructorNameMapping.put(nonCanonName, canonName);
             }
-        }
-        catch (Exception e){
-            e.printStackTrace();
-            Constants.LOGGER.error("Critical issue reading file containing mapping of instructor names");
-            Constants.LOGGER.error(String.format("Error reading the file %s", resourceFilePath));
-            System.exit(ParseInput.PROGRAM_FAILURE);
+            catch (Exception e){
+                e.printStackTrace();
+                Constants.LOGGER.error("Critical issue reading file containing mapping of instructor names");
+                Constants.LOGGER.error(String.format("Error reading the file %s", resourceFilePath));
+                System.exit(ParseInput.PROGRAM_FAILURE);
+            }
         }
 
         return instructorNameMapping;
