@@ -7,6 +7,7 @@ import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import org.acme.schooltimetabling.apiCalls.auth.AuthTokens;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
@@ -32,7 +33,7 @@ public class TimetableApp {
         ArrayList<Lesson> lessonList;
         ArrayList<Timeslot> timeslotList;
         Timetable timetable;
-
+        AuthTokens.getAccessToken();
         ScheduleConfig.loadConfig(YAML_FILE_PATH);
         LOGGER.info(String.format("%s, %s, %s, %s\n", ScheduleConfig.getDepartment(),
                 ScheduleConfig.getCurTerm(), ScheduleConfig.getPrevTerm(),

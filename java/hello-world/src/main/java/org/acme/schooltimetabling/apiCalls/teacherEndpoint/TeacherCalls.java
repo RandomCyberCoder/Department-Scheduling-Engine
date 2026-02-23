@@ -22,7 +22,11 @@ public class TeacherCalls {
     }
 
     public static List<TeacherRecord> getAllTeachers() throws Exception{
-        TeacherService service = ApiConstants.retrofit.create(TeacherService.class);
+        if(ApiConstants.getRetrofitWithAuth() == null){
+            LOGGER.error("Couldn't get authentication tokens");
+            return Collections.emptyList();
+        }
+        TeacherService service = ApiConstants.getRetrofitWithAuth().create(TeacherService.class);
         Call<List<TeacherRecord>> callSync = service.getTeachers(ImmutableMap.of(
 //                example of query param
 //                "department", "csc"

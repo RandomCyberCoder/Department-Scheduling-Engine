@@ -23,7 +23,11 @@ public class SurveyCalls {
 
     public static List<SurveyRecord> termSurveysToRecord() throws Exception{
         ObjectMapper mapper = new ObjectMapper();
-        SurveyService service = ApiConstants.retrofit.create(SurveyService.class);
+        if(ApiConstants.getRetrofitWithAuth() == null){
+            LOGGER.error("Couldn't get authentication tokens");
+            return Collections.emptyList();
+        }
+        SurveyService service = ApiConstants.getRetrofitWithAuth().create(SurveyService.class);
         Call<List<Map<String, Object>>> callSync = service.getSurveys(ImmutableMap.of(
                 "term", ScheduleConfig.getCurTerm()
         ));
