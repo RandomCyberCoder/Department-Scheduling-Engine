@@ -153,6 +153,9 @@ public class ResultSaver {
         }
     }
 
+    /**
+     * Prints out to the list view Excel sheet
+     */
     private void listView(XSSFSheet listSheet, List<Lesson> validLessons, List<Lesson> invalidLessons){
         List<Lesson> lessonList = solToPrint.getLessons();
         final int COURSE_NAME_COL = 0;
@@ -229,14 +232,18 @@ public class ResultSaver {
 
     }
 
+    /**
+     * Helper function to print out every lesson
+     */
     private int listViewPrntHlpr(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx) {
         for(Lesson lesson: lessons){
             final Timeslot lsTs = lesson.getTimeslot();
             Timeslot.test_minSetUp("1");
             if(lesson.isHasLecture()){
                 Row row = listSheet.createRow(rowIdx++);
+                String roomName = lesson.isStudio() ? lesson.getRoom().getName() : "University Room";
                 Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLecSection(), lesson.getModifiers(),
-                        lesson.getTeacherObj().getName(), lesson.getRoom().getName(), lsTs.getLecDays().toString(),
+                        lesson.getTeacherObj().getName(), roomName, lsTs.getLecDays().toString(),
                         lsTs.getStartTimeLec().toString(), lsTs.getEndTimeLec().toString(), true};
                 lstViewRowHelper(row, vals);
             }
@@ -252,6 +259,9 @@ public class ResultSaver {
         return rowIdx;
     }
 
+    /**
+     * list view helper for printing out the skipped lessons
+     */
     private int listViewSkipHelper(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx){
         for(Lesson lesson: lessons){
             Row row = listSheet.createRow(rowIdx++);
@@ -282,6 +292,9 @@ public class ResultSaver {
         }
     }
 
+    /**
+     * driver function for printing out the teacher view Excel sheet
+     */
     private void teacherView(XSSFSheet teacherSheet, List<Lesson> validLessons){
         Map<Integer, Row> rowsBuilt = new HashMap<>();
         setupShtHdrs(teacherSheet, rowsBuilt, TEACHER_COL_MAP.keySet().iterator(), TEACHER_COL_MAP);
@@ -304,22 +317,28 @@ public class ResultSaver {
         }
     }
 
+    /**
+     * Driver function for printing out the room sheet
+     */
     private void roomView(XSSFSheet roomSheet, List<Lesson> validLessons){
         Map<Integer, Row> rowsBuilt = new HashMap<>();
         setupShtHdrs(roomSheet, rowsBuilt, ROOM_COL_MAP.keySet().iterator(), ROOM_COL_MAP);
-        String labStr = "";
         for(Lesson lesson: validLessons){
             Timeslot ts = lesson.getTimeslot();
-            labStr =  labToStr(lesson);
             if(lesson.getRoom().getName().equals(Constants.LEC_ONLY)) continue;
-            fillTimeCell(roomSheet, rowsBuilt, labStr, ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getNonLecDays(),
+            //if the course is a studio course also print out the lecture that is also occupying the room
+            if(lesson.isStudio()){
+                fillTimeCell(roomSheet, rowsBuilt, lecToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getLecDays(),
+                        ts.getStartTimeLec(), ts.getEndTimeLec());
+            }
+            fillTimeCell(roomSheet, rowsBuilt, labToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getNonLecDays(),
                             ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
 
         }
     }
 
     /**
-     *
+     * Helper function for printing out a lesson to a sheet view
      * @param sheet
      * @param rowMap map of row num to Row if created. This is important because if you remake the {@link Row} for row number
      *               that has had one built for already it will delete the old contents
@@ -447,7 +466,7 @@ public class ResultSaver {
         Timeslot ts = lesson.getTimeslot();
         return String.format("%s\n", lesson.getTeacherObj().getName()) +
                 String.format("%s\n", lesson.getCourseName()) +
-                String.format("%s\n", "University Room") +
+                String.format("%s\n", lesson.isStudio() ? lesson.getRoom().getName() : "University Room") +
                 String.format("Lecture Sec Num: %s\n", lesson.getLecSection()) +
                 String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLec().format(LOCALTIME_FORMATTER),
                         ts.getEndTimeLec().format(LOCALTIME_FORMATTER));
