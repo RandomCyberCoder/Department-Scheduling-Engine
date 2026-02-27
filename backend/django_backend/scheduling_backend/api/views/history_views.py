@@ -1,18 +1,14 @@
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
-from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework import status, mixins, generics
 from rest_framework.request import Request
-from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
-import pandas as pd
+from rest_framework.permissions import DjangoModelPermissions
 from ..models import History
 from ..serializer import HistorySerializer
-from .helper.file_reader import file_to_df
-from .helper.survey_helpers import find_teacher, find_survey
 
 @api_view(["GET"])
+@permission_classes("api.view_history")
 def historyRetByName(request: Request) -> Response:
     """A get request that take in a 'name' query param (must be present) and will search the History
     table for a teacher that has had that name in the past
@@ -48,3 +44,46 @@ def historyRetByName(request: Request) -> Response:
         "data": record_serialized.data 
     },
     status=status.HTTP_200_OK)
+
+
+# This isn't really used at all. Just used it for CBV practice before updating other FBV -> CBV
+# class HistorySpecific(APIView):
+#     """
+#     Retrieve or delete a history instance.
+#     """
+#     permission_classes = [DjangoModelPermissions]
+#     queryset = History.objects.all()
+
+#     def get_object(self, pk):
+#         try:
+#             return History.objects.get(pk=pk)
+#         except History.DoesNotExist:
+#             raise Http404
+
+#     def get(self, request, pk, format=None):
+#         h_obj = self.get_object(pk)
+#         serializer = HistorySerializer(h_obj)
+#         return Response(serializer.data)
+    
+#     def delete(self, request, pk, format=None):
+#         h_obj = self.get_object(pk)
+#         h_obj.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class HistorySpecific(
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView,
+):
+    permission_classes = [DjangoModelPermissions]
+    queryset = History.objects.all()
+    serializer_class = HistorySerializer
+    
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
