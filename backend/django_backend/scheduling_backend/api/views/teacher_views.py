@@ -14,35 +14,22 @@ from ..serializer import TeacherSerializer, FileUploadSerializer
 from .helper.history_helpers import history_save_name
 from .helper.file_reader import file_to_df
 from .helper.query_helpers import generate_Q_objects
+from .mixins.teacher_mixins import DepFacFilterMixin
 
-VALID_DEPARTMENTS = ["csc", "cpe"]
 
+class GetTeachers(generics.ListAPIView, DepFacFilterMixin):
+    """Endpoint for retreiving Teacher records and allows for filtering
 
-@api_view(['GET'])
-@permission_required("api.view_teacher", raise_exception=True)
-def get_teachers(request):
+    Returns:
+        All Teacher records in the DB or are filtered response if query parameters are given
     """
-    GET endpoint for retrienveing all teachers are teachers within just the CPE or CSC department 
-    
-    :param request: payload request
-    """
-    department = request.query_params.get("department")
-    # faculty = request.query_param.get("faculty")
-    # all_flag = request.query_param.get("all_flag")
-    if department is not None:
-        if department.lower() not in VALID_DEPARTMENTS:
-            return Response({"error": f"valid departments are: {VALID_DEPARTMENTS}"},
-                            status.HTTP_400_BAD_REQUEST)
-        
-        filter_obj = Q(csc="True") if department == "csc" else Q(cpe="True")
-        teachers = Teacher.objects.filter(filter_obj)
-    else: 
-        teachers = Teacher.objects.all()
+    permission_classes = [DjangoModelPermissions]
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer
 
-    serializer = TeacherSerializer(teachers, many=True)
-
-    return Response(serializer.data)
-
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return self.filter_by_dep_fac(queryset)
 
 
 

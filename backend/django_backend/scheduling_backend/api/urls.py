@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from .views.teacher_views import (
-    get_teachers, 
+    GetTeachers, 
     create_teacher,
     teachers_file_upload,
     teacher_bulk_update,
@@ -28,7 +28,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     #teacher endpoints
-    path('teachers/', get_teachers, name='get_user'),
+    path('teachers/', GetTeachers.as_view(), name='get_user'),
     path('teachers/create/', create_teacher, name='create_teacher'),
     path('teachers/<int:pk>/', TeacherSpecific.as_view(), name='update_teacher'),
     path('teachers/file/', teachers_file_upload, name='users_file_upload'),
