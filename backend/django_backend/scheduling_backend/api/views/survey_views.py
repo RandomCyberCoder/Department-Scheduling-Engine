@@ -1,12 +1,13 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
-from rest_framework import status
+from rest_framework import status, mixins, generics
 from rest_framework.exceptions import APIException
 from rest_framework.request import Request
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
-import pandas as pd
+from django.contrib.auth.decorators import permission_required 
 from ..models import Survey
 from ..serializer import TeacherSerializer, SurveyFileSerializer, SurveySerializer
 from .helper.file_reader import file_to_df
@@ -14,6 +15,7 @@ from .helper.survey_helpers import find_teacher, find_survey
 
 @api_view(["GET"])
 @parser_classes([JSONParser])
+@permission_required("api.view_survey", raise_exception=True)
 def survey_base_endpoint(request: Request) -> Response:
     """Retrives suvery instances based on given query parameters. If no query
     parameters are in the url. Than all survey instance are retrived.
@@ -70,41 +72,29 @@ def survey_base_endpoint(request: Request) -> Response:
         data["teacher"] = data["teacher"]
     return Response(ret_data, status.HTTP_200_OK)
 
-
-
-
-@api_view(["DELETE"])
-def delete_survey_instance(request, pk) -> Response:
+    
+class SurveySpecific(generics.GenericAPIView,
+                     mixins.DestroyModelMixin):
     """Attempts to delete a survey with the given primary key in the url parameter
-
-    Args:
-        request (_type_): payload; ignored in function
-        pk (_type_): primary key of survey instance trying to be deleted
-
-    Returns:
-        Response: returns a json object with msg and boolean indicating wether
-        the instance was deleted
     """
-    try:
-        del_survey = Survey.objects.get(id=pk)
-        del_survey.delete()
-        return Response({"msg": f"Deleted survey with primary key '{pk}'",
-                         "deleted": True},
-                            status.HTTP_200_OK)
-    except ObjectDoesNotExist as e:
-        return Response({"msg": f"{e}",
-                         "deleted": False}, status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({"msg": "Probably a server error",
-                         "dev_msg": f"{e}",
-                         "deleted": False},
-                         status.HTTP_500_INTERNAL_SERVER_ERROR)
+    queryset = Survey.objects.all()
+    serializer_class = SurveySerializer
+    permission_classes = [DjangoModelPermissions]
+
+    def delete(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_202_NO_CONTENT)
 
 
 
 
 @api_view(["POST"])
 @parser_classes([FormParser, MultiPartParser])
+@permission_required("api.add_survey", raise_exception=True)
 def survey_file_upload(request: Request) -> Response:
     """Allows for a file upload (csv, tsv, or excel) and will create a survey instance for survey response in the file. If a 
     survey instance already exists for the a term and teacher name combo, the previous instance will be replaced with the new one. If

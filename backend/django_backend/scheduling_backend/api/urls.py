@@ -14,7 +14,7 @@ from .views.teacher_views import (
 from .views.survey_views import (
     survey_file_upload,
     survey_base_endpoint,
-    delete_survey_instance
+    SurveySpecific
 )
 from .views.history_views import(
     historyRetByName,
@@ -37,7 +37,7 @@ urlpatterns = [
     # survey endpoints
     path('surveys/file/', survey_file_upload, name="survey_file_upload"),
     path('surveys/', survey_base_endpoint, name="base_survey_endpoint"),
-    path('surveys/remove/<int:pk>/', delete_survey_instance, name="del_surv_inst"),
+    path('surveys/<int:pk>/', SurveySpecific.as_view(), name="del_surv_inst"),
 
     # history endpoints
     path('history/', historyRetByName, name="retrieve_by_name"),
