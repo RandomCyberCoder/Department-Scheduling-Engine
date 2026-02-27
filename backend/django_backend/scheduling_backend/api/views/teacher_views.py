@@ -1,10 +1,12 @@
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
-from rest_framework import status
+from rest_framework import status, mixins, generics
 from rest_framework.exceptions import APIException
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, DjangoModelPermissions
 from django.db.models import Q
 from django.db import transaction
+from django.contrib.auth.decorators import permission_required 
 from typing import Tuple
 import pandas as pd
 from ..models import Teacher
@@ -12,13 +14,12 @@ from ..serializer import TeacherSerializer, FileUploadSerializer
 from .helper.history_helpers import history_save_name
 from .helper.file_reader import file_to_df
 from .helper.query_helpers import generate_Q_objects
-from django.core import serializers
 
 VALID_DEPARTMENTS = ["csc", "cpe"]
 
 
-
 @api_view(['GET'])
+@permission_required("api.view_teacher", raise_exception=True)
 def get_teachers(request):
     """
     GET endpoint for retrienveing all teachers are teachers within just the CPE or CSC department 
@@ -46,6 +47,7 @@ def get_teachers(request):
 
 
 @api_view(['POST'])
+@permission_required("api.add_teacher", raise_exception=True)
 def create_teacher(request):
     """
     Creates a Teacher object(s) in the data base. Will return 400 if payload has a duplicate within or 
@@ -83,6 +85,7 @@ def create_teacher(request):
 #TODO add the possibility for a facutly field as well. it will be easier to use I think if so
 @api_view(['POST'])
 @parser_classes([FormParser, MultiPartParser])
+@permission_required("api.add_teacher", raise_exception=True)
 def teachers_file_upload(request):
     """Will attempt to create an object if one does not exist. If one exists it will be updated.
     This will only consider the teacher entity fields 'canon', 'non_canon', and 'email'
@@ -192,149 +195,32 @@ def teachers_file_upload(request):
     return Response(serializer.errors, status.HTTP_400_BAD_REQUEST) 
 
 
+class TeacherSpecific(mixins.RetrieveModelMixin, 
+                      mixins.DestroyModelMixin, 
+                      generics.GenericAPIView):
+    permission_classes = [DjangoModelPermissions]
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer
 
-#NOTE I only support the GET and DELETE methods, the other two haven't been devoloped enough or have been replaced by other endpoints
-@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@parser_classes([JSONParser])
-def update_teacher(request, pk):
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
-    def update_teacher_helper(serializer: TeacherSerializer, successStatusCode: int) -> Response:
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": "teacher obj has been updated"},
-                            successStatusCode)
-        return Response({"error": f"{serializer.errors}",
-                        "msg" :"Couldn't update the object"},
-                        status.HTTP_406_NOT_ACCEPTABLE)
-
-    #check if a teacher entry with the given primary key exists
-    try:
-        teacher = Teacher.objects.get(pk=pk)
-    except Exception as e:
-        return Response({"error": f"{e}",
-                         "msg": f"Couldn't find teacher object with primary key {pk}"},
-                        status.HTTP_404_NOT_FOUND)
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
     
-    if request.method == 'GET':
-        serializer = TeacherSerializer(teacher)
-        return Response({"success": "Teacher object retrieved",
-                         "data": serializer.data},
-                         status.HTTP_200_OK)
-    elif request.method == 'PUT':
-        return({"msg": "METHOD not implemented"}, status.HTTP_501_NOT_IMPLEMENTED)
-        #TODO Make sure this is idempotent
-        #should this take all the fields
-        #it also seems that a put request should add 
-        #note a put request should also be able to create
-        #for fields that don't exists they should just default
-        serializer = TeacherSerializer(teacher, data=request.data)
-        return update_teacher_helper(serializer, status.HTTP_200_OK)
-    elif request.method == 'PATCH':
-        return({"msg": "METHOD not implemented"}, status.HTTP_501_NOT_IMPLEMENTED)
-        #TODO if a either version of a teacher's name is changed then store it in the history table
-        serializer = TeacherSerializer(teacher, data=request.data, partial=True)
-        return update_teacher_helper(serializer, status.HTTP_200_OK)
-    elif request.method == 'DELETE':
-        teacher.delete()
-        return Response({"success": f"teacher object with pk '{pk}' has been deleted",
-                         "object": serializers.serialize("json", [teacher])},
-                        status=status.HTTP_204_NO_CONTENT)
-    else:
-        return Response({"error": "Unsupported HTTP method for endpoint"},
-                        status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-
-
-'''
-Endpoint function for uploading a file to update teachers
-It will scan for what teachers are faculty members. Try to find their teacher object
-int the DB and update them if they could be find.
-
-TODO if we set up a history of names for a person we could also pull from that which could help
-'''
-@api_view(["PATCH"])
-@parser_classes([FormParser, MultiPartParser])
-def set_faculty(request):
-    MINIMUM_EXPECTED_COLUMNS = ["name", "title", "email"]
-    
-
-    def invalid_df(df: pd.DataFrame) -> bool:
-        columns = df.columns.to_list()
-        for column in MINIMUM_EXPECTED_COLUMNS:
-            if column not in columns:
-                return True
-        
-        return False
-        
-
-
-    VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
-    serializer = FileUploadSerializer(data=request.data)
-
-    if not serializer.is_valid():
-            Response({"error": f"{serializer.errors}",
-                    "msg": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
-
-    if request.method != 'PATCH':
-        return Response({"error": "Unsupported HTTP method for endpoint"}, 
-                status.HTTP_405_METHOD_NOT_ALLOWED)
-    
-
-    FILE = serializer.validated_data["file"]   
-    try:
-        faculty_df = file_to_df(FILE, VALID_EXTENSIONS)
-    except APIException as e:
-        return Response({"error": f"{e}"}, 
-            status=status.HTTP_406_BAD_REQUEST)
-    except Exception as e:
-        return Response({"error": f"problem reading the file {FILE.name}",
-                            "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    updates = []
-    updates_teacher = []
-    failed = []
-
-
-    if invalid_df(faculty_df):
-        return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
-                            status.HTTP_406_NOT_ACCEPTABLE) 
-
-    for index, row in faculty_df.iterrows():
-        try:
-            if "professor" in row["title"].lower():
-                non_canon_name = row["name"]
-                email = row["email"]
-                teacher = Teacher.objects.get(Q(non_canon=non_canon_name) | Q(email=email))
-                updates.append(teacher.non_canon)
-                updates_teacher.append(teacher)
-        
-        except Exception as _:
-            failed.append(non_canon_name) 
-
-    update_faculty_dict = {"faculty": "True"}
-    for teacher in updates_teacher:                
-        serializer = TeacherSerializer(teacher, data=update_faculty_dict, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            # I don't think we should ever be able to get here but leaving it here just in case
-            print(f"log we failed to update, but this shouldn't be possible {teacher.non_canon}")
-            failed.append(teacher.non_canon)
-            updates.remove(teacher.non_canon)
-
-    return Response({"msg": "updated teachers",
-            "updated": updates,
-            "failed": failed
-            },
-            status.HTTP_202_ACCEPTED)
-
-
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # serialized_data = self.get_serializer(instance).data
+        self.perform_destroy(instance)
+        return Response({
+            "message": f"teacher object with pk '{self.kwargs['pk']}' has been deleted"
+        }, status=status.HTTP_202_ACCEPTED)
 
 
 
 @api_view(["PATCH"])
 @parser_classes([JSONParser])
+@permission_required("api.change_teacher", raise_exception=True)
 def teacher_bulk_update(request):
     """Bulk updates teachers. Allows a teacher to be identified by email, canon_name, non_canon_name or their id (primary key).
     If multiple teachers found for a lookup then they are skipped. Once the teacher is identified, their fields can be updated.
@@ -423,3 +309,88 @@ def teacher_bulk_update(request):
                 "failed": failed},
                 status.HTTP_200_OK)
         
+
+#deprecating this endpoint in favor of the more flexible bulk update endpoint
+# '''
+# Endpoint function for uploading a file to update teachers
+# It will scan for what teachers are faculty members. Try to find their teacher object
+# int the DB and update them if they could be found.
+
+# TODO if we set up a history of names for a person we could also pull from that which could help
+# '''
+# @api_view(["PATCH"])
+# @parser_classes([FormParser, MultiPartParser])
+# @permission_required("api.change_teacher", raise_exception=True)
+# def set_faculty(request):
+#     MINIMUM_EXPECTED_COLUMNS = ["name", "title", "email"]
+    
+
+#     def invalid_df(df: pd.DataFrame) -> bool:
+#         columns = df.columns.to_list()
+#         for column in MINIMUM_EXPECTED_COLUMNS:
+#             if column not in columns:
+#                 return True
+        
+#         return False
+        
+
+
+#     VALID_EXTENSIONS = ['tsv', 'csv', 'xlsx', 'xlsm', 'xlsb']
+#     serializer = FileUploadSerializer(data=request.data)
+
+#     if not serializer.is_valid():
+#             Response({"error": f"{serializer.errors}",
+#                     "msg": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
+
+#     if request.method != 'PATCH':
+#         return Response({"error": "Unsupported HTTP method for endpoint"}, 
+#                 status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+
+#     FILE = serializer.validated_data["file"]   
+#     try:
+#         faculty_df = file_to_df(FILE, VALID_EXTENSIONS)
+#     except APIException as e:
+#         return Response({"error": f"{e}"}, 
+#             status=status.HTTP_406_BAD_REQUEST)
+#     except Exception as e:
+#         return Response({"error": f"problem reading the file {FILE.name}",
+#                             "msg": f"{e}"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#     updates = []
+#     updates_teacher = []
+#     failed = []
+
+
+#     if invalid_df(faculty_df):
+#         return Response({"error": f"header of file should include: {MINIMUM_EXPECTED_COLUMNS}"},
+#                             status.HTTP_406_NOT_ACCEPTABLE) 
+
+#     for index, row in faculty_df.iterrows():
+#         try:
+#             if "professor" in row["title"].lower():
+#                 non_canon_name = row["name"]
+#                 email = row["email"]
+#                 teacher = Teacher.objects.get(Q(non_canon=non_canon_name) | Q(email=email))
+#                 updates.append(teacher.non_canon)
+#                 updates_teacher.append(teacher)
+        
+#         except Exception as _:
+#             failed.append(non_canon_name) 
+
+#     update_faculty_dict = {"faculty": "True"}
+#     for teacher in updates_teacher:                
+#         serializer = TeacherSerializer(teacher, data=update_faculty_dict, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#         else:
+#             # I don't think we should ever be able to get here but leaving it here just in case
+#             print(f"log we failed to update, but this shouldn't be possible {teacher.non_canon}")
+#             failed.append(teacher.non_canon)
+#             updates.remove(teacher.non_canon)
+
+#     return Response({"msg": "updated teachers",
+#             "updated": updates,
+#             "failed": failed
+#             },
+#             status.HTTP_202_ACCEPTED)

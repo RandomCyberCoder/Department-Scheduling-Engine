@@ -8,8 +8,6 @@ from .views.teacher_views import (
     get_teachers, 
     create_teacher,
     teachers_file_upload,
-    update_teacher,
-    set_faculty,
     teacher_bulk_update,
     TeacherSpecific
 )
@@ -34,7 +32,6 @@ urlpatterns = [
     path('teachers/create/', create_teacher, name='create_teacher'),
     path('teachers/<int:pk>/', TeacherSpecific.as_view(), name='update_teacher'),
     path('teachers/file/', teachers_file_upload, name='users_file_upload'),
-    path('teachers/faculty/file/', set_faculty, name='set_faculty'),
     path('teachers/update/bulk/', teacher_bulk_update, name="teacher_bulk_update"),
     
     # survey endpoints
