@@ -17,7 +17,8 @@ public class Timeslot {
     public LocalTime startTimeLec;
     public LocalTime endTimeLec;
     public BitSet lectureBitSet;
-    public boolean onlyLec;
+    public boolean hasLec;
+    public boolean hasLabAct;
     public LocalTime startTimeLabAct;
     public LocalTime endTimeLabAct;
     public BitSet labActBitSet;
@@ -35,9 +36,6 @@ public class Timeslot {
      * currently used only for lab/act
      */
     private float labActHours;
-    public float totalHours;
-    public float totalHours2;
-    public boolean secondSlot;
     private static final float FLOAT_TIME_DELTA = 0.01f;
     private static final int MINUTES_PER_HOUR = 60;
 
@@ -110,7 +108,7 @@ public class Timeslot {
     private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labActDays){
         this.id = Integer.toString(ID);
         this.ID = ID;
-        this.onlyLec = labActBitSet.cardinality() == 0;
+        this.hasLec = labActBitSet.cardinality() == 0;
         this.lectureBitSet = (BitSet) lecBitSet.clone();
         this.labActBitSet = (BitSet) labActBitSet.clone();
         this.lecDays = lecDays.clone();
@@ -121,7 +119,6 @@ public class Timeslot {
         this.allTimesBitSet = allBitSet;
         this.lecHours = lecBitSet.cardinality() /(float)lecDays.size() / 2f;
         this.labActHours = labActBitSet.cardinality() /(float)labActDays.size() /2f;
-        this.totalHours = this.labActHours + this.lecHours;
     }
 
     /**
@@ -134,144 +131,124 @@ public class Timeslot {
 
 
     public Timeslot(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
-                    String days2, String startTime2, String endTime2, float lecture_hours2, float total_hours2)
+                    String days2, String startTime2, String endTime2, float lab_hours)
             throws Exception{
 
         final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("h:mma");
-
-        /*this variable will be used to see if the entry has two timeslots linked,
-        * used later for calculating the complete bitset representation of the timeslot*/
-        this.secondSlot = false;
+        //by default a timeslot has neither
+        this.hasLec = false;
+        this.hasLabAct = false;
+        this.lectureBitSet = new BitSet();
+        this.labActBitSet = new BitSet();
 
         this.ID = ID;
         this.id = String.valueOf(ID);
         /*Mark what days the timeslot occupies*/
-        lecDays = EnumSet.noneOf(Days.class);
         nonLecDays = EnumSet.noneOf(Days.class);
 
-        if(days.contains("M")){
-            lecDays.add(Days.MONDAY);
-        }
-        if(days.contains("T")){
-            lecDays.add(Days.TUESDAY);
-        }
-        if(days.contains("W")){
-            lecDays.add(Days.WEDNESDAY);
-        }
-        if(days.contains("R")){
-            lecDays.add(Days.THURSDAY);
-        }
-        if(days.contains("F")){
-            lecDays.add(Days.FRIDAY);
-        }
-        /*determine if the timeslot will accommodate only lectures*/
-        this.lecHours = lecHours;
-        this.totalHours = totalHours;
-        /* We do the following comparison instead of lec_hours == total_hours because of floating point errors */
-        this.onlyLec = Math.abs(lecHours - totalHours) < FLOAT_TIME_DELTA;
-
-        /*check start and end time for the lab and possibly for the lab/activity */
-        this.startTimeLec = LocalTime.parse(startTime.trim(), FORMATTER);
-        /*LocalTime is immutable so doing this won't modify startTimeLec*/
-        this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
-        /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
-        this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(this.lecHours * 2),
-                this.lecDays);
-
-        /* initialize the lab/activity members based off if the timeslot is for
-         * lectures only */
-        if(this.onlyLec){
-            /*if the first time slot was only a lecture time slot we now want to check if the adjacent time slot has
-            * a lab time.*/
-            if(days2.isBlank()){
-                this.labActBitSet = new BitSet();
-                this.startTimeLabAct = this.endTimeLabAct = this.endTimeLec;
+        //check the first subslot
+        if(!days.isBlank()){
+            this.hasLec = true;
+            lecDays = EnumSet.noneOf(Days.class);
+            if(days.contains("M")){
+                lecDays.add(Days.MONDAY);
             }
-            else{
-                this.secondSlot = true;
-                this.onlyLec = false;
-                this.totalHours2 = total_hours2;
-                if(days2.contains("M")){
-                    this.nonLecDays.add(Days.MONDAY);
-                }
-                if(days2.contains("T")){
-                    this.nonLecDays.add(Days.TUESDAY);
-                }
-                if(days2.contains("W")){
-                    this.nonLecDays.add(Days.WEDNESDAY);
-                }
-                if(days2.contains("R")){
-                    this.nonLecDays.add(Days.THURSDAY);
-                }
-                if(days2.contains("F")){
-                    this.nonLecDays.add(Days.FRIDAY);
-                }
+            if(days.contains("T")){
+                lecDays.add(Days.TUESDAY);
+            }
+            if(days.contains("W")){
+                lecDays.add(Days.WEDNESDAY);
+            }
+            if(days.contains("R")){
+                lecDays.add(Days.THURSDAY);
+            }
+            if(days.contains("F")){
+                lecDays.add(Days.FRIDAY);
+            }
+            /*determine if the timeslot will accommodate only lectures*/
+            this.lecHours = lecHours;
 
-                /*Hours per day for second timeslot are assumed to be dedicated towards labs/acts */
-                this.labActHours = lecture_hours2;
-                this.startTimeLabAct = LocalTime.parse(startTime2.trim(), FORMATTER);
-                this.endTimeLabAct = LocalTime.parse(endTime2.trim(), FORMATTER);
-                this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(total_hours2 * 2),
+            /*check start and end time for the lab and possibly for the lab/activity */
+            this.startTimeLec = LocalTime.parse(startTime.trim(), FORMATTER);
+            /*LocalTime is immutable so doing this won't modify startTimeLec*/
+            this.endTimeLec = startTimeLec.plusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
+            /* initialize the lecture BitSet, multiply lecHours by 2 because we need then number of 30 minute blocks */
+            this.lectureBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(this.lecHours * 2),
+                    this.lecDays);
+
+            //if the total hours is greater than the lecHours then there is extra time for lab in this subslot
+            /* We do the following comparison instead of lec_hours == total_hours because of floating point errors */
+            if(Math.abs(lecHours - totalHours) > FLOAT_TIME_DELTA){
+                this.hasLabAct = true;
+                /* end time of the timeslot is when the lab will end */
+                this.endTimeLabAct = LocalTime.parse(endTime.trim(), FORMATTER);
+                /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.
+                 * This doesn't necessarily start right after the time the lecture ends. We could have a gap (i.e. like during
+                 * Tuesday and Thursday)*/
+                this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
+                /* create BitSet for the lab/lec */
+                this.nonLecDays = this.lecDays;
+                this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(this.lecHours * 2),
                         this.nonLecDays);
+                this.labActHours = this.lecHours;
             }
         }
-        else{
-            /* end time of the timeslot is when the lab will end */
-            this.endTimeLabAct = LocalTime.parse(endTime.trim(), FORMATTER);
-            /* When computing the start time of the lab/activity we are assuming that the lab/activity takes equally long.
-            * This doesn't necessarily start right after the time the lecture ends. We could have a gap (i.e. like during
-            * Tuesday and Thursday)*/
-            this.startTimeLabAct = this.endTimeLabAct.minusMinutes(Math.round(MINUTES_PER_HOUR * this.lecHours));
-            /* create BitSet for the lab/lec */
-            this.nonLecDays = this.lecDays;
-            this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(this.lecHours * 2),
+
+        if(!days2.isBlank()){
+            //sanity check; avoids accidentally having two lab/act timeslots
+            if(this.hasLabAct) throw new RuntimeException("When creating a timeslot an error occurred. Timeslot had a " +
+                    "lab activity set in the first and second sub slot.");
+            this.hasLabAct = true;
+            if(days2.contains("M")){
+                this.nonLecDays.add(Days.MONDAY);
+            }
+            if(days2.contains("T")){
+                this.nonLecDays.add(Days.TUESDAY);
+            }
+            if(days2.contains("W")){
+                this.nonLecDays.add(Days.WEDNESDAY);
+            }
+            if(days2.contains("R")){
+                this.nonLecDays.add(Days.THURSDAY);
+            }
+            if(days2.contains("F")){
+                this.nonLecDays.add(Days.FRIDAY);
+            }
+
+            /*Hours per day for second timeslot are assumed to be dedicated towards labs/acts */
+            this.labActHours = lab_hours;
+            this.startTimeLabAct = LocalTime.parse(startTime2.trim(), FORMATTER);
+            this.endTimeLabAct = LocalTime.parse(endTime2.trim(), FORMATTER);
+            this.labActBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLabAct, Math.round(lab_hours * 2),
                     this.nonLecDays);
-            this.labActHours = this.lecHours;
         }
 
-        /*we assume that the whole block will be occupied by whoever is assigned it*/
-        this.allTimesBitSet = BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
-                this.lecDays);
-        /*if there was a second timeslot we have to join it*/
-        if(!onlyLec){
+        //sanity check if user overlapped the lec and lab/act sub timeslots
+        if(this.labActBitSet.intersects(this.lectureBitSet)) throw new RuntimeException("Error creating timeslot. " +
+            "The lecture and lab/act times overlap");
+
+        this.allTimesBitSet = new BitSet();
+        if(!days.isBlank()){
+            /*we assume that the whole block will be occupied by whoever is assigned it*/
+            this.allTimesBitSet.or(BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
+                    this.lecDays));
+        }
+        if(!days2.isBlank()){
             this.allTimesBitSet.or(this.labActBitSet);
         }
     }
 
+//    private boolean validateTs(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
+//                               String days2, String startTime2, String endTime2, float lab_hours){
+//        return validateTs(ID, days, startTime, endTime, lecHours, totalHours,  days2, startTime2, endTime2, lab_hours,
+//                false);
+//    }
+//    private boolean validateTs(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
+//                               String days2, String startTime2, String endTime2, float lab_hours, boolean raise_exception){
+//
+//
+//    }
 
-    @Override
-    public String toString() {
-        String lecStr = "lecture: " + lecDays.toString() + " " + startTimeLec.toString();
-        String labActStr = this.onlyLec ? "" :
-                (" ---- " + "lab: " + nonLecDays.toString() + startTimeLabAct.toString());
-        return lecStr + labActStr;
-    }
-
-    public String toStringLec(){
-        return getString(lecDays, startTimeLec, endTimeLec);
-    }
-
-    public String toStringLabAct(){
-        if(onlyLec) return "";
-
-        return getString(nonLecDays, startTimeLabAct, endTimeLabAct);
-    }
-
-    private String getString(EnumSet<Days> nonLecDays, LocalTime startTime, LocalTime endTime) {
-        StringBuilder buildLecRep = new StringBuilder();
-
-        if(nonLecDays.contains(Days.MONDAY)) buildLecRep.append('M');
-        if(nonLecDays.contains(Days.TUESDAY)) buildLecRep.append('T');
-        if(nonLecDays.contains(Days.WEDNESDAY)) buildLecRep.append('W');
-        if(nonLecDays.contains(Days.THURSDAY)) buildLecRep.append('R');
-        if(nonLecDays.contains(Days.FRIDAY)) buildLecRep.append('F');
-
-        buildLecRep.append(" ");
-        buildLecRep.append(startTime.toString());
-        buildLecRep.append(" - ").append(endTime.toString());
-
-        return buildLecRep.toString();
-    }
 
     /**
      * <p>Check that is timeslot is continuous; i.e. timeslot is for one day and the time
@@ -299,6 +276,40 @@ public class Timeslot {
 
     }
 
+    @Override
+    public String toString() {
+        String lecStr = "lecture: " + lecDays.toString() + " " + startTimeLec.toString();
+        String labActStr = this.hasLec ? "" :
+                (" ---- " + "lab: " + nonLecDays.toString() + startTimeLabAct.toString());
+        return lecStr + labActStr;
+    }
+
+    public String toStringLec(){
+        return getString(lecDays, startTimeLec, endTimeLec);
+    }
+
+    public String toStringLabAct(){
+        if(hasLec) return "";
+
+        return getString(nonLecDays, startTimeLabAct, endTimeLabAct);
+    }
+
+    private String getString(EnumSet<Days> nonLecDays, LocalTime startTime, LocalTime endTime) {
+        StringBuilder buildLecRep = new StringBuilder();
+
+        if(nonLecDays.contains(Days.MONDAY)) buildLecRep.append('M');
+        if(nonLecDays.contains(Days.TUESDAY)) buildLecRep.append('T');
+        if(nonLecDays.contains(Days.WEDNESDAY)) buildLecRep.append('W');
+        if(nonLecDays.contains(Days.THURSDAY)) buildLecRep.append('R');
+        if(nonLecDays.contains(Days.FRIDAY)) buildLecRep.append('F');
+
+        buildLecRep.append(" ");
+        buildLecRep.append(startTime.toString());
+        buildLecRep.append(" - ").append(endTime.toString());
+
+        return buildLecRep.toString();
+    }
+
     // ************************************************************************
     // Getters and setters
     // ************************************************************************
@@ -323,8 +334,8 @@ public class Timeslot {
         return lectureBitSet;
     }
 
-    public boolean isOnlyLec() {
-        return onlyLec;
+    public boolean isHasLec() {
+        return hasLec;
     }
 
     public LocalTime getStartTimeLabAct() {
@@ -349,18 +360,6 @@ public class Timeslot {
 
     public float getLabActHours(){
         return labActHours;
-    }
-
-    public float getTotalHours() {
-        return totalHours;
-    }
-
-    public float getTotalHours2() {
-        return totalHours2;
-    }
-
-    public boolean isSecondSlot() {
-        return secondSlot;
     }
 
     public EnumSet<Days> getLecDays() {

@@ -265,7 +265,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     float tsLecHrs = ts.getLecHours();
                     tsLecHrs *= lDays.size();
-                    float tsLabActHrs = ts.isOnlyLec() ? 0 : ts.getLabActHours();
+                    float tsLabActHrs = ts.isHasLec() ? 0 : ts.getLabActHours();
                     tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot

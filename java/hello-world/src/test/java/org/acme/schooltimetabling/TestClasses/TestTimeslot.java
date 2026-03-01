@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestTimeslot {
-    final int LIST_LEN = 4;
+    final int LIST_LEN = 6;
     static ArrayList<Timeslot> timeslotList;
     private static final int MONDAY_OFFSET = 0;
     private static final int TUESDAY_OFFSET = 30;
@@ -39,20 +39,20 @@ public class TestTimeslot {
     @DisplayName("Checking for amount of labs")
     void checkLabs(){
         AtomicInteger numOfLabs = new AtomicInteger();
-        timeslotList.forEach(timeslot -> {if(!timeslot.onlyLec) {
+        timeslotList.forEach(timeslot -> {if(timeslot.hasLabAct) {
             numOfLabs.getAndIncrement();
         }});
-        assertEquals(numOfLabs.get(), 3);
+        assertEquals(5, numOfLabs.get());
     }
 
     @Test
     @DisplayName("Checking # of only lectures")
     void checkLectures(){
         AtomicInteger numOfLabs = new AtomicInteger();
-        timeslotList.forEach(timeslot -> {if(timeslot.onlyLec) {
+        timeslotList.forEach(timeslot -> {if(timeslot.hasLec && !timeslot.hasLabAct) {
             numOfLabs.getAndIncrement();
         }});
-        assertEquals(numOfLabs.get(), 1);
+        assertEquals(1, numOfLabs.get());
     }
 
     @Test
@@ -60,12 +60,11 @@ public class TestTimeslot {
     void checkTimeslot1(){
         Timeslot timeslot = timeslotList.get(0);
         assertEquals(timeslot.lecHours, 1);
-        assertEquals(timeslot.totalHours, 2);
         assertEquals(timeslot.labActBitSet.cardinality(), 6);
         assertEquals(timeslot.lectureBitSet.cardinality(), 6);
         assertEquals(timeslot.allTimesBitSet.cardinality(), 12);
-        assertFalse(timeslot.onlyLec);
-        assertFalse(timeslot.secondSlot);
+        assertTrue(timeslot.hasLec);
+        assertTrue(timeslot.hasLabAct);
 
 
     }
@@ -75,13 +74,11 @@ public class TestTimeslot {
     void checkTimeslot2(){
         Timeslot timeslot = timeslotList.get(1);
         assertEquals(timeslot.lecHours, 1);
-        assertEquals(timeslot.totalHours, 1);
-        assertEquals(timeslot.totalHours2, 2);
         assertEquals(timeslot.lectureBitSet.cardinality(), 4);
         assertEquals(timeslot.labActBitSet.cardinality(), 4);
         assertEquals(timeslot.allTimesBitSet.cardinality(), 8);
-        assertFalse(timeslot.onlyLec);
-        assertTrue(timeslot.secondSlot);
+        assertTrue(timeslot.hasLec);
+        assertTrue(timeslot.hasLabAct);
 
     }
 
@@ -90,14 +87,11 @@ public class TestTimeslot {
     void checkTimeslot3(){
         Timeslot timeslot = timeslotList.get(2);
         assertEquals(timeslot.lecHours, 1);
-        assertEquals(timeslot.totalHours, 1);
-        assertEquals(timeslot.totalHours2, 1.5);
         assertEquals(timeslot.lectureBitSet.cardinality(), 4);
         assertEquals(timeslot.labActBitSet.cardinality(), 9);
         assertEquals(timeslot.allTimesBitSet.cardinality(), 13);
-        assertFalse(timeslot.onlyLec);
-        assertTrue(timeslot.secondSlot);
-
+        assertTrue(timeslot.hasLec);
+        assertTrue(timeslot.hasLabAct);
     }
 
     @Test
@@ -105,12 +99,37 @@ public class TestTimeslot {
     void checkTimeslot4(){
         Timeslot timeslot = timeslotList.get(3);
         assertEquals(timeslot.lecHours, 1);
-        assertEquals(timeslot.totalHours, 1);
         assertEquals(timeslot.lectureBitSet.cardinality(), 8);
         assertEquals(timeslot.labActBitSet.cardinality(), 0);
         assertEquals(timeslot.allTimesBitSet.cardinality(), 8);
-        assertTrue(timeslot.onlyLec);
-        assertFalse(timeslot.secondSlot);
+        assertTrue(timeslot.hasLec);
+        assertFalse(timeslot.hasLabAct);
+
+    }
+
+    @Test
+    @DisplayName("Timeslot 5")
+    void checkTimeslot5(){
+        Timeslot timeslot = timeslotList.get(4);
+        assertEquals(timeslot.lecHours, 1.5);
+        assertEquals(timeslot.lectureBitSet.cardinality(), 6);
+        assertEquals(timeslot.labActBitSet.cardinality(), 6);
+        assertEquals(timeslot.allTimesBitSet.cardinality(), 16);
+        assertTrue(timeslot.hasLec);
+        assertTrue(timeslot.hasLabAct);
+
+    }
+
+    @Test
+    @DisplayName("Timeslot 6")
+    void checkTimeslot6(){
+        Timeslot timeslot = timeslotList.get(5);
+        assertEquals(timeslot.lecHours, 0);
+        assertEquals(timeslot.lectureBitSet.cardinality(), 0);
+        assertEquals(timeslot.labActBitSet.cardinality(), 6);
+        assertEquals(timeslot.allTimesBitSet.cardinality(), 6);
+        assertFalse(timeslot.hasLec);
+        assertTrue(timeslot.hasLabAct);
 
     }
 }
