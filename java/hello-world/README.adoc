@@ -1,29 +1,12 @@
-= School Timetabling (Java, Maven or Gradle)
+= School Timetabling (Java, Maven)
 
 Assign lessons to timeslots and rooms to produce a better schedule for teachers and students.
 
 * <<run,Run the application>>
 
-== Prerequisites
-
-. Install Java and Maven, for example with https://sdkman.io[Sdkman]:
-+
-----
-$ sdk install java
-$ sdk install maven
-----
-
 [[run]]
 == Run the application
 
-. Git clone the timefold-quickstarts repo:
-+
-[source, shell]
-----
-$ git clone https://github.com/TimefoldAI/timefold-quickstarts.git
-...
-$ cd timefold-quickstarts/java/hello-world
-----
 
 . Start the application with Maven:
 +
@@ -33,16 +16,4 @@ $ mvn verify
 ...
 $ java -jar target/hello-world-run.jar
 ----
-+
-or with Gradle:
-+
-[source, shell]
-----
-$ gradle run
-----
 
-Look for the planning solution in the console log.
-
-== More information
-
-Visit https://timefold.ai[timefold.ai].
