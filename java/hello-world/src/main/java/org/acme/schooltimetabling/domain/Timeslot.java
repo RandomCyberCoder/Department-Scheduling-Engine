@@ -95,6 +95,8 @@ public class Timeslot {
         this.id = Integer.toString(ID);
         this.lecDays = lecDays.clone();
         this.nonLecDays = labDays.clone();
+        this.hasLec = !this.lecDays.isEmpty();
+        this.hasLabAct = !this.nonLecDays.isEmpty();
     }
 
     /**
@@ -108,11 +110,12 @@ public class Timeslot {
     private Timeslot(int ID, BitSet lecBitSet, BitSet labActBitSet, EnumSet<Days> lecDays , EnumSet<Days> labActDays){
         this.id = Integer.toString(ID);
         this.ID = ID;
-        this.hasLec = labActBitSet.cardinality() == 0;
         this.lectureBitSet = (BitSet) lecBitSet.clone();
         this.labActBitSet = (BitSet) labActBitSet.clone();
         this.lecDays = lecDays.clone();
         this.nonLecDays = labActDays.clone();
+        this.hasLec = !this.lecDays.isEmpty();
+        this.hasLabAct = !this.nonLecDays.isEmpty();
         BitSet allBitSet = new BitSet();
         allBitSet.or(this.lectureBitSet);
         allBitSet.or(this.labActBitSet);
