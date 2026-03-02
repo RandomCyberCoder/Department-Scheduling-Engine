@@ -7,7 +7,8 @@ public record WrongHoursAmountJustification(Lesson lesson1, String description) 
     public WrongHoursAmountJustification(Lesson lesson1){
         this(lesson1,
                 "Lesson name %s; Lesson has lab or act %B; timeslot has only lesson %B"
-                        .formatted(lesson1.getCourseName(), lesson1.isHasLabAct(), lesson1.getTimeslot().isHasLec()
+                        .formatted(lesson1.getCourseName(), lesson1.isHasLabAct(),
+                                lesson1.getTimeslot().isHasLec() && !lesson1.getTimeslot().isHasLabAct()
                         ));
     }
 }

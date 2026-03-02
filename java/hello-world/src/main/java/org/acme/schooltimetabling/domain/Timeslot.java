@@ -140,16 +140,15 @@ public class Timeslot {
         this.hasLabAct = false;
         this.lectureBitSet = new BitSet();
         this.labActBitSet = new BitSet();
+        this.allTimesBitSet = new BitSet();
+        this.lecDays = EnumSet.noneOf(Days.class);
+        this.nonLecDays = EnumSet.noneOf(Days.class);
 
         this.ID = ID;
         this.id = String.valueOf(ID);
-        /*Mark what days the timeslot occupies*/
-        nonLecDays = EnumSet.noneOf(Days.class);
-
         //check the first subslot
         if(!days.isBlank()){
             this.hasLec = true;
-            lecDays = EnumSet.noneOf(Days.class);
             if(days.contains("M")){
                 lecDays.add(Days.MONDAY);
             }
@@ -165,7 +164,7 @@ public class Timeslot {
             if(days.contains("F")){
                 lecDays.add(Days.FRIDAY);
             }
-            /*determine if the timeslot will accommodate only lectures*/
+
             this.lecHours = lecHours;
 
             /*check start and end time for the lab and possibly for the lab/activity */
@@ -227,27 +226,16 @@ public class Timeslot {
         if(this.labActBitSet.intersects(this.lectureBitSet)) throw new RuntimeException("Error creating timeslot. " +
             "The lecture and lab/act times overlap");
 
-        this.allTimesBitSet = new BitSet();
         if(!days.isBlank()){
             /*we assume that the whole block will be occupied by whoever is assigned it*/
             this.allTimesBitSet.or(BitSetHelper.timeSlotBitSet(this.startTimeLec, Math.round(totalHours * 2),
                     this.lecDays));
         }
+        //OR with lab/act bitset if the lab/act time was in the second subplot instead of the first
         if(!days2.isBlank()){
             this.allTimesBitSet.or(this.labActBitSet);
         }
     }
-
-//    private boolean validateTs(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
-//                               String days2, String startTime2, String endTime2, float lab_hours){
-//        return validateTs(ID, days, startTime, endTime, lecHours, totalHours,  days2, startTime2, endTime2, lab_hours,
-//                false);
-//    }
-//    private boolean validateTs(int ID, String days, String startTime, String endTime, float lecHours, float totalHours,
-//                               String days2, String startTime2, String endTime2, float lab_hours, boolean raise_exception){
-//
-//
-//    }
 
 
     /**
@@ -278,18 +266,16 @@ public class Timeslot {
 
     @Override
     public String toString() {
-        String lecStr = "lecture: " + lecDays.toString() + " " + startTimeLec.toString();
-        String labActStr = this.hasLec ? "" :
-                (" ---- " + "lab: " + nonLecDays.toString() + startTimeLabAct.toString());
-        return lecStr + labActStr;
+        return this.toStringLec() + " ---- " + this.toStringLabAct();
     }
 
     public String toStringLec(){
+        if(!this.hasLec) return "No lec time";
         return getString(lecDays, startTimeLec, endTimeLec);
     }
 
     public String toStringLabAct(){
-        if(hasLec) return "";
+        if(!this.hasLabAct) return "No lab/act time";
 
         return getString(nonLecDays, startTimeLabAct, endTimeLabAct);
     }
@@ -338,6 +324,10 @@ public class Timeslot {
         return hasLec;
     }
 
+    public boolean isHasLabAct() {
+        return hasLabAct;
+    }
+
     public LocalTime getStartTimeLabAct() {
         return startTimeLabAct;
     }
@@ -354,12 +344,21 @@ public class Timeslot {
         return allTimesBitSet;
     }
 
+
+    /**
+     * @return number of lec hours the timeslot can accommodate per day
+     */
     public float getLecHours() {
-        return lecHours;
+        if(!this.hasLec) return 0;
+        else return lecHours;
     }
 
+    /**
+     * @return number of lab/act hours the timeslot can accommodate per day
+     */
     public float getLabActHours(){
-        return labActHours;
+        if(!this.hasLabAct) return 0;
+        else return labActHours;
     }
 
     public EnumSet<Days> getLecDays() {

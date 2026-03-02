@@ -265,7 +265,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
                     float tsLecHrs = ts.getLecHours();
                     tsLecHrs *= lDays.size();
-                    float tsLabActHrs = ts.isHasLec() ? 0 : ts.getLabActHours();
+                    float tsLabActHrs = ts.getLabActHours();
                     tsLabActHrs *= nonLDays.size();
 
                     //return true of too many or not enough lec hours or lab/activity hours in the timeslot
@@ -463,9 +463,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
 
     Constraint inBestTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
-                .filter(lesson -> {
-                    return lesson.maskInCmprs().cardinality() > 0;
-                })
+                .filter(lesson -> lesson.maskInCmprs().cardinality() > 0)
                 .reward(HardMediumSoftScore.ONE_SOFT)
                 .asConstraint("Reward time in preferred time interval");
     }

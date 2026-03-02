@@ -18,9 +18,7 @@ public class ConstraintTestHelper {
     public final static Room DUMMY_ROOM = new Room("1", "dummyRoom", 1);
     public final static Teacher DUMMY_TEACHER = new Teacher(
             1, "dummyInstructor", EMPTY_BS, EMPTY_BS, EMPTY_BS);
-    public final static Timeslot DUMMY_TS = Timeslot.test_minSetUp("1");
-
-    public final static int DUMMY_LINKER = 1;
+    public final static Timeslot DUMMY_TS = Timeslot.test_lecLabBitAndDays(999, EMPTY_BS, EMPTY_BS, NO_DAYS, NO_DAYS);
     /**
      * Test: room name; will be used by a specific course {@link #TEST_L_W_LAB_SPECIFIC}
      */
@@ -41,7 +39,7 @@ public class ConstraintTestHelper {
      * Room that is used for a course specifically and can also be used by an lab
      */
     public static Room TEST_ROOM_SPECIFIC;
-    public static String NON_STUDIO_SPECIFIC = "non stdio course with a specific room";
+    public static String NON_STUDIO_SPECIFIC = "non studio course with a specific room";
 
     static{
         Constants.POSSIBLE_ROOMS.add(TEST_LAB_ROOM_SPECIFIC);

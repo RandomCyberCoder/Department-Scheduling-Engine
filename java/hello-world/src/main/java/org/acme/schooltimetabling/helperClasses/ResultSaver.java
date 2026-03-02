@@ -83,7 +83,7 @@ public class ResultSaver {
         }
     }
 
-    public void saveSolution() throws Exception{
+    public void saveSolution(){
         final XSSFWorkbook workbook = new XSSFWorkbook();
         headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
@@ -117,7 +117,7 @@ public class ResultSaver {
                         } else {
                             // Fallback: log unknown justification
                             LOGGER.warn("Unknown justification type: " + justification.getClass() +
-                                    "  Skipping any penalized classes. Likely to lead to bad invalid solution printout." +
+                                    "  Skipping any penalized classes. Possible bad/invalid solution printout." +
                                     " Add justification to solution printout");
                         }
 
@@ -287,7 +287,7 @@ public class ResultSaver {
                 rowCell.setCellValue(val.toString());
             }
             else{
-                LOGGER.error("Dev error: wasn't able to ");
+                LOGGER.error("Dev error: wasn't able to print out value for cell");
             }
         }
     }
@@ -426,7 +426,7 @@ public class ResultSaver {
     }
 
 
-    private void saveSolution(XSSFWorkbook workbook) throws Exception{
+    private void saveSolution(XSSFWorkbook workbook){
         int maxAttempts = 2; // first try + one retry
         for(int attempt = 1; attempt <= maxAttempts; attempt++) {
             try{
