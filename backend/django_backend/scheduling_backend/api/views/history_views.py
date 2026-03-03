@@ -1,14 +1,15 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, mixins, generics
-from rest_framework.request import Request
-from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.request import Request 
 from rest_framework.permissions import DjangoModelPermissions
+from django.core.exceptions import ObjectDoesNotExist 
+from django.contrib.auth.decorators import permission_required
 from ..models import History
 from ..serializer import HistorySerializer
 
 @api_view(["GET"])
-@permission_classes("api.view_history")
+@permission_required("api.view_history")
 def historyRetByName(request: Request) -> Response:
     """A get request that take in a 'name' query param (must be present) and will search the History
     table for a teacher that has had that name in the past
