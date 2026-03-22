@@ -37,7 +37,6 @@ public class Lesson {
     public boolean hasLecture, hasLabAct;
     public int lecHours, labActHours;
     public Teacher teacherObj;
-    private Integer linker = null;
 
 
     @PlanningVariable
@@ -55,38 +54,16 @@ public class Lesson {
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
 
     /* Test factory methods */
-
-    /**
-     * No linker
-     */
     public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                             String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
                 , timeslot, room);
     }
-    /**
-     * with linker
-     */
-    public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
-                                          String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room,
-                                          Integer linker){
-        return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
-                , timeslot, room, linker);
-    }
 
     /* Test constructor(s)*/
 
     private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
-                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room, Integer linker){
-        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
-                , timeslot, room);
-        this.linker = linker;
-    }
-
-    private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
-//        /*calling normal constructor used during setup*/
-//        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj, null);
         /*the courseConfig stream is assumed to come in the format
          * E-L-A where E is the number of lecture units, L is the number of
          * lab units, and A is the number of activity units */
@@ -131,7 +108,7 @@ public class Lesson {
      * @param teacherObj teacher object associated with the <i>teacherName</i>
      */
     public Lesson(String Id, int lecSection, String courseName, String modifiers,
-                  String courseConfig, Teacher teacherObj, Integer linker){
+                  String courseConfig, Teacher teacherObj){
         /*the courseConfig stream is assumed to come in the format
         * E-L-A where E is the number of lecture units, L is the number of
         * lab units, and A is the number of activity units */
@@ -156,7 +133,6 @@ public class Lesson {
         /*TODO check if we can delete this field*/
         this.teacherName = teacherObj.getName();
         this.modifiers = modifiers;
-        this.linker = linker;
     }
 
     /**
@@ -248,10 +224,6 @@ public class Lesson {
 
     public Teacher getTeacherObj() {
         return teacherObj;
-    }
-
-    public Integer getLinker(){
-        return linker;
     }
 
     public boolean isStudio(){

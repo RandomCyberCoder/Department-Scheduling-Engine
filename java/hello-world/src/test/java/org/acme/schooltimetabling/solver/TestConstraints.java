@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.solver;
 
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
@@ -13,10 +14,12 @@ import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
 
+import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
@@ -475,6 +478,237 @@ public class TestConstraints {
         constraintVerifier.verifyThat(TimetableConstraintProvider::primeTime50Plus)
                 .given(lessonOutPrimeTime, lessonInPrimeTime, lsLabOnly)
                 .penalizesBy(1);
+    }
+
+
+    @Test
+    @DisplayName("no Pen: teacher with small gaps")
+    void teacherNoLargeGaps(){
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        EnumSet<Days> TR = EnumSet.of(Days.TUESDAY, Days.THURSDAY);
+
+        BitSet bs_mwf_8am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet bs_mwf_9am_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, MWF);
+        BitSet bs_mwf_1PM_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("1:00PM", formatter), 2, MWF);
+        BitSet bs_tr_830pm_3blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:30PM", formatter), 3, TR);
+        BitSet bs_mwf_3pm_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("3:00PM", formatter), 2, MWF);
+
+        Timeslot ts_mwf_8am_2blcks_9am_2blcks = Timeslot.test_lecLabBitAndDays(1, bs_mwf_8am_2blcks, bs_mwf_9am_2blcks, MWF, MWF);
+        Timeslot ts_mwf_1pm_2blcks = Timeslot.test_lecLabBitAndDays(2, bs_mwf_1PM_2blcks, ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.NO_DAYS, ConstraintTestHelper.NO_DAYS);
+        Timeslot ts_tr_830pm_3blcks = Timeslot.test_lecLabBitAndDays(3, ConstraintTestHelper.EMPTY_BS, bs_tr_830pm_3blcks,
+                ConstraintTestHelper.NO_DAYS, ConstraintTestHelper.NO_DAYS);
+        Timeslot ts_mwf_3pm_2blcks =
+                Timeslot.test_lecLabBitAndDays(4, bs_mwf_3pm_2blcks, ConstraintTestHelper.EMPTY_BS,
+                        MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson ls1 = Lesson.test_buildLesson("1", 1, "", "", "",
+                "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER , ts_mwf_8am_2blcks_9am_2blcks,
+                ConstraintTestHelper.DUMMY_ROOM);
+        Lesson ls2 = Lesson.test_buildLesson("2", 1, "", "", "",
+                "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER , ts_mwf_1pm_2blcks,
+                ConstraintTestHelper.DUMMY_ROOM);
+        Lesson ls3 = Lesson.test_buildLesson("3", 1, "", "", "",
+                "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER , ts_tr_830pm_3blcks,
+                ConstraintTestHelper.DUMMY_ROOM);
+        Lesson ls4 = Lesson.test_buildLesson("4", 1, "", "", "",
+                "0-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER , ts_mwf_3pm_2blcks,
+                ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::compressTeachTime)
+                .given(ls1, ls2, ls3, ls4)
+                .penalizesBy(0);
+    }
+
+
+    @Test
+    @DisplayName("Penalties: large gaps and long days")
+    void penalizeLargeGapsAndLongDays(){
+
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        Teacher TEACHER1 = new Teacher( 1, "dummyInstructor", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
+        Teacher TEACHER2 = new Teacher( 1, "dummyInstructor", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
+
+
+    /* ---------------------------
+       Teacher 1: gap > 3 hours
+       --------------------------- */
+
+        BitSet t1_8am = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet t1_1230pm = BitSetHelper.timeSlotBitSet(LocalTime.parse("12:30PM", formatter), 2, MWF); // 3.5 hr gap
+
+        Timeslot ts_t1_a = Timeslot.test_lecLabBitAndDays(1, t1_8am, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Timeslot ts_t1_b = Timeslot.test_lecLabBitAndDays(1, t1_1230pm, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson t1_l1 = Lesson.test_buildLesson("t1_l1", 1,"","","","0-0-0",1,
+                TEACHER1, ts_t1_a, ConstraintTestHelper.DUMMY_ROOM);
+
+        Lesson t1_l2 = Lesson.test_buildLesson("t1_l2", 1,"","","","0-0-0",1,
+                TEACHER1, ts_t1_b, ConstraintTestHelper.DUMMY_ROOM);
+
+
+/* ---------------------------
+   Teacher 2: day > 8 hours (8.5h) with NO >3hr gaps
+   --------------------------- */
+
+        BitSet t2_8am = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet t2_12pm = BitSetHelper.timeSlotBitSet(LocalTime.parse("12:00PM", formatter), 2, MWF);
+        BitSet t2_430pm = BitSetHelper.timeSlotBitSet(LocalTime.parse("4:30PM", formatter), 1, MWF);
+
+        Timeslot ts_t2_a = Timeslot.test_lecLabBitAndDays(1, t2_8am, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Timeslot ts_t2_b = Timeslot.test_lecLabBitAndDays(1, t2_12pm, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Timeslot ts_t2_c = Timeslot.test_lecLabBitAndDays(1, t2_430pm, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson t2_l1 = Lesson.test_buildLesson("t2_l1",1,"","","","0-0-0",1,
+                TEACHER2, ts_t2_a, ConstraintTestHelper.DUMMY_ROOM);
+
+        Lesson t2_l2 = Lesson.test_buildLesson("t2_l2",1,"","","","0-0-0",1,
+                TEACHER2, ts_t2_b, ConstraintTestHelper.DUMMY_ROOM);
+
+        Lesson t2_l3 = Lesson.test_buildLesson("t2_l3",1,"","","","0-0-0",1,
+                TEACHER2, ts_t2_c, ConstraintTestHelper.DUMMY_ROOM);
+
+
+
+    /* ---------------------------
+       Teacher 5: multiple large gaps
+       still only one penalty
+       --------------------------- */
+
+        BitSet t5_8am = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet t5_1230pm = BitSetHelper.timeSlotBitSet(LocalTime.parse("12:30PM", formatter), 2, MWF);
+        BitSet t5_6pm = BitSetHelper.timeSlotBitSet(LocalTime.parse("6:00PM", formatter), 2, MWF);
+
+        Timeslot ts_t5_a = Timeslot.test_lecLabBitAndDays(1, t5_8am, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Timeslot ts_t5_b = Timeslot.test_lecLabBitAndDays(1, t5_1230pm, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Timeslot ts_t5_c = Timeslot.test_lecLabBitAndDays(1, t5_6pm, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+
+        Lesson t5_l1 = Lesson.test_buildLesson("t5_l1",1,"","","","0-0-0",1,
+                ConstraintTestHelper.DUMMY_TEACHER, ts_t5_a, ConstraintTestHelper.DUMMY_ROOM);
+
+        Lesson t5_l2 = Lesson.test_buildLesson("t5_l2",1,"","","","0-0-0",1,
+                ConstraintTestHelper.DUMMY_TEACHER, ts_t5_b, ConstraintTestHelper.DUMMY_ROOM);
+
+        Lesson t5_l3 = Lesson.test_buildLesson("t5_l3",1,"","","","0-0-0",1,
+                ConstraintTestHelper.DUMMY_TEACHER, ts_t5_c, ConstraintTestHelper.DUMMY_ROOM);
+
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::compressTeachTime)
+                .given(
+                        t1_l1, t1_l2,
+                        t2_l1, t2_l2, t2_l3,
+                        t5_l1, t5_l2, t5_l3
+                )
+                .penalizesBy(3);
+    }
+
+
+    @Test
+    @DisplayName("Reward: teacher prefers one-hour gaps")
+    void rewardPreferredHourGap() {
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        Teacher teacher = new Teacher(1, "prefers gaps", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+
+        BitSet early = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        BitSet late = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter), 2, MWF);
+
+        Timeslot tsEarly = Timeslot.test_lecLabBitAndDays(1, early, ConstraintTestHelper.EMPTY_BS, MWF, ConstraintTestHelper.NO_DAYS);
+        Timeslot tsLate = Timeslot.test_lecLabBitAndDays(2, ConstraintTestHelper.EMPTY_BS, late, ConstraintTestHelper.NO_DAYS, MWF);
+
+        Lesson lesson1 = Lesson.test_buildLesson("gap1", 1, "", "", "",
+                "0-0-0", 1, teacher, tsEarly, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lesson2 = Lesson.test_buildLesson("gap2", 1, "", "", "",
+                "0-0-0", 1, teacher, tsLate, ConstraintTestHelper.DUMMY_ROOM);
+
+        //------ no reward (hour gap between lec and lab)
+        EnumSet<Days> RF = EnumSet.of(Days.THURSDAY, Days.FRIDAY);
+        BitSet rfLecture = BitSetHelper.timeSlotBitSet(LocalTime.parse("3:00PM", formatter), 2, RF);
+        BitSet rfLab = BitSetHelper.timeSlotBitSet(LocalTime.parse("5:00PM", formatter), 2, RF);
+        Timeslot rfTimeslot = Timeslot.test_lecLabBitAndDays(6, rfLecture, rfLab, RF, RF);
+        Teacher singleCourseTeacher = new Teacher(4, "single slot", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+        Lesson singleCourse = Lesson.test_buildLesson("gap3", 1, "", "", "",
+                "0-0-0", 1, singleCourseTeacher, rfTimeslot, ConstraintTestHelper.DUMMY_ROOM);
+
+        //------ no reward
+        Teacher disagreeTeacher = new Teacher(2, "hates gaps", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+
+        Lesson disagreeLesson1 = Lesson.test_buildLesson("gapDisagree1", 1, "", "", "",
+                "0-0-0", 1, disagreeTeacher, tsEarly, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson disagreeLesson2 = Lesson.test_buildLesson("gapDisagree2", 1, "", "", "",
+                "0-0-0", 1, disagreeTeacher, tsLate, ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::rewardPreferredHourGap)
+                .given(lesson1, lesson2,
+                        singleCourse,
+                        disagreeLesson1, disagreeLesson2)
+                .rewardsWith(1);
+    }
+
+    @Test
+    @DisplayName("Penalty: teacher dislikes one-hour gaps")
+    void penalizeDislikedHourGap() {
+        EnumSet<Days> TR = EnumSet.of(Days.TUESDAY, Days.THURSDAY);
+        EnumSet<Days> T = EnumSet.of(Days.TUESDAY);
+        Teacher teacher = new Teacher(2, "hates gaps", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+
+        BitSet blockA = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, TR);
+        BitSet blockB = BitSetHelper.timeSlotBitSet(LocalTime.parse("11:00AM", formatter), 2, TR);
+        BitSet blockC = BitSetHelper.timeSlotBitSet(LocalTime.parse("1:00PM", formatter), 2, T);
+
+        Timeslot tsA = Timeslot.test_lecLabBitAndDays(3, blockA, ConstraintTestHelper.EMPTY_BS, TR, ConstraintTestHelper.NO_DAYS);
+        Timeslot tsB = Timeslot.test_lecLabBitAndDays(4, blockB, ConstraintTestHelper.EMPTY_BS, TR, ConstraintTestHelper.NO_DAYS);
+        Timeslot tsC = Timeslot.test_lecLabBitAndDays(5, ConstraintTestHelper.EMPTY_BS, blockC, ConstraintTestHelper.NO_DAYS, T);
+
+        Lesson lessonA = Lesson.test_buildLesson("penalty1", 1, "", "", "",
+                "0-0-0", 1, teacher, tsA, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lessonB = Lesson.test_buildLesson("penalty2", 1, "", "", "",
+                "0-0-0", 1, teacher, tsB, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson lessonC = Lesson.test_buildLesson("penalty2", 1, "", "", "",
+                "0-0-0", 1, teacher, tsC, ConstraintTestHelper.DUMMY_ROOM);
+
+        //------ No penalty
+        EnumSet<Days> RF = EnumSet.of(Days.THURSDAY, Days.FRIDAY);
+        BitSet lectureRf = BitSetHelper.timeSlotBitSet(LocalTime.parse("3:00PM", formatter), 2, RF);
+        BitSet labRf = BitSetHelper.timeSlotBitSet(LocalTime.parse("5:00PM", formatter), 2, RF);
+        Timeslot rfTimeslot = Timeslot.test_lecLabBitAndDays(6, lectureRf, labRf, RF, RF);
+        Teacher singleCourseTeacher = new Teacher(4, "single course", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+        Lesson singleCourse = Lesson.test_buildLesson("singleCourse", 1, "", "", "",
+                "0-0-0", 1, singleCourseTeacher, rfTimeslot, ConstraintTestHelper.DUMMY_ROOM);
+        //-------- No penalty
+        Teacher gapPrefTeacher = new Teacher(3, "likes gaps", ConstraintTestHelper.EMPTY_BS,
+                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+
+        Lesson likedGap1 = Lesson.test_buildLesson("agree1", 1, "", "", "",
+                "0-0-0", 1, gapPrefTeacher, tsA, ConstraintTestHelper.DUMMY_ROOM);
+        Lesson likedGap2 = Lesson.test_buildLesson("agree2", 1, "", "", "",
+                "0-0-0", 1, gapPrefTeacher, tsB, ConstraintTestHelper.DUMMY_ROOM);
+
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::penalizeDislikedHourGap)
+                .given(lessonA, lessonB, lessonC,
+                        singleCourse,
+                        likedGap1, likedGap2)
+                .penalizesBy(2);
     }
 }
 

@@ -4,10 +4,12 @@ import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftSc
 import ai.timefold.solver.core.api.score.stream.*;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.solver.justifications.*;
@@ -38,7 +40,10 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 wrongRoomType(constraintFactory),
 
                 // Medium Constraints
-                prefTime(constraintFactory)
+                prefTime(constraintFactory),
+                compressTeachTime(constraintFactory),
+                rewardPreferredHourGap(constraintFactory),
+                penalizeDislikedHourGap(constraintFactory)
 
                 // Soft constraints
         ));
@@ -343,61 +348,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     .asConstraint("Studio lab right after lecture");
     }
 
-//THE COMMENTED CODE BELOW ARE OLD CONSTRAINTS FROM WHEN I WAS DISCONNECTING LABS AND LECTURE. MIGHT BE USEFUL LATER
-//    /**
-//     * Checks studio courses' lab/act portion occurs on one day with consecutive time
-//     * @param constraintFactory constraint factory
-//     * @return constraint penalizing studio courses not using studio time
-//     */
-//    Constraint studioSpace(ConstraintFactory constraintFactory){
-//        return  constraintFactory.forEach(Lesson.class)
-//                .filter(lesson -> {
-//                    //only check lab/act portion of the studio style split
-//                    if(!Constants.STUDIO_STYLE_COURSES.contains(lesson.getCourseName()) ||
-//                            !lesson.isHasLabAct() ||
-//                            Constants.TESTING) return false;
-//
-//
-//                    //"lecture" portion will be used for lab/act space
-//                    //The timeslot should only have the lecture portion set. For a single day
-//                    return !lesson.getTimeslot().isContinuous();
-//
-//                })
-//                .penalize(HardMediumSoftScore.ONE_HARD)
-//                .asConstraint("Studio space must be consecutive on a single day");
-//    }
-//
-//
-//    /**
-//     * For studio courses, it makes sure that at least one lecture occurs before the lab occurs
-//     * //TODO check with beard. Not sure if this is actually a thing but leaving it here just in case
-//     * @param constraintFactory
-//     * @return constraint penalizing studio courses that have their lab time before any lecture has taken place
-//     */
-//    Constraint studioLabAfterLesson(ConstraintFactory constraintFactory){
-//        //filter for studio only courses
-//        //just check the first bit of the lab vs lec bitset. if lab comes before penalty
-//        return constraintFactory.forEachUniquePair(Lesson.class,
-//                        Joiners.equal(Lesson::getLinker),
-//                        //skip non-studio classes
-//                        Joiners.filtering((lesson, lesson2) -> lesson.isStudio() && lesson.isStudio())
-//                )
-//                .filter((lesson, lesson2) -> {
-//                    //NOTE: one lesson will be the lec and the other one will be the lab/act
-//
-//                    //if first lesson is the lec, get the lecture bitset else use lesson2's bitset
-//                    final BitSet lecBS = lesson.isHasLecture() ? lesson.getTimeslot().getLectureBitSet() :
-//                            lesson2.getTimeslot().getLectureBitSet();
-//                    //if first lesson is the lab, get the lecture (yes the lecture) bitset else use lesson2's bitset
-//                    final BitSet labBS = lesson.isHasLabAct() ? lesson.getTimeslot().getLectureBitSet() :
-//                            lesson2.getTimeslot().getLectureBitSet();
-//
-//                    return labBS.nextSetBit(0) <= lecBS.nextSetBit(0);
-//                })
-//                .penalize(HardMediumSoftScore.ONE_HARD)
-//                .asConstraint("Studio Penalty: lab before all lecture");
-//    }
-
     //-------------------------------------- Medium Constraints --------------------------------------
 
     Constraint prefTime(ConstraintFactory constraintFactory){
@@ -414,6 +364,170 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     return tmp.cardinality() / 2;
                 })
                 .asConstraint("Reward 30min blocks in prof's pref times");
+    }
+
+    //cap at 8 hour days
+    private static final int MAX_DAY_LEN = 16;
+    private static final int MAX_GAP = 6;
+    private boolean dayHasLrgGap(Days day, BitSet time){
+        final int NO_NEXT_BIT_SET = -1;
+        final int OFFSET;
+        if(day == Days.MONDAY) OFFSET = BitSetHelper.MONDAY_OFFSET;
+        else if(day == Days.TUESDAY) OFFSET = BitSetHelper.TUESDAY_OFFSET;
+        else if(day == Days.WEDNESDAY) OFFSET = BitSetHelper.WEDNESDAY_OFFSET;
+        else if(day == Days.THURSDAY) OFFSET = BitSetHelper.THURSDAY_OFFSET;
+        else OFFSET = BitSetHelper.FRIDAY_OFFSET;
+        BitSet bs = time.get(OFFSET, OFFSET + BitSetHelper.MAX_BITS_PER_DAY);
+
+        //skip if empty
+        int start = bs.nextSetBit(0);
+        if(start == -1) return false;
+        int end = bs.nextClearBit(start) - 1;
+        for(int nxtStrt = bs.nextSetBit(end + 1);
+            nxtStrt != NO_NEXT_BIT_SET;
+            nxtStrt = bs.nextSetBit(end + 1)){
+
+            int localDiff = nxtStrt - end - 1;
+            //to large a gap between lessons on the given day
+            if(localDiff > MAX_GAP) return true;
+            //the end of this lec or lab.
+            end = bs.nextClearBit(nxtStrt) - 1;
+        }
+
+        //check if too much time in a day
+        return end - start + 1 > MAX_DAY_LEN;
+    }
+
+    /**
+     * This constraint penalizes a teacher if there is a gap between lessons more than {@link #MAX_GAP} amount of 30-minute
+     * blocks between the end of a lesson and the start of another lesson. It will also penalize a teacher that has
+     * a day longer than 8 hours; i.e. the time from when their first lesson starts to when their last lesson ends.
+     */
+    Constraint compressTeachTime(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .groupBy(Lesson::getTeacherObj, toList())
+                .filter((teacher, lessons) -> {
+                    //constraint is not relevant to anyone teaching only one class
+                    if(lessons.size() == 1) return  false;
+
+                    //constraint is not relevant if all lessons don't share a day;
+                    EnumSet<Days> daysTeaching = EnumSet.noneOf(Days.class);
+                    boolean lsSharedDay = false;
+                    BitSet scheduledTime = new BitSet();
+                    for(Lesson lesson: lessons){
+                        Timeslot ts = lesson.getTimeslot();
+                        //flag if we find any two lessons that share a day
+                        if(Collections.disjoint(daysTeaching, ts.getLecDays())) lsSharedDay = true;
+                        if(Collections.disjoint(daysTeaching, ts.getNonLecDays())) lsSharedDay = true;
+                        //collect the days being taught
+                        daysTeaching.addAll(ts.getLecDays());
+                        daysTeaching.addAll(ts.getNonLecDays());
+                        //accumulate time taught
+                        scheduledTime.or(ts.getLectureBitSet());
+                        scheduledTime.or(ts.getLabActBitSet());
+                    }
+
+                    //if no lessons share days, then there is nothing to penalize
+                    if(!lsSharedDay) return false;
+
+                    for(Days day: daysTeaching){
+                        //if any day has a large gap, penalize
+                        if(dayHasLrgGap(day, scheduledTime)) return true;
+                    }
+
+                    return false;
+                })
+                .penalize(HardMediumSoftScore.ONE_MEDIUM)
+                .asConstraint("Penalize teacher schedules with large gaps or long days");
+    }
+
+    //------------------------
+
+    private int countHourGaps(Days day, BitSet time, List<Lesson> lessons, Set<Set<Integer>> used) {
+        // Determine the day's offset
+        final int OFFSET;
+        if(day == Days.MONDAY) OFFSET = BitSetHelper.MONDAY_OFFSET;
+        else if(day == Days.TUESDAY) OFFSET = BitSetHelper.TUESDAY_OFFSET;
+        else if(day == Days.WEDNESDAY) OFFSET = BitSetHelper.WEDNESDAY_OFFSET;
+        else if(day == Days.THURSDAY) OFFSET = BitSetHelper.THURSDAY_OFFSET;
+        else OFFSET = BitSetHelper.FRIDAY_OFFSET;
+        BitSet bs = time.get(OFFSET, OFFSET + BitSetHelper.MAX_BITS_PER_DAY);
+
+        int gaps = 0;
+
+        // Start scanning the day's scheduled lessons
+        int start = bs.nextSetBit(0);
+
+        while (start != -1) {
+
+            // Find the end of this lesson block
+            int end = bs.nextClearBit(start) - 1;
+
+            // Look for the next lesson block
+            int nextStart = bs.nextSetBit(end + 1);
+
+            if (nextStart != -1) {
+                int gap = nextStart - end - 1;  // number of empty 30-min blocks
+
+                if (gap == 2) {  // exactly 1 hour
+                    int first = -1;
+                    int second = -1;
+                    for(int i = 0; i < lessons.size(); i++){
+                        BitSet lsBs = lessons.get(i).getTimeslot().getAllTimesBitSet();
+                        if(lsBs.get(OFFSET + end)) first = i;
+                        if(lsBs.get(OFFSET + nextStart)) second = i;
+                    }
+                    //need to check that they aren't the same or else the creation of inline set will error
+                    if(first != second && used.add(Set.of(first, second))) gaps++;
+                }
+            }
+
+            // Move to the next lesson block
+            start = nextStart;
+        }
+
+        return gaps;
+    }
+
+    private int countTeacherHourGaps(List<Lesson> lessons) {
+        BitSet scheduledTime = new BitSet();
+        EnumSet<Days> daysTeaching = EnumSet.noneOf(Days.class);
+        Set<Set<Integer>> used = new HashSet<>();
+
+        for (Lesson lesson : lessons) {
+            Timeslot ts = lesson.getTimeslot();
+            scheduledTime.or(ts.getAllTimesBitSet());
+            daysTeaching.addAll(lesson.getTimeslot().getLecDays());
+            daysTeaching.addAll(lesson.getTimeslot().getNonLecDays());
+        }
+
+        int totalGaps = 0;
+        for (Days day : daysTeaching) {
+            totalGaps += countHourGaps(day, scheduledTime, lessons, used);
+        }
+
+        //divide to account for potentially multiple classes counted
+        return totalGaps;
+    }
+
+    Constraint rewardPreferredHourGap(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Lesson.class)
+                .groupBy(Lesson::getTeacherObj, toList())
+                .filter((teacher, lessons) ->
+                        teacher.getGapPref() == Preference.AGREE)
+                .reward(HardMediumSoftScore.ONE_MEDIUM,
+                        (teacher, lessons) -> countTeacherHourGaps(lessons))
+                .asConstraint("Reward teachers who prefer 1-hour gaps");
+    }
+
+    Constraint penalizeDislikedHourGap(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Lesson.class)
+                .groupBy(Lesson::getTeacherObj, toList())
+                .filter((teacher, lessons) ->
+                        teacher.getGapPref() == Preference.DISAGREE)
+                .penalize(HardMediumSoftScore.ONE_MEDIUM,
+                        (teacher, lessons) -> countTeacherHourGaps(lessons))
+                .asConstraint("Penalize teachers who dislike 1-hour gaps");
     }
 
     //-------------------------------------- Soft Constraints --------------------------------------

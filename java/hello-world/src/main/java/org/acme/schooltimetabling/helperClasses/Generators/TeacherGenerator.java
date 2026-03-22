@@ -5,6 +5,7 @@ import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -25,9 +26,8 @@ public class TeacherGenerator extends Generator{
      *
      * @return A Map mapping a teacher's canon name to their teacher object
      */
-    public static Map<String, Teacher> teacherGenDriver() throws Exception{
-        String YAML_FILE_PATH = "constants/config.yaml";
-        ScheduleConfig.loadConfig(YAML_FILE_PATH);
+    public static Map<String, Teacher> teacherGenDriver(){
+        ScheduleConfig.loadConfig("constants/config.yaml");
         Map<String, Teacher> teacherMap = new HashMap<>();
         boolean success = false;
         if(ScheduleConfig.isUseApi()){
@@ -39,6 +39,7 @@ public class TeacherGenerator extends Generator{
                 }
                 else{
                     for(SurveyRecord surveyRecord: surveys){
+                        //just make getTEacherRecord the only one called
                         surveyRecord.toTeacher();
                         TeacherRecord teacherRecord = surveyRecord.getTeacherRecord();
                         teacherMap.put(teacherRecord.getCanon(), surveyRecord.toTeacher());
@@ -171,7 +172,7 @@ public class TeacherGenerator extends Generator{
         }
 
         //go through teachers that didn't bleed and notify
-        if(!teacherBleed.keySet().isEmpty()){
+        if(!teacherBleed.isEmpty()){
             StringBuilder names = new StringBuilder();
             for(String teacherName: teacherBleed.keySet()){
                 names.append(String.format("%s; ", teacherName));
@@ -245,12 +246,12 @@ public class TeacherGenerator extends Generator{
         }
 
         String[] splitName = canonName.split(",");
-
+        Preference pref = Preference.parsePref(surveyEntry.get("gap"));
         if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
             LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
-            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
+            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts, pref);
         }
-        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);
+        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
     }
 
 

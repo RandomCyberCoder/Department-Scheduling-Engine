@@ -4,6 +4,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
@@ -76,6 +77,10 @@ public class Faculty extends Teacher{
 
     public Faculty(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict) {
         super(id, name, preferences, acceptable, conflict);
+    }
+
+    public Faculty(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict, Preference gap) {
+        super(id, name, preferences, acceptable, conflict, gap);
     }
 
     public Faculty(Teacher teacher){

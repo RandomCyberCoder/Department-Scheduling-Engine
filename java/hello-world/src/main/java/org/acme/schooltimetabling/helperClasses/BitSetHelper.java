@@ -10,15 +10,15 @@ import java.util.EnumSet;
 
 public class BitSetHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(BitSetHelper.class);
-    private static final int MONDAY_OFFSET = 0;
-    private static final int TUESDAY_OFFSET = 30;
-    private static final int WEDNESDAY_OFFSET = 60;
-    private static final int THURSDAY_OFFSET = 90;
-    private static final int FRIDAY_OFFSET = 120;
+    public static final int MONDAY_OFFSET = 0;
+    public static final int TUESDAY_OFFSET = 30;
+    public static final int WEDNESDAY_OFFSET = 60;
+    public static final int THURSDAY_OFFSET = 90;
+    public static final int FRIDAY_OFFSET = 120;
     private static final int NUM_OF_BITS = 150;
     private static final int PRIME_TIME_DAY_START_OFFSET = 4;
     private static final int PRIME_TIME_DAY_END_OFFSET = 16;
-    private static final int MAX_BITS_PER_DAY = 30;
+    public static final int MAX_BITS_PER_DAY = 30;
     public static final BitSet NON_PRIME_TIME_MASK;
     public static final BitSet PRIME_TIME_MASK;
 

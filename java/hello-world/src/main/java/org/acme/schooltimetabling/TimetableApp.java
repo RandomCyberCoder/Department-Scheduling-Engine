@@ -102,7 +102,6 @@ public class TimetableApp {
             });
         }
 
-//        storeResults(solution);
         ResultSaver resultSaver = new ResultSaver(solution);
         resultSaver.saveSolution();
 

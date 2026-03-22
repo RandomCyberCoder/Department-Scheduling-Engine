@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
@@ -98,7 +100,8 @@ public class SurveyRecord {
                 conflict.or(bsRep);
             }
         }
-        Teacher teacher = new Teacher(TeacherGenerator.getNextTeacherID(), nonCanonName, preferences, acceptable, conflict);
+        Teacher teacher = new Teacher(TeacherGenerator.getNextTeacherID(), Constants.TEACHER_NAME_TO_CANON.get(nonCanonName),
+                preferences, acceptable, conflict, Preference.parsePref((String) extraFields.get("gap")));
         if(teacherRecord.isFaculty()) teacher = new Faculty(teacher);
         return teacher;
     }
