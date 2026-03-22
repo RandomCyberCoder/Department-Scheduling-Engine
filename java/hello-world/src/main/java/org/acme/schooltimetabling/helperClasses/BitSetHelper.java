@@ -7,6 +7,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
 import java.util.EnumSet;
+import java.util.Map;
 
 public class BitSetHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(BitSetHelper.class);
@@ -21,6 +22,13 @@ public class BitSetHelper {
     public static final int MAX_BITS_PER_DAY = 30;
     public static final BitSet NON_PRIME_TIME_MASK;
     public static final BitSet PRIME_TIME_MASK;
+    public static final Map<Days, Integer> DAY_OFFSET = Map.of(
+            Days.MONDAY, BitSetHelper.MONDAY_OFFSET,
+            Days.TUESDAY, BitSetHelper.TUESDAY_OFFSET,
+            Days.WEDNESDAY, BitSetHelper.WEDNESDAY_OFFSET,
+            Days.THURSDAY, BitSetHelper.THURSDAY_OFFSET,
+            Days.FRIDAY, BitSetHelper.FRIDAY_OFFSET
+    );
 
     static {
         PRIME_TIME_MASK = new BitSet();

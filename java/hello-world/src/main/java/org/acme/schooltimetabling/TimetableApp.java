@@ -104,6 +104,7 @@ public class TimetableApp {
 
         ResultSaver resultSaver = new ResultSaver(solution);
         resultSaver.saveSolution();
+        resultSaver.teacherTimesToJson();
 
         return;
     }

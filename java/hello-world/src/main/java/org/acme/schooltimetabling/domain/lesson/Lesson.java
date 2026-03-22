@@ -4,6 +4,7 @@ import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -12,7 +13,12 @@ import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 
 @PlanningEntity(difficultyComparatorClass = LessonComparator.class)
 //@PlanningEntity(comparator = LessonComparator.class)
@@ -284,5 +290,36 @@ public class Lesson {
         copy.or(timeslot.getLabActBitSet());
         copy.and(ScheduleConfig.getCompressOutMask());
         return copy;
+    }
+
+    public List<Map<String, String>> toJson(){
+        List<Map<String, String>> res = new ArrayList<>();
+        if (timeslot == null) {
+            return res;
+        }
+
+        BitSet schedule = new BitSet();
+        schedule.or(timeslot.getAllTimesBitSet());
+        LocalTime BASE_TIME = LocalTime.of(7, 0);
+
+        for (Days day : Days.values()) {
+            int offset = BitSetHelper.DAY_OFFSET.get(day);
+            BitSet dayBits = schedule.get(offset, offset + BitSetHelper.MAX_BITS_PER_DAY);
+            int start = dayBits.nextSetBit(0);
+            while (start != -1) {
+
+                int end = dayBits.nextClearBit(start) - 1;
+                LocalTime startTime = BASE_TIME.plusMinutes(start * 30L);
+                LocalTime endTime = BASE_TIME.plusMinutes((end + 1) * 30L);
+                res.add(Map.of(
+                        "day", day.name(),
+                        "start", startTime.format(Constants.TIME_FMT),
+                        "end", endTime.format(Constants.TIME_FMT)
+                ));
+                start = dayBits.nextSetBit(end + 1);
+            }
+        }
+
+        return res;
     }
 }

@@ -8,6 +8,8 @@ import ai.timefold.solver.core.api.score.stream.DefaultConstraintJustification;
 import ai.timefold.solver.core.api.solver.SolutionManager;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
@@ -16,6 +18,7 @@ import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.WrongHoursAmountJustification;
+import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -24,9 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -83,16 +88,14 @@ public class ResultSaver {
         }
     }
 
-    public void saveSolution(){
-        final XSSFWorkbook workbook = new XSSFWorkbook();
-        headerCellStyle = workbook.createCellStyle();
-        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
-        lessonCellStyle = workbook.createCellStyle();
-        lessonCellStyle.setWrapText(true);
-        final XSSFSheet roomSheet = workbook.createSheet("Room Usage");
-        final XSSFSheet teacherSheet = workbook.createSheet("Teacher schedule");
-        final XSSFSheet lessonListSheet = workbook.createSheet("List View");
+    /**
+     * Extracts lessons from the current solution and separates them out into those that violate do and don't violate
+     * hard constraints. If no solution has been passed it will return a pair of empty lists.
+     * @return a pair where the first value are lessons with no hard constraint violation and the second value are
+     * lessons that violate at least one hard constraint
+     */
+    private Pair<List<Lesson>, List<Lesson>> extractLessons(){
+        if(solToPrint == null) return new Pair<>(List.of(), List.of());
 
         List<Lesson> allLessons = solToPrint.getLessons(); // your full list of lessons
 
@@ -131,14 +134,37 @@ public class ResultSaver {
                 }
             }
         });
-        List<Lesson> lessonsWithHardViolations = allLessons.stream()
-                .filter(penalizedLessons::contains)
-                .toList();
 
         List<Lesson> lessonsWithoutHardViolations = allLessons.stream()
                 .filter(lesson -> !penalizedLessons.contains(lesson))
                 .toList();
 
+        List<Lesson> lessonsWithHardViolations = allLessons.stream()
+                .filter(penalizedLessons::contains)
+                .toList();
+
+
+        return new Pair<>(lessonsWithoutHardViolations, lessonsWithHardViolations);
+    }
+
+
+    /**
+     * Saves the created solution to an Excel file
+     */
+    public void saveSolution(){
+        final XSSFWorkbook workbook = new XSSFWorkbook();
+        headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+        lessonCellStyle = workbook.createCellStyle();
+        lessonCellStyle.setWrapText(true);
+        final XSSFSheet roomSheet = workbook.createSheet("Room Usage");
+        final XSSFSheet teacherSheet = workbook.createSheet("Teacher schedule");
+        final XSSFSheet lessonListSheet = workbook.createSheet("List View");
+
+        Pair<List<Lesson>, List<Lesson>> extractedLessons = extractLessons();
+        List<Lesson> lessonsWithoutHardViolations = extractedLessons.getKey();
+        List<Lesson> lessonsWithHardViolations = extractedLessons.getValue();
 
         roomView(roomSheet, lessonsWithoutHardViolations);
         teacherView(teacherSheet, lessonsWithoutHardViolations);
@@ -473,5 +499,49 @@ public class ResultSaver {
 
 
     }
+
+    public void teacherTimesToJson() throws IOException {
+        Pair<List<Lesson>, List<Lesson>> extracted = extractLessons();
+        //we only consider lessons that don't violate any hard constraints as actually being scheduled
+        List<Lesson> lsWithNoHard = extracted.getKey();
+
+        Map<String, List<Map<String, String>>> res = new HashMap<>();
+        for(Lesson lesson: lsWithNoHard){
+            final String teacherName = lesson.getTeacherObj().getName();
+            if(!res.containsKey(teacherName)) res.put(teacherName, new ArrayList<>());
+            List<Map<String, String>> teacherMap = res.get(teacherName);
+            teacherMap.addAll(lesson.toJson());
+        }
+
+        Scanner retryScanner = new Scanner(System.in);
+        boolean retryAllowed = true;
+
+
+        //try to save json to file
+        while (true) {
+            try {
+                DateTimeFormatter JSON_FILE_TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String FILE_NAME = "times_" + LocalDateTime.now().format(JSON_FILE_TIMESTAMP) + ".json";
+                ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+                        .enable(SerializationFeature.INDENT_OUTPUT);
+                Path outputDir = Paths.get("generated");
+                Path target = outputDir.resolve(FILE_NAME);
+                Files.createDirectories(outputDir);
+                OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(target.toFile(), res);
+                LOGGER.info("Teacher schedule saved to JSON: {}", target);
+                break;
+            } catch (IOException e) {
+                if (!retryAllowed) {
+                    LOGGER.error("Still unable to write JSON after retry: {}", e.getMessage());
+                    throw e;
+                }
+                LOGGER.warn("Unable to write teacher JSON (it might be open elsewhere): {}", e.getMessage());
+                System.out.println("Press Enter once the file is closed, then the JSON write will be retried.");
+                retryScanner.nextLine();
+                retryAllowed = false;
+            }
+        }
+    }
+
 
 }

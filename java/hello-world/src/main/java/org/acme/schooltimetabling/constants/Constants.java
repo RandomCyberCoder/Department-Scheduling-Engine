@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,6 +24,10 @@ import java.util.stream.Stream;
  * fit anywhere else, like a class.
  */
 public class Constants {
+    /**
+     * Global time formatter
+     */
+    public static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mma");
     /**
     * Set to True for testing. Helps by pass some checks
     * */
