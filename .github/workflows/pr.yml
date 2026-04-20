@@ -1,0 +1,30 @@
+name: Qualtiy Assurance
+
+on: [pull_request]
+
+jobs:
+  quality-assurance:
+    name: django-quality-assurance
+    runs-on: ubuntu-latest
+    container: python:3.13
+
+    #services not needed
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 2.2.1
+
+      - name: Install dependencies with Poetry
+        working-directory: backend
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-ansi
+
+      - name: Run Django tests
+        working-directory: backend/django_backend/scheduling_backend
+        run: poetry run python manage.py test -v2

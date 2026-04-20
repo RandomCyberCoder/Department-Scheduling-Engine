@@ -7,8 +7,10 @@
 ### Development
 
 - [ ] The changes have been covered with tests, if necessary.
-- [ ] You have a green build, with the exception of the flaky tests.
-- 
+- [ ] You have a green build
+- [ ] Backend tests passed
+
 ### Code Review
 
-- [ ] Review code if possible
+- [ ] This pull request includes an explanatory title and description.
+- [ ] The GitHub issue is linked if necessary
