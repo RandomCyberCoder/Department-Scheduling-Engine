@@ -36,12 +36,17 @@ services:
     container_name: django_service
     image: django_custom:latest
     build: 
-      context: ./django_backend
+      context: ./
       dockerfile: ./django_backend/Dockerfile
     ports:
       - "8002:8000"
     volumes:
-      - ./django_backend/scheduling_backend:/app/scheduling_backend
+      - ./django_backend/scheduling_backend:/django_backend/scheduling_backend
+    networks:
+      - scheduling
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres-service
 
 
 
