@@ -270,7 +270,7 @@ def survey_file_upload(request: Request) -> Response:
             survey_serializer.is_valid(raise_exception=True)
             survey_serializer.save()
             success.append({"msg": "teacher",
-                            "suvey_id": survey_serializer.data["id"],
+                            "survey_id": survey_serializer.data["id"],
                             "creation": potential is None,
                             "teacher_file_idx": idx,
                             "teacher": teacher_serializer.data})
