@@ -22,7 +22,7 @@ import org.acme.schooltimetabling.helperClasses.ParseInput;
 import java.util.*;
 
 public class TimetableApp {
-
+//TODO andrea schuman name udpate in excel file, update in the db as well or at least check over this
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableApp.class);
     private static final String YAML_FILE_PATH = "constants/config.yaml";
     private static final boolean PRINT_DETAILED_SUMMARY = true;

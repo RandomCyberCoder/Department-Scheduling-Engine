@@ -4,6 +4,7 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -18,6 +19,7 @@ public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
+    private static final Map<String, List<Map<String, String>>> PRESCHED_TIMES = ParseInput.readPrescheduledFile();
     /**
      * Keeps track of the next available section number available for a course
      */
@@ -180,12 +182,28 @@ public class LessonGenerator extends Generator{
         if(teacher == null){
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s'. Most likely due to them not having" +
-                        " a survey filled out;" +
+                        " a survey filled out or old noncanon-canon mapping is used;" +
                         "Creating one for them with now with no conflict, pref, or acceptable times.", teacherName));
             }
 
             //create teacher object
             teacher = noSurveyTeacher(teacherName);
+
+            //add prescheduled times if possible
+            if(PRESCHED_TIMES.containsKey(teacherName)){
+                LOGGER.info(String.format("Found a prescheduled time for '%s'. Adding the time to their conflict bitset.",
+                        teacherName));
+
+                try {
+                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.get(teacherName));
+                    teacher.getAcceptable().andNot(addConflict);
+                    teacher.getPreferences().andNot(addConflict);
+                    teacher.getConflict().or(addConflict);
+                } catch (Exception e) {
+                    LOGGER.info("Couldn't parse prescheduled times for '{}' because of error: '{}'",
+                            teacherName, e.getMessage());
+                }
+            }
 
             teacherHashMap.put(teacherName, teacher);
         }

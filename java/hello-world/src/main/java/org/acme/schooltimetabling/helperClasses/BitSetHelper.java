@@ -1,10 +1,12 @@
 package org.acme.schooltimetabling.helperClasses;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Map;
@@ -186,5 +188,29 @@ public class BitSetHelper {
         }
 
         return bitset;
+    }
+
+
+    public static BitSet timeJsonToBs(Map<String, String> time) {
+        if (time == null || time.get("day") == null || time.get("start") == null || time.get("end") == null) {
+            throw new IllegalArgumentException("Time map must contain day, start, and end");
+        }
+        LocalTime start = LocalTime.parse(time.get("start"), Constants.TIME_FMT);
+        LocalTime end = LocalTime.parse(time.get("end"), Constants.TIME_FMT);
+        LocalTime earliest = LocalTime.of(7, 0);
+        LocalTime latest = LocalTime.of(22, 0);
+        if (start.isBefore(earliest) || end.isAfter(latest) || !end.isAfter(start)) {
+            throw new IllegalArgumentException("Times must be between 7:00AM and 10:00PM and end after start");
+        }
+        if ((start.getMinute() % 30) != 0 || (end.getMinute() % 30) != 0) {
+            throw new IllegalArgumentException("Times must fall exactly on the hour or half-hour");
+        }
+        Days day = Days.valueOf(time.get("day").toUpperCase());
+        int startBlock = (int) ChronoUnit.MINUTES.between(earliest, start) / 30;
+        int endBlock = (int) ChronoUnit.MINUTES.between(earliest, end) / 30;
+        int dayOffset = DAY_OFFSET.get(day);
+        BitSet bitSet = new BitSet();
+        bitSet.set(dayOffset + startBlock, dayOffset + endBlock);
+        return bitSet;
     }
 }
