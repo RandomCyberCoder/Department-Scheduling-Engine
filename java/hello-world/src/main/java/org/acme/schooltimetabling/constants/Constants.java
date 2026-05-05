@@ -138,7 +138,6 @@ public class Constants {
             List<String> introCourses = List.of("csc1001", "csc2002", "csc2050");
             Set<String> introRooms = Set.of("Room 301", "Room 302", "Room 232A");
 
-            //TODO non_sec_courses
             List<String> non_sec_courses = List.of("csc2050", "csc3300");
             Set<String> non_sec_rooms = Set.of("Room 301", "Room 302", "Room 232A", "Room 255", "Room 256", "Room 257",
                     "Room 20-127");
@@ -247,7 +246,7 @@ public class Constants {
 
         FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
 
-        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_new.xlsx");
+        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/name_mappings.xlsx");
     }
 
     private Constants(){

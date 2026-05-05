@@ -44,7 +44,7 @@
 <!--        adding entity tabu helps a lot, the lower, the better. Using entity size rather than ratio is better
             from my experiments. Upon the semester switch adding tabu could harm the solution quality-->
 <!--            <entityTabuSize>1</entityTabuSize>-->
-            <simulatedAnnealingStartingTemperature>3hard/10medium/30soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>2hard/10medium/20soft</simulatedAnnealingStartingTemperature>
         </acceptor>
 
 <!--    from experiments, the lower this number the better, but too low seems to end up in hard constraints violated-->
