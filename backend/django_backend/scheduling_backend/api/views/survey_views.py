@@ -231,8 +231,8 @@ def survey_file_upload(request: Request) -> Response:
             #find a teacher entity for given name (assumes name is non_canon)
             query_gen_dict = {"non_canon": SURVEY_NAME}
             #NOTE beard said he would email fields
-            if(data["email"] != ""):
-                query_gen_dict["email"] = data["email"] 
+            # if(data["email"] != ""):
+            #     query_gen_dict["email"] = data["email"] 
             #raises an exception if nothing is found
             teacher = find_teacher(**query_gen_dict)
             teacher_serializer = TeacherSerializer(teacher)
