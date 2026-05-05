@@ -4,9 +4,9 @@ prevTerm: "2264"
 seasonTerm: "fall"
 testing: false
 useApi: true
+aggressiveChoice: "AGGRESSIVE_PENALTY"
 # ------- Optional -------
 # this setting changes how we model the PrimeTime constraint
-aggressiveChoice: "AGGRESSIVE_PENALTY"
 compressStart: "7:00AM"
 compressEnd: "6:00PM"
 prescheduledFileName: "PrescheduledTimes_ExampleFile.example.json"

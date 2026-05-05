@@ -72,34 +72,36 @@ public class ScheduleConfig {
             Yaml yaml = new Yaml();
             HOLDER.scheduleConfig = yaml.loadAs(inputStream, ScheduleConfig.class);
 
-            //BitSet setup for times we want to compress into
-            EnumSet<Days> MTWRF = EnumSet.allOf(Days.class);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
-            LocalTime startTime = LocalTime.parse(HOLDER.scheduleConfig.compressStart, formatter);
-            LocalTime endTime = LocalTime.parse(HOLDER.scheduleConfig.compressEnd, formatter);
-            //normalize times
-            startTime = roundToNearestHalfHour(startTime);
-            endTime = roundToNearestHalfHour(endTime);
-            if(startTime.isAfter(endTime)){
-                LOGGER.error("The start time for the compressed start is after the end time; Exiting program");
-                System.exit(1);
-            }
-            //get number of 30 minute blocks
-            long numBlcks = Duration.between(startTime,endTime).toMinutes() / 30;
-            final int bsSizeRep = 150;
-            BitSet buildCmprsIn = new BitSet(bsSizeRep);
-            buildCmprsIn.or(BitSetHelper.timeSlotBitSet(startTime, (int) numBlcks, MTWRF));
-            BitSet buildCmprsOut = (BitSet) buildCmprsIn.clone();
-            buildCmprsOut.flip(0, bsSizeRep);
+            if(HOLDER.scheduleConfig.compressStart != null && HOLDER.scheduleConfig.compressEnd != null) {//BitSet setup for times we want to compress into
+                EnumSet<Days> MTWRF = EnumSet.allOf(Days.class);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
+                LocalTime startTime = LocalTime.parse(HOLDER.scheduleConfig.compressStart, formatter);
+                LocalTime endTime = LocalTime.parse(HOLDER.scheduleConfig.compressEnd, formatter);
+                //normalize times
+                startTime = roundToNearestHalfHour(startTime);
+                endTime = roundToNearestHalfHour(endTime);
+                if (startTime.isAfter(endTime)) {
+                    LOGGER.error("The start time for the compressed start is after the end time; Exiting program");
+                    System.exit(1);
+                }
+                //get number of 30 minute blocks
+                long numBlcks = Duration.between(startTime, endTime).toMinutes() / 30;
+                final int bsSizeRep = 150;
+                BitSet buildCmprsIn = new BitSet(bsSizeRep);
+                buildCmprsIn.or(BitSetHelper.timeSlotBitSet(startTime, (int) numBlcks, MTWRF));
+                BitSet buildCmprsOut = (BitSet) buildCmprsIn.clone();
+                buildCmprsOut.flip(0, bsSizeRep);
 
-            HOLDER.scheduleConfig.cpmrsInBs = buildCmprsIn;
-            HOLDER.scheduleConfig.cmprsOutBs = buildCmprsOut;
+                HOLDER.scheduleConfig.cpmrsInBs = buildCmprsIn;
+                HOLDER.scheduleConfig.cmprsOutBs = buildCmprsOut;
+            }
         } catch (Exception e){
             final int PROGRAM_FAILURE = 1;
             LOGGER.error("Program is terminating. Couldn't read the yaml file");
             LOGGER.error(String.format("Program assumes yaml file is located at '%s' int the resources directory",
                     yamlPath));
             LOGGER.error(String.format("Related error: %s", e.getMessage()));
+            e.printStackTrace();
             System.exit(PROGRAM_FAILURE);
         }
     }
