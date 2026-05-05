@@ -247,7 +247,7 @@ public class Constants {
 
         FACULTY_LAST_NAMES = ParseInput.getFaculty("constants/faculty_website_list.tsv");
 
-        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/faculty_names_new.xlsx");
+        TEACHER_NAME_TO_CANON = getInstructorNameMapping("constants/name_mappings.xlsx");
     }
 
     private Constants(){
