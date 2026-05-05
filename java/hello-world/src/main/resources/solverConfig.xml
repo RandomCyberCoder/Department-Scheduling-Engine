@@ -11,7 +11,7 @@
     <!--stricter modes cause the solver to become slower, but can be used in dev for error-detection;
     use NON_REPRODUCIBLE if you don't reproducibility. For dev use PHASE_ASSERT (the default) or just comment
      out the environment mode; see https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/running-the-solver#environmentModeBestPractices-->
-    <environmentMode>NON_REPRODUCIBLE</environmentMode>
+<!--    <environmentMode>NON_REPRODUCIBLE</environmentMode>-->
     <termination>
         <secondsSpentLimit>100</secondsSpentLimit>
     </termination>

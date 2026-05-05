@@ -262,6 +262,9 @@ public class ResultSaver {
      * Helper function to print out every lesson
      */
     private int listViewPrntHlpr(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx) {
+
+        lessons = sortLessons(lessons);
+
         for(Lesson lesson: lessons){
             final Timeslot lsTs = lesson.getTimeslot();
             Timeslot.test_minSetUp("1");
@@ -289,6 +292,9 @@ public class ResultSaver {
      * list view helper for printing out the skipped lessons
      */
     private int listViewSkipHelper(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx){
+
+        lessons = sortLessons(lessons);
+
         for(Lesson lesson: lessons){
             Row row = listSheet.createRow(rowIdx++);
             Object[] vals = new Object[]{lesson.getCourseName(), "N/A", lesson.getModifiers(),
@@ -317,6 +323,22 @@ public class ResultSaver {
             }
         }
     }
+
+
+    private List<Lesson> sortLessons(List<Lesson> list){
+        //sort the list so it look neat to look at; sort by course name
+        //make the list mutable for sorting
+        List<Lesson> toSort = new ArrayList<>(list);
+        toSort.sort((a, b) -> {
+            String nameA = a.getCourseName();
+            String nameB = b.getCourseName();
+
+            return nameA.compareTo(nameB);
+        });
+
+        return toSort;
+    }
+
 
     /**
      * driver function for printing out the teacher view Excel sheet
