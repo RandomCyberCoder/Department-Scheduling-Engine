@@ -4,6 +4,7 @@ import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -12,7 +13,12 @@ import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 
 @PlanningEntity(difficultyComparatorClass = LessonComparator.class)
 //@PlanningEntity(comparator = LessonComparator.class)
@@ -37,7 +43,6 @@ public class Lesson {
     public boolean hasLecture, hasLabAct;
     public int lecHours, labActHours;
     public Teacher teacherObj;
-    private Integer linker = null;
 
 
     @PlanningVariable
@@ -55,38 +60,16 @@ public class Lesson {
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
 
     /* Test factory methods */
-
-    /**
-     * No linker
-     */
     public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                             String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
                 , timeslot, room);
     }
-    /**
-     * with linker
-     */
-    public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
-                                          String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room,
-                                          Integer linker){
-        return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
-                , timeslot, room, linker);
-    }
 
     /* Test constructor(s)*/
 
     private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
-                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room, Integer linker){
-        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
-                , timeslot, room);
-        this.linker = linker;
-    }
-
-    private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
-//        /*calling normal constructor used during setup*/
-//        this(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj, null);
         /*the courseConfig stream is assumed to come in the format
          * E-L-A where E is the number of lecture units, L is the number of
          * lab units, and A is the number of activity units */
@@ -131,7 +114,7 @@ public class Lesson {
      * @param teacherObj teacher object associated with the <i>teacherName</i>
      */
     public Lesson(String Id, int lecSection, String courseName, String modifiers,
-                  String courseConfig, Teacher teacherObj, Integer linker){
+                  String courseConfig, Teacher teacherObj){
         /*the courseConfig stream is assumed to come in the format
         * E-L-A where E is the number of lecture units, L is the number of
         * lab units, and A is the number of activity units */
@@ -156,7 +139,6 @@ public class Lesson {
         /*TODO check if we can delete this field*/
         this.teacherName = teacherObj.getName();
         this.modifiers = modifiers;
-        this.linker = linker;
     }
 
     /**
@@ -250,10 +232,6 @@ public class Lesson {
         return teacherObj;
     }
 
-    public Integer getLinker(){
-        return linker;
-    }
-
     public boolean isStudio(){
         return Constants.STUDIO_STYLE_COURSES.contains(this.courseName);
     }
@@ -312,5 +290,36 @@ public class Lesson {
         copy.or(timeslot.getLabActBitSet());
         copy.and(ScheduleConfig.getCompressOutMask());
         return copy;
+    }
+
+    public List<Map<String, String>> toJson(){
+        List<Map<String, String>> res = new ArrayList<>();
+        if (timeslot == null) {
+            return res;
+        }
+
+        BitSet schedule = new BitSet();
+        schedule.or(timeslot.getAllTimesBitSet());
+        LocalTime BASE_TIME = LocalTime.of(7, 0);
+
+        for (Days day : Days.values()) {
+            int offset = BitSetHelper.DAY_OFFSET.get(day);
+            BitSet dayBits = schedule.get(offset, offset + BitSetHelper.MAX_BITS_PER_DAY);
+            int start = dayBits.nextSetBit(0);
+            while (start != -1) {
+
+                int end = dayBits.nextClearBit(start) - 1;
+                LocalTime startTime = BASE_TIME.plusMinutes(start * 30L);
+                LocalTime endTime = BASE_TIME.plusMinutes((end + 1) * 30L);
+                res.add(Map.of(
+                        "day", day.name(),
+                        "start", startTime.format(Constants.TIME_FMT),
+                        "end", endTime.format(Constants.TIME_FMT)
+                ));
+                start = dayBits.nextSetBit(end + 1);
+            }
+        }
+
+        return res;
     }
 }

@@ -1,26 +1,36 @@
 package org.acme.schooltimetabling.helperClasses;
+import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.BitSet;
 import java.util.EnumSet;
+import java.util.Map;
 
 public class BitSetHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(BitSetHelper.class);
-    private static final int MONDAY_OFFSET = 0;
-    private static final int TUESDAY_OFFSET = 30;
-    private static final int WEDNESDAY_OFFSET = 60;
-    private static final int THURSDAY_OFFSET = 90;
-    private static final int FRIDAY_OFFSET = 120;
+    public static final int MONDAY_OFFSET = 0;
+    public static final int TUESDAY_OFFSET = 30;
+    public static final int WEDNESDAY_OFFSET = 60;
+    public static final int THURSDAY_OFFSET = 90;
+    public static final int FRIDAY_OFFSET = 120;
     private static final int NUM_OF_BITS = 150;
     private static final int PRIME_TIME_DAY_START_OFFSET = 4;
     private static final int PRIME_TIME_DAY_END_OFFSET = 16;
-    private static final int MAX_BITS_PER_DAY = 30;
+    public static final int MAX_BITS_PER_DAY = 30;
     public static final BitSet NON_PRIME_TIME_MASK;
     public static final BitSet PRIME_TIME_MASK;
+    public static final Map<Days, Integer> DAY_OFFSET = Map.of(
+            Days.MONDAY, BitSetHelper.MONDAY_OFFSET,
+            Days.TUESDAY, BitSetHelper.TUESDAY_OFFSET,
+            Days.WEDNESDAY, BitSetHelper.WEDNESDAY_OFFSET,
+            Days.THURSDAY, BitSetHelper.THURSDAY_OFFSET,
+            Days.FRIDAY, BitSetHelper.FRIDAY_OFFSET
+    );
 
     static {
         PRIME_TIME_MASK = new BitSet();
@@ -178,5 +188,29 @@ public class BitSetHelper {
         }
 
         return bitset;
+    }
+
+
+    public static BitSet timeJsonToBs(Map<String, String> time) {
+        if (time == null || time.get("day") == null || time.get("start") == null || time.get("end") == null) {
+            throw new IllegalArgumentException("Time map must contain day, start, and end");
+        }
+        LocalTime start = LocalTime.parse(time.get("start"), Constants.TIME_FMT);
+        LocalTime end = LocalTime.parse(time.get("end"), Constants.TIME_FMT);
+        LocalTime earliest = LocalTime.of(7, 0);
+        LocalTime latest = LocalTime.of(22, 0);
+        if (start.isBefore(earliest) || end.isAfter(latest) || !end.isAfter(start)) {
+            throw new IllegalArgumentException("Times must be between 7:00AM and 10:00PM and end after start");
+        }
+        if ((start.getMinute() % 30) != 0 || (end.getMinute() % 30) != 0) {
+            throw new IllegalArgumentException("Times must fall exactly on the hour or half-hour");
+        }
+        Days day = Days.valueOf(time.get("day").toUpperCase());
+        int startBlock = (int) ChronoUnit.MINUTES.between(earliest, start) / 30;
+        int endBlock = (int) ChronoUnit.MINUTES.between(earliest, end) / 30;
+        int dayOffset = DAY_OFFSET.get(day);
+        BitSet bitSet = new BitSet();
+        bitSet.set(dayOffset + startBlock, dayOffset + endBlock);
+        return bitSet;
     }
 }

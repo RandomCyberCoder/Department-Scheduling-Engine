@@ -36,13 +36,15 @@
     <localSearch>
 <!--    terminate after all hard constraints are solved, with any medium or soft score-->
         <termination>
+            <terminationCompositionStyle>OR</terminationCompositionStyle>
             <bestScoreLimit>0hard/*medium/*soft</bestScoreLimit>
+            <unimprovedSecondsSpentLimit>30</unimprovedSecondsSpentLimit>
         </termination>
         <acceptor>
 <!--        adding entity tabu helps a lot, the lower, the better. Using entity size rather than ratio is better
             from my experiments. Upon the semester switch adding tabu could harm the solution quality-->
 <!--            <entityTabuSize>1</entityTabuSize>-->
-            <simulatedAnnealingStartingTemperature>2hard/10medium/30soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>3hard/10medium/30soft</simulatedAnnealingStartingTemperature>
         </acceptor>
 
 <!--    from experiments, the lower this number the better, but too low seems to end up in hard constraints violated-->
@@ -68,7 +70,7 @@
 <!--            <entityTabuSize>1</entityTabuSize>-->
 <!--            &lt;!&ndash;using a ration for the values throws an error currently&ndash;&gt;-->
 <!--            <valueTabuSize>3</valueTabuSize>-->
-            <simulatedAnnealingStartingTemperature>2hard/5medium/5soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>3hard/5medium/5soft</simulatedAnnealingStartingTemperature>
         </acceptor>
         <forager>
             <acceptedCountLimit>10</acceptedCountLimit>

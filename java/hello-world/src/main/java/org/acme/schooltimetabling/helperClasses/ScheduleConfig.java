@@ -27,6 +27,7 @@ public class ScheduleConfig {
     public boolean useApi;
     public String compressStart;
     public String compressEnd;
+    public String prescheduledFileName;
     //------------ values calculated ------------
     private BitSet cpmrsInBs;
     private BitSet cmprsOutBs;
@@ -146,5 +147,10 @@ public class ScheduleConfig {
     public static BitSet getCompressOutMask() {
         if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
         return HOLDER.scheduleConfig.cmprsOutBs;
+    }
+
+    public static String getPrescheduledFileName(){
+        if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
+        return HOLDER.scheduleConfig.prescheduledFileName;
     }
 }

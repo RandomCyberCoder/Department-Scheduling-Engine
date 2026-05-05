@@ -1,8 +1,10 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -17,6 +19,7 @@ public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
+    private static final Map<String, List<Map<String, String>>> PRESCHED_TIMES = ParseInput.readPrescheduledFile();
     /**
      * Keeps track of the next available section number available for a course
      */
@@ -26,7 +29,6 @@ public class LessonGenerator extends Generator{
      * available lesson ID rather than using this attribute directly.
      */
     private static int lessonID = 1;
-    private static int availableLinkerID = 1;
     private static List<Lesson> skippedLessons = new ArrayList<>();
 
     static {
@@ -133,7 +135,6 @@ public class LessonGenerator extends Generator{
      */
     private static Lesson generateLesson(Map<String, Teacher> teacherHashMap, Map<String, Integer> courseSectionCounter,
             String course, String teacherName){
-        final Integer NO_LESSON_LINKER = null;
         String courseConfig;
         boolean hasLabOrAct;
         int sectionNumber;
@@ -159,7 +160,7 @@ public class LessonGenerator extends Generator{
 
         /*create class*/
         return new Lesson(Integer.toString(nxtLessonID()), sectionNumber, courseName,
-                courseModifier, courseConfig,  teacher, NO_LESSON_LINKER);
+                courseModifier, courseConfig,  teacher);
     }
 
 
@@ -181,12 +182,28 @@ public class LessonGenerator extends Generator{
         if(teacher == null){
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s'. Most likely due to them not having" +
-                        " a survey filled out;" +
+                        " a survey filled out or old noncanon-canon mapping is used;" +
                         "Creating one for them with now with no conflict, pref, or acceptable times.", teacherName));
             }
 
             //create teacher object
             teacher = noSurveyTeacher(teacherName);
+
+            //add prescheduled times if possible
+            if(PRESCHED_TIMES.containsKey(teacherName)){
+                LOGGER.info(String.format("Found a prescheduled time for '%s'. Adding the time to their conflict bitset.",
+                        teacherName));
+
+                try {
+                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.get(teacherName));
+                    teacher.getAcceptable().andNot(addConflict);
+                    teacher.getPreferences().andNot(addConflict);
+                    teacher.getConflict().or(addConflict);
+                } catch (Exception e) {
+                    LOGGER.info("Couldn't parse prescheduled times for '{}' because of error: '{}'",
+                            teacherName, e.getMessage());
+                }
+            }
 
             teacherHashMap.put(teacherName, teacher);
         }
@@ -291,76 +308,6 @@ public class LessonGenerator extends Generator{
     }
 
 
-
-
-    /** NOTE this not how true studios should be handled
-     * Studio style helper to create special lessons for the studio style courses
-     * @param name name of the course (i.e. csc457)
-     * @param modifier course modifier; if none present use them empty string
-     * @param config configuration to use for the split
-     * @param teacher instructor teaching the course
-     * @return a studio style course split into a lecture and either a lab or activity lesson; First element is the
-     *  lecture lesson
-     */
-    private static Pair<Lesson, Lesson> studioHelper(String name, String modifier, String config, Teacher teacher){
-        //leaving out while proper studio implementation
-        if(true) throw new UnsupportedOperationException("This is not what a proper studio is. This implementation actually" +
-                " is a nice to have.");
-        /* units lecture-lab-activity */
-        final int LECTURE = 0;
-        final int LAB = 1;
-        final int ACT = 2;
-        String[] configParsed = config.split("-");
-        int lecUnits = Integer.parseInt(configParsed[LECTURE]);
-        int labUnits = Integer.parseInt(configParsed[LAB]);
-        int actUnits = Integer.parseInt(configParsed[ACT]);
-
-        String newConfig;
-        int idToUse;
-        int sectionNumber;
-
-        //debug comments
-        if(lecUnits == 0) {
-            LOGGER.error(String.format("studio style course '%s' has no lecture; implement logic for this", name));
-            return null;
-        }
-        if(labUnits == 0 && actUnits == 0){
-            LOGGER.error(String.format("studio style course '%s' has no lab or activity; implement logic for this. " +
-                    "I don't think this is possible though", name));
-            return null;
-        }
-
-        /*TODO: I could have sworn I saw a studio style course that had no lecture. If this is possible,
-         *  then we will make a course with only a lecture or activity sort of like a normal course but force
-         *  studio space to be all on the same day continuously*/
-        /*Assuming studio style courses have a lecture and either a lab or activity*/
-        /*create a lesson for the lecture portion*/
-        final int LINKER_ID = nxtLinkerID();
-        newConfig = String.format("%d-0-0", lecUnits);
-        sectionNumber = COURSE_SECTION_COUNTER.get(name);
-        COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        Lesson lecLesson = new Lesson(Integer.toString(nxtLessonID()), sectionNumber, name
-                , modifier, newConfig, teacher, LINKER_ID);
-
-
-        /*create a lesson for the lab or activity portion of the course*/
-        if(labUnits > 0){
-            newConfig = String.format("0-%d-0", labUnits);
-        }
-        else{
-            newConfig = String.format("0-0-%d", actUnits);
-        }
-        sectionNumber = COURSE_SECTION_COUNTER.get(name);
-        COURSE_SECTION_COUNTER.replace(name, sectionNumber + 1);
-        Lesson labActLesson = new Lesson(Integer.toString(nxtLessonID()), sectionNumber, name
-                , modifier, newConfig, teacher, LINKER_ID);
-
-        return new Pair<>(lecLesson, labActLesson);
-    }
-
-
-
-
     /**
      * This function is used to create a teacher object during lesson creation if a teacher object can't be found
      * for the name. It will return a faculty object if the person is found to be a faculty member. Note that the object
@@ -378,10 +325,12 @@ public class LessonGenerator extends Generator{
         if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
             LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
                     , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
+                    Preference.NEUTRAL);
         }
 
-        return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+        return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
+                Preference.NEUTRAL);
     }
 
 
@@ -416,17 +365,6 @@ public class LessonGenerator extends Generator{
         return lessonID++;
     }
 
-
-
-
-    /**
-     * Helper function to ensure the {@link #availableLinkerID} is updated when the current linker ID is used.
-     * Note that only one ID should be used per a pair of lecture and lab/act.
-     * @return give the next available linker
-     */
-    private static int nxtLinkerID(){
-            return availableLinkerID++;
-    }
 
     public static List<Lesson> getSkippedLessons(){ return skippedLessons; }
 

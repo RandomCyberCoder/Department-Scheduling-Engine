@@ -63,48 +63,4 @@ public class TestLessons {
                 }));
     }
 
-    //Note this test is currently not applicable using a different definition of a studio style course
-    @Disabled
-    @Test
-    @DisplayName("Check studio courses")
-    void checkStudio(){
-        //set once the pair has been verified
-        Set<Integer> linked = new HashSet<>();
-        //holds lesson whose pair needs to be found
-        Map<Integer, Lesson> findPair = new HashMap<>();
-        assertAll("Loop checking all potential studio style courses",
-                lessonList.stream()
-                        .filter(lesson ->
-                                Constants.STUDIO_STYLE_COURSES.contains(lesson.courseName.toLowerCase())
-                        )
-                        .map(lesson -> (Executable) () -> {
-                            //checks for a specific lesson
-                            assertAll("Checking studio course",
-                                    //checks that studio courses have a link
-                                    () -> assertNotNull(lesson.getLinker()),
-                                    //check if lesson's link has a pair already
-                                    () -> assertFalse(linked.contains(lesson.getLinker())),
-                                    //check for pair
-                                    () -> assertTrue(() -> {
-                                        Lesson prev = findPair.getOrDefault(lesson.getLinker(), null);
-                                        if(prev != null){
-                                            //make sure the one lesson is lab/act and the other is the lecture
-                                            if(prev.hasLecture == lesson.hasLecture
-                                                    || prev.hasLabAct == lesson.hasLabAct) return false;
-                                            else{
-                                                //if pair has been validated add it to paired lesson verified
-                                                linked.add(lesson.getLinker());
-                                                return true;
-                                            }
-                                        }
-                                        else{
-                                            findPair.put(lesson.getLinker(), lesson);
-                                            return true;
-                                        }
-                                    })
-
-                            );
-                }).toList());
-    }
-
 }

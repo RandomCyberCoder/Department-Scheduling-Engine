@@ -5,6 +5,7 @@ import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -25,9 +26,8 @@ public class TeacherGenerator extends Generator{
      *
      * @return A Map mapping a teacher's canon name to their teacher object
      */
-    public static Map<String, Teacher> teacherGenDriver() throws Exception{
-        String YAML_FILE_PATH = "constants/config.yaml";
-        ScheduleConfig.loadConfig(YAML_FILE_PATH);
+    public static Map<String, Teacher> teacherGenDriver(){
+        ScheduleConfig.loadConfig("constants/config.yaml");
         Map<String, Teacher> teacherMap = new HashMap<>();
         boolean success = false;
         if(ScheduleConfig.isUseApi()){
@@ -39,6 +39,7 @@ public class TeacherGenerator extends Generator{
                 }
                 else{
                     for(SurveyRecord surveyRecord: surveys){
+                        //just make getTEacherRecord the only one called
                         surveyRecord.toTeacher();
                         TeacherRecord teacherRecord = surveyRecord.getTeacherRecord();
                         teacherMap.put(teacherRecord.getCanon(), surveyRecord.toTeacher());
@@ -92,6 +93,12 @@ public class TeacherGenerator extends Generator{
             LOGGER.info("Creating teacher objects from files");
             /*teacher name -> teacher object*/
             teacherMap = TeacherGenerator.generateTeachers(curQuarterSurveys, prevQuarterSurveys);
+        }
+
+        if(ScheduleConfig.getPrescheduledFileName() != null){
+            LOGGER.info("Reading in prescheduled time file");
+            Map<String, List<Map<String, String>>> preschedTimes = ParseInput.readPrescheduledFile();
+            if(!preschedTimes.isEmpty()) prescheduleUpdate(teacherMap, preschedTimes);
         }
 
         return teacherMap;
@@ -171,7 +178,7 @@ public class TeacherGenerator extends Generator{
         }
 
         //go through teachers that didn't bleed and notify
-        if(!teacherBleed.keySet().isEmpty()){
+        if(!teacherBleed.isEmpty()){
             StringBuilder names = new StringBuilder();
             for(String teacherName: teacherBleed.keySet()){
                 names.append(String.format("%s; ", teacherName));
@@ -245,12 +252,48 @@ public class TeacherGenerator extends Generator{
         }
 
         String[] splitName = canonName.split(",");
-
+        Preference pref = Preference.parsePref(surveyEntry.get("gap"));
         if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
             LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
-            return new Faculty(getNextTeacherID(), instructorName, preferred, acceptable, conflicts);
+            return new Faculty(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
         }
-        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts);
+        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
+    }
+
+    //TODO note to update the teachers that get made on the fly if their teacher object is not found
+    private static void prescheduleUpdate(Map<String, Teacher> teacherMap, Map<String, List<Map<String, String>>> presched){
+        Iterator<Map.Entry<String, List<Map<String, String>>>> iterator = presched.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, List<Map<String, String>>> entry = iterator.next();
+            String name = entry.getKey();
+            Teacher teacher = teacherMap.get(name);
+            if (teacher == null) continue;
+
+            try {
+                BitSet addConflict = createPreschedBs(entry.getValue());
+                teacher.getAcceptable().andNot(addConflict);
+                teacher.getPreferences().andNot(addConflict);
+                teacher.getConflict().or(addConflict);
+                iterator.remove(); // safe removal while iterating
+            } catch (Exception e) {
+                LOGGER.info("Couldn't parse prescheduled times for '{}' because of error: '{}'",
+                        name, e.getMessage());
+            }
+        }
+
+        if(!presched.isEmpty()){
+            LOGGER.info("When updating teachers with their prescheduled conflicts, the following teachers " +
+                    "had no corresponding object: {}", presched.keySet());
+        }
+    }
+
+    public static BitSet createPreschedBs(List<Map<String, String>> timeJson){
+        BitSet bs = new BitSet();
+        for(Map<String, String> time: timeJson){
+            bs.or(BitSetHelper.timeJsonToBs(time));
+        }
+
+        return bs;
     }
 
 
