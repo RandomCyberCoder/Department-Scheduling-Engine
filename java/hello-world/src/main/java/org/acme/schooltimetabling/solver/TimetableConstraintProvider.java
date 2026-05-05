@@ -575,6 +575,11 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Penalizing for being in prime time");
     }
 
+
+    /**
+     * This constraint is used when we choose the "Aggressive" version of the solver that aims to compress and REWARD
+     * time that is in the time interval specified in the configuration file
+     */
     Constraint inBestTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> lesson.maskInCmprs().cardinality() > 0)
@@ -582,6 +587,11 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Reward time in preferred time interval");
     }
 
+
+    /**
+     * This constraint is used when we choose the "Aggressive" version of the solver that aims to compress and PENALIZE
+     * time that is in the time interval specified in the configuration file
+     */
     Constraint outBestTime(ConstraintFactory constraintFactory){
         return constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> lesson.maskOutCmprs().cardinality() > 0)
