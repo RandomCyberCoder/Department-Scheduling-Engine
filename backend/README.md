@@ -46,3 +46,6 @@ Note that when using the command the db you connect to can't be scheduling. It m
 run the command 'docker exec -it postgres-service psql -U admin -d scheduling' to open connection and shell then type '\l' to see the available DBs.
 
 Note that when restoring to the scheduling database, you can't have any connection open to it.
+
+# Workflow
+test it
