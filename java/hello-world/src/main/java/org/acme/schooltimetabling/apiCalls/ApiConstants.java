@@ -7,7 +7,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiConstants {
-    public final static String baseUrl = "http://localhost:8000/api/";
+    public final static String baseUrl = "http://localhost:8002/api/";
     public final static Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(ApiConstants.baseUrl)
             .client(new OkHttpClient.Builder().build())

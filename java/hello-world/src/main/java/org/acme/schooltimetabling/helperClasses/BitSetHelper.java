@@ -66,7 +66,6 @@ public class BitSetHelper {
         /* Each hour has two 30-minute blocks*/
         final int HOUR_OFFSET = 2;
         BitSet bitSet = new BitSet();
-        //TODO so it's not so wierd of mapping values. Do math such as hour-7 and multiply by 2 to get offset
         int startHour = startTime.getHour();
         if(startHour < FIRST_POSSIBLE_HR || startHour > LST_POSSIBLE_HR) throw new RuntimeException(String.format(
                 "There was an error reading the time '%s'", startTime));

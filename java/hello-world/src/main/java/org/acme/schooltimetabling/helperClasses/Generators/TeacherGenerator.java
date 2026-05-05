@@ -260,14 +260,22 @@ public class TeacherGenerator extends Generator{
         return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
     }
 
-    //TODO note to update the teachers that get made on the fly if their teacher object is not found
+
     private static void prescheduleUpdate(Map<String, Teacher> teacherMap, Map<String, List<Map<String, String>>> presched){
         Iterator<Map.Entry<String, List<Map<String, String>>>> iterator = presched.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, List<Map<String, String>>> entry = iterator.next();
             String name = entry.getKey();
             Teacher teacher = teacherMap.get(name);
-            if (teacher == null) continue;
+            if (teacher == null){
+                teacher = new Teacher(getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
+                LOGGER.warn("Couldn't find a teacher object for {} during prescheduling setup; creating one...", name);
+                if(Constants.FACULTY_LAST_NAMES.contains(name.split(",")[0].strip())){
+                    LOGGER.info("promoting {} to faculty", name);
+                    teacher = new Faculty(teacher);
+                }
+                teacherMap.put(name, teacher);
+            }
 
             try {
                 BitSet addConflict = createPreschedBs(entry.getValue());
