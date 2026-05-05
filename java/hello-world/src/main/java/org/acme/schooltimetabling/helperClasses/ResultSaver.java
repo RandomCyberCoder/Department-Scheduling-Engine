@@ -262,6 +262,16 @@ public class ResultSaver {
      * Helper function to print out every lesson
      */
     private int listViewPrntHlpr(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx) {
+        //sort the list so it look neat to look at; sort by course name
+        //make the list mutable for sorting
+        lessons = new ArrayList<>(lessons);
+        lessons.sort((a, b) -> {
+            String nameA = a.getCourseName();
+            String nameB = b.getCourseName();
+
+            return nameA.compareTo(nameB);
+        });
+
         for(Lesson lesson: lessons){
             final Timeslot lsTs = lesson.getTimeslot();
             Timeslot.test_minSetUp("1");
