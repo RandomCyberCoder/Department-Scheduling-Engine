@@ -1,0 +1,18 @@
+[
+    {
+        "name": "LastName, FirstName",
+        "fall": [],
+        "spring": [
+            "cpe470"
+        ]
+    },
+    {
+        "name": "LastName2, FirstName2",
+        "fall": [
+            "cpe426"
+        ],
+        "spring": [
+            "cpe333"
+        ]
+    }
+]
