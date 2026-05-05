@@ -39,7 +39,7 @@ services:
       context: ./
       dockerfile: ./django_backend/Dockerfile
     ports:
-      - "8002:8000"
+      - "8002:8002"
     volumes:
       - ./django_backend/scheduling_backend:/django_backend/scheduling_backend
     networks:
