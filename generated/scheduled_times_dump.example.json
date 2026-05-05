@@ -1,0 +1,71 @@
+{
+  "LastName, FirstName": [
+    {
+      "start": "10:00AM",
+      "day": "MONDAY",
+      "end": "12:00PM"
+    },
+    {
+      "start": "10:00AM",
+      "day": "WEDNESDAY",
+      "end": "12:00PM"
+    },
+    {
+      "start": "10:00AM",
+      "day": "FRIDAY",
+      "end": "12:00PM"
+    },
+    {
+      "start": "4:00PM",
+      "day": "MONDAY",
+      "end": "6:00PM"
+    },
+    {
+      "start": "4:00PM",
+      "day": "WEDNESDAY",
+      "end": "6:00PM"
+    },
+    {
+      "start": "4:00PM",
+      "day": "FRIDAY",
+      "end": "6:00PM"
+    },
+    {
+      "start": "12:00PM",
+      "day": "MONDAY",
+      "end": "2:00PM"
+    },
+    {
+      "start": "12:00PM",
+      "day": "WEDNESDAY",
+      "end": "2:00PM"
+    },
+    {
+      "start": "12:00PM",
+      "day": "FRIDAY",
+      "end": "2:00PM"
+    }
+  ],
+  "LastName2, FirstName2": [
+    {
+      "start": "9:00AM",
+      "day": "MONDAY",
+      "end": "10:30AM"
+    },
+    {
+      "start": "9:00AM",
+      "day": "WEDNESDAY",
+      "end": "10:30AM"
+    },
+    {
+      "start": "11:00AM",
+      "day": "MONDAY",
+      "end": "1:00PM"
+    },
+    {
+      "start": "11:00AM",
+      "day": "WEDNESDAY",
+      "end": "1:00PM"
+    }
+  ]
+}
