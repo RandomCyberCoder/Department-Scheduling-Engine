@@ -1,51 +1,101 @@
 # Backend workspace
-This workspace is soley dedicated to the backend. The backend has the default settings for to give authentication using JWT tokens and all api endpoints by default have authentication by default. In other words, the access token provided will be needed for accessing all api endpoints unless the api endpoint explicitly disabled auth. Ontop of authentication, authorization is also enabled across all endpoints using role based access control (RBAC). 
+This workspace is soley dedicated to the backend. 
+The backend has the default settings to include authentication using JWT tokens on all api endpoints by default have authentication by default.
+In other words, the access token provided will be needed for accessing all api endpoints unless the api endpoint explicitly disabled auth. Ontop of authentication, authorization is also enabled across all endpoints using role based access control (RBAC). 
 
 Roles can be created, managed, and assigned through the django admin. Furthermore, users can be created and managed through the django admin.
 
-# Backend sevices setup
-All backend services can be quickly setup using the docker compose file. A .env file will be needed in this directory (backend) as show below. The optional values have defaults in the docker compose file. If you use your own values, the DB backup command will need slight changes. The pgadmin variables will be needed for logging into the pgadmin. The Postgres variables will be need to connect to the db. 
+This guide of the backend will assume that you have everything backend related already setup from the [README](../README.md) file in the repo root.
 
-The database has its own container built on the PostgreSQL image.
+# PostgreSQL DB
+The databse default name where everything is stored is called `scheduling` unless you otherwise specified in the `.env` file used when 
+creating the service.
 
-The backend has contiainer is built on a base python image.
+There are 3 main tables called `api_history`, `api_teacher`, and `api_survey`. 
+The `teaher` table contains information about the teachers.
+The `history` table keeps a record of names teachers have had before. This table has a many-to-one realtions ship to the `teacher` table.
+This `survey` table keeps a record of surveys a teacher has. This table has a many-to-one realtions ship to the `teacher` table.
+Note that when we are backing or restoring the DB we shouldn't have anything connected to the database
 
-The container used for monitoring is built using the PgAdmin image.
+The other tables you will encounter in the scheduling database are those setup by django to handle permissions and users.
 
-```
-#your .env file
-POSTGRES_PASSWORD=${PASSWORD:-yourPostgresPassword}
-PGADMIN_PASSWORD=${PASSWORD:-yourPgadminPassword}
+For information about the columns look at the pgAdmin [section](#pgadmin) to learn about inspecting the tables.
 
-#optional
-PGADMIN_EMAIL=......
-POSTGRES_USER=......
-POSTGRES_DB=......
-```
-# Backend documentation
-Another .env file will be needed from the backend. Location of this is basically wherever you launch the `manage.py` in `django_backend/scheduling_backend`. The `.env` file variables will be like the below.
-```
-#this is the .env file for django backend
-POSTGRES_PASSWORD=passwordFromDockerComposeFile
-POSTGRES_HOST=hostUrlOfPostgres
-```
-Api endpoint documentation is all in the Postman workspace.
-# Quick overview
-The api endpoint for getting tokens is {base_url}/api/token.
+__Backing up the DB__  
+`docker exec postgres-service pg_dump -Fc -U admin scheduling > db.dump`
 
-The teacher endpoints are at ```{base_url}/api/teachers/```. The survey endpoints are at ```{base_url}/api/surveys/```. The teacher endpoints are at ```{base_url}/api/history/```.
+__Restoring the DB from a backup__  
+`docker exec -i postgres-service pg_restore -d postgres -U admin --clean --create < db.dump`
 
-# Backing up the PostgreSQL DB
-## Command to backup
-docker exec postgres-service pg_dump -Fc -U admin scheduling > db.dump
+Note that when using the command, you cant be connected to the scheduling database. It must be some other db. If you want to know what db's are available
+run the command `docker exec -it postgres-service psql -U admin -d scheduling` to open connection and shell then type `\l` to see the available DBs.
 
-## Command to restore
-docker exec -i postgres-service pg_restore -d postgres -U admin --clean --create < db.dump
+# pgAdmin
+PG admin is on of the services created in the docker compose file. 
+This can be used to check what databases are setup, what tables exist, run SQL queries on a database, and many other things. 
+In order to do those things go to `http://localhost:15432/login?next=/` to log into your pg pgAdmin account.
+Your credentials should be those from your .env file used when running `docker compose up`. The default username/email is example@example.com
 
-Note that when using the command the db you connect to can't be scheduling. It must be some other db. If you want to know what db's are available
-run the command 'docker exec -it postgres-service psql -U admin -d scheduling' to open connection and shell then type '\l' to see the available DBs.
+Once you have loged in:  
+1. In the Object Explorer side tab we will right click Servers -> register -> server. 
+Then you should see a window appear.
+2. In the `general` tab, give you server a name. It can be any name
+3. Navigate to the `Connection` tab and then enter `db` for the host name and enter the username and password from your `.env` file
+used for docker compose. If your `.env` file didn't have a username then the default will be `admin`.
+4. toggle the `Save password?` on, so we don't have to reenter our password.
+5. Save the server. If you have an error make sure PostgreSQL is running.
+6. Expand the new server you, expand the databases, and select the scheduling database.
+7. In the tool bar in the Object Explorer window click the button that looks like the database with a play button
+8. You should see a new tab open that will allow you to run SQL queries and see the results of those queries
 
-Note that when restoring to the scheduling database, you can't have any connection open to it.
+To inspect the tables click on servers -> the server you just setup -> Databases -> scheduling -> Schemas -> public -> Tables
 
-# Workflow
-test it
+Example setup
+![pgAdmin example setup](./documentation_images/pgadmin_example.png)
+
+
+
+# The Django Backend
+__Quick overview__
+
+The api endpoint for getting tokens is `{base_url}/api/token`.
+
+The teacher endpoints are at ```{base_url}/api/teachers/```. The survey endpoints are at ```{base_url}/api/surveys/```. The history endpoints are at ```{base_url}/api/history/```.
+Another .env file will be needed for the backend as mentioned in the README file in the root director. 
+The location of this is basically wherever you launch the `manage.py` in `django_backend/scheduling_backend`, but my instructions assume
+you have it in the same directory as `manage.py`
+
+All Django related files are in the `./django_backend/scheduling_backend` [directory](./django_backend/scheduling_backend/).
+
+API endpoint documentation is all in the Postman workspace or upload this 
+[file](./documentation_media/backend_postman_docs.json) to your postman workspace. 
+When using the workspace make sure create and enviornment and the variables `base_url` and `jwt_access_token`.
+To get your access token use the `JWT token pair` request example and copy the access token into your enviornemnt.
+
+Examples
+![Postman enviornment example](./documentation_images/postman_env.png)
+![Postman authentication example](./documentation_images/postman_auth.png)
+
+
+__Creating users and permissions__  
+If you setup the database with a `.dump` file given to you you should have a superuse already. Other wise run the following command
+from the `./django_backend/scheduling_backend/` directory `poetry run python -m manage createsuperuser`.
+
+Once you have a superuser go to http://localhost:8002/admin, port may vary depending on the port you gave when running the server.
+Log into the admin portal and you should now be able manage users and persmissions
+
+# Django Admin Portal
+
+The Django admin portal provides a built-in interface for managing users and permissions within the application.
+
+Through this portal, administrators can:
+
+- Create, update, and delete user accounts  
+- Assign and manage user permissions  
+- Organize users into groups for easier permission management  
+- Control access to different parts of the application based on roles  
+
+This makes it easy to manage authentication and authorization without needing to write custom interfaces.
+
+# CI workflows
+The django backend comes with a test suite that can be ran. This same test suite will run when you make a pull request to merge into the `stable` branch.
