@@ -1,0 +1,603 @@
+{
+  "info": {
+    "_postman_id": "43b83109-87bc-4d3e-a362-2206f72fea5c",
+    "name": "Backend Usage Examples",
+    "description": "This template contains a boilerplate for documentation that you can quickly customize and reuse.\n\n### How to use this template:\n\n- Replace the content given brackets (()) with your API's details.\n- Tips are formatted in `codespan` - feel free to read and remove them.\n    \n\n---\n\n`Start with a brief overview of what your API offers.`\n\nThe ((product name)) provides many API products, tools, and resources that enable you to ((add product value here)).\n\n`You can also list the APIs you offer, link to the relevant pages, or do both in this section.`\n\n## **Getting started guide**\n\n`List the steps or points required to start using your APIs. Make sure to cover everything required to reach success with your API as quickly as possible.`\n\nTo start using the ((add APIs here)), you need to -\n\n`The points given below are from The Postman API's documentation. You can reference it to write your own getting started guide.`\n\n- You must use a valid API Key to send requests to the API endpoints. You can get your API key from Postman's [integrations dashboard](https://go.postman.co/settings/me/api-keys).\n- The API has [rate and usage limits](https://learning.postman.com/docs/developer/postman-api/postman-api-rate-limits/).\n- The API only responds to HTTPS-secured communications. Any requests sent via HTTP return an HTTP 301 redirect to the corresponding HTTPS resources.\n- The API returns request responses in JSON format. When an API request returns an error, it is sent in the JSON response as an error key.\n    \n\n## Authentication\n\n`Add details on the authorization keys/tokens required, steps that cover how to get them, and the relevant error codes.`\n\nThe ((product name)) API uses ((add your API's authorization type)) for authentication.\n\n`The details given below are from the Postman API's documentation. You can reference it to write your own authentication section.`\n\nPostman uses API keys for authentication. You can generate a Postman API key in the [API keys](https://postman.postman.co/settings/me/api-keys) section of your Postman account settings.\n\nYou must include an API key in each request to the Postman API with the X-Api-Key request header.\n\n### Authentication error response\n\nIf an API key is missing, malformed, or invalid, you will receive an HTTP 401 Unauthorized response code.\n\n## Rate and usage limits\n\n`Use this section to cover your APIs' terms of use. Include API limits, constraints, and relevant error codes, so consumers understand the permitted API usage and practices.`\n\n`The example given below is from The Postman API's documentation. Use it as a reference to write your APIs' terms of use.`\n\nAPI access rate limits apply at a per-API key basis in unit time. The limit is 300 requests per minute. Also, depending on your plan, you may have usage limits. If you exceed either limit, your request will return an HTTP 429 Too Many Requests status code.\n\nEach API response returns the following set of headers to help you identify your use status:\n\n| Header | Description |\n| --- | --- |\n| `X-RateLimit-Limit` | The maximum number of requests that the consumer is permitted to make per minute. |\n| `X-RateLimit-Remaining` | The number of requests remaining in the current rate limit window. |\n| `X-RateLimit-Reset` | The time at which the current rate limit window resets in UTC epoch seconds. |\n\n### 503 response\n\nAn HTTP `503` response from our servers indicates there is an unexpected spike in API access traffic. The server is usually operational within the next five minutes. If the outage persists or you receive any other form of an HTTP `5XX` error, [contact support](https://support.postman.com/hc/en-us/requests/new/).\n\n### **Need some help?**\n\n`Add links that customers can refer to whenever they need help.`\n\nIn case you have questions, go through our tutorials ((link to your video or help documentation here)). Or visit our FAQ page ((link to the relevant page)).\n\nOr you can check out our community forum, there’s a good chance our community has an answer for you. Visit our developer forum ((link to developer forum)) to review topics, ask questions, and learn from others.\n\n`You can also document or add links to libraries, code examples, and other resources needed to make a request.`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46090595"
+  },
+  "item": [
+    {
+      "name": "Authentication/Authorization",
+      "item": [
+        {
+          "name": "JWT token pair",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"yourusername\",\r\n  \"password\": \"yourpassword\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                ""
+              ]
+            },
+            "description": "The tokens are necessary to access all the endpoints. The `access token` is need when connecting to an endpoint for authentication. If this token expires, you can use the `refresh token` to send it to the [JWT new access token](https://eman-9291839.postman.co/workspace/Scheduling~6f11bb04-21c1-43e4-b125-5df67e856ccb/request/46090595-2adee7c2-cc6a-4c2e-9ebd-8cda973293dd?action=share&source=copy-link&creator=46090595&ctx=documentation) endpoint to get a new access token. Alternatively you could just got another pair of tokens. If the `refresh token` expires then you will have call this endpoint again.."
+          },
+          "response": []
+        },
+        {
+          "name": "JWT new access token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"refresh\": \"your_refresh_token_here\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                "refresh",
+                ""
+              ]
+            },
+            "description": "Gives you a way to get a new token without logging back in. All you need is your refresh token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Teacher",
+      "item": [
+        {
+          "name": "Retrieve all teachers",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                ""
+              ]
+            },
+            "description": "Retrieves all Teacher records in the database. If you want to query via department or faculty specifically look at [this](https://eman-9291839.postman.co/workspace/Scheduling~6f11bb04-21c1-43e4-b125-5df67e856ccb/request/46090595-df8f94eb-d5ce-480b-9bb8-914b71084146?action=share&source=copy-link&creator=46090595&ctx=documentation) for examples."
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve by department and faculty",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/?department=csc&faculty=true&logic=or",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "department",
+                  "value": "csc"
+                },
+                {
+                  "key": "faculty",
+                  "value": "true"
+                },
+                {
+                  "key": "logic",
+                  "value": "or"
+                }
+              ]
+            },
+            "description": "The valid departments query optoins are \"cpe\" and \"csc\"; valid faculty query options are \"true\" and \"false\"; valid logic options are \"or\" and \"and\".\n\nQuery parameter options:  \n`department`: \"cpe\", \"csc\"\n\n`faculty`: \"true\", \"false\"\n\n`logic`: \"or\", \"and\" (default) if not used\n\nWhen querying by both department and faculty, if no logic option is given then it will default to returning Teacher records that have both the department and facuty option given.\n\nIf not query by department or faculty is given, then it will return all Teacher records in the database;\n\nDoing `{{base_url}}/api/teachers/`"
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve teacher by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/5/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "5",
+                ""
+              ]
+            },
+            "description": "Retrive a specific \"Teacher\" object in the database using their primary key (integer)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create teacher",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n    {\"canon\": \"eman\", \"non_canon\": \"edog\", \"email\": \"theOne@theOne.him\", \"cpe\": true, \"csc\": true, \"faculty\": true},\r\n    {\"canon\": \"Norris, Lando\", \"non_canon\": \"papaya\", \"email\": \"norris@f1.champ\"},\r\n    {\"canon\": \"Perez, Sergio\", \"non_canon\": \"Mexican Minister of Defense\" }\r\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/create/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "create",
+                ""
+              ]
+            },
+            "description": "This endpoint requires you to send a valid json payload. This payload can be a list of json objects or a json object. Look at the Body tab of the request for an example.\n\nThe valid fields for the payload are:\n\n```\n(REQUIRED, chars) canon: max_length=100, unique\n(REQUIRED, chars) non_canon: max_length=100, unique\n(OPTIONAL, email) email: unique, null, blank=True;\n(OPTIONAL, boolean) cpe: default=False\n(OPTIONAL, boolean) csc: default=False\n(OPTIONAL, boolean) faculty: default=False\n\n ```\n\nFor the boolean fields: you could use true or false as in the example body. Also, django allows for strings as seen in this [source code snippet](https://github.com/django/django/blob/9cc231e8243091519f5d627cd02ee40bbb853ced/django/db/models/fields/__init__.py#L1170).\n\nThe names used for the canon and non-canon fields will be stored in another table for potential future use."
+          },
+          "response": []
+        },
+        {
+          "name": "creation/update via file",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "7be3bade-0efa-49ad-8ff9-2ff41c0b2bcd",
+                  "src": "postman-cloud:///1f0f718e-94f4-4ed0-b4c4-a647f94d03c0"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/file/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "file",
+                ""
+              ]
+            },
+            "description": "This endpoint will take in a file (excel, tsv, or csv) with columns `email`, `name` or `non_canon` (this column being the non-canon teacher's name), and `canon`. Furthermore it allows for optional `faculty` boolean column (use `true` or `false` values). For each row in the file, a unique `teacher` will be searched for with the given column fields. If a unique `teacher` is found its email, canon name and non-canon name will be updated. If one is not found then a new Teacher object will be created. If multiple teacher objects for a row then it will be marked skipped and marked as a failure.\n\nEmail field for a row can be left blank. Recommended to include the other two column fields.\n\nNote, when a `Teacher` object is created/found, the names they are given will be stored in the `history` table to keep a record of who has had the most recent name.\n\nNote, if a `Teacher` object can't be found by name in the `teacher` table, the endpoint will fall back to look for a name in the `history` table.\n\n**Example file contents:**\n\n| **email** | **name** | **canon** | **faculty** |\n| --- | --- | --- | --- |\n| [sandler@example.com](https://mailto:sandler@example.com) | Happy Gilmore | Sandler, Adam | false |\n| [rick@example.com](https://mailto:rick@example.com) | Rick Roll | Astley, Rick |  |\n|  | World cup champ | Messi | false |\n| [sandler@example.com](https://mailto:sandler@example.com) | Rick Roll | Messi |  |\n\n**Resulting Endpoint response:**\n\n``` json\n{\n    \"msg\": \"finished trying to update teachers\",\n    \"success\": [\n        {\n            \"creation_status\": false,\n            \"teacher\": {\n                \"id\": 125,\n                \"canon\": \"Sandler, Adam\",\n                \"non_canon\": \"Happy Gilmore\",\n                \"email\": \"sandler@example.com\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        },\n        {\n            \"creation_status\": false,\n            \"teacher\": {\n                \"id\": 126,\n                \"canon\": \"Astley, Rick\",\n                \"non_canon\": \"Rick Roll\",\n                \"email\": \"rick@example.com\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        },\n        {\n            \"creation_status\": false,\n            \"teacher\": {\n                \"id\": 113,\n                \"canon\": \"Messi\",\n                \"non_canon\": \"World cup champ\",\n                \"email\": null,\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        }\n    ],\n    \"failed\": [\n        {\n            \"msg\": \"Multiple teacher entities with given fields\",\n            \"attempt\": {\n                \"canon\": \"Messi\",\n                \"non_canon\": \"Rick Roll\",\n                \"email\": \"sandler@example.com\"\n            }\n        }\n    ]\n}\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "bulk update",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n    {\r\n        \"lookup\": {\"id\": 10000, \"canon\": \"Perez, Sergio\"}, \r\n        \"update_data\": {\"email\": \"theReturn@cadillac.org\", \"faculty\": true, \"random_invalid\": \"has no effect\"}\r\n    }, \r\n    {\r\n        \"lookup\": {\"email\": \"norris@f1.champ\", \"canon\": \"eman\"}, \r\n        \"update_data\": {\"email\": \"This entity update will fail\"}\r\n    },\r\n    {\r\n        \"lookup\": {\"id\": 10000}, \r\n        \"update_data\": {\"canon\": \"will fail\"}\r\n    }\r\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/update/bulk/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "update",
+                "bulk",
+                ""
+              ]
+            },
+            "description": "This api should be used to update teacher entities in bulk. It will allow you to get a techer entity by their id (Primary Key), canon name, non canon name, or email. You can search by all of these simultaneously as well. You can update any part of a teacher entity except for its id (Primary Key).\n\nThe payload must be a list of objects, where each object has they keys `lookup` and `update_data` mapped to an object. The `lookup` object must have at least on of the following keys: `id, email, canon, non_canon`. The `update_data` object must have at least on of the following keys: `canon, non_canon, email, cpe, csc, faculty`. Note, any other keys in either the `lookup` or `update_data` mapped objects will be ignored.\n\nIf all the objects in the list are valid then the api will attempt to update all and report back which objects resulted in a succesful update and which failed.\n\nExample payload (Note, at least one key-value pair must be present in the `lookup` and `update_data` objects):\n\n``` json\n[\n    {\n        \"lookup\": {\"id\": 10000, \"canon\": \"Perez, Sergio\"}, \n        \"update_data\": {\"email\": \"theReturn@cadillac.org\", \"faculty\": true, \"random_invalid\": \"has no effect\"}\n    }, \n    {\n        \"lookup\": {\"email\": \"norris@f1.champ\", \"canon\": \"eman\"}, \n        \"update_data\": {\"email\": \"This entity update will fail\"}\n    },\n    {\n        \"lookup\": {\"id\": 10000}, \n        \"update_data\": {\"canon\": \"will fail assuming 'id' isn't a primary key in the DB\"}\n    }\n]\n\n ```\n\nExample response:\n\n``` json\n{\n    \"msg\": \"finished trying to update teachers\",\n    \"success\": [\n        {\n            \"msg\": \"success updating teacher with lookup: {'id': 10000, 'canon': 'Perez, Sergio'}\",\n            \"teacher_data\": {\n                \"id\": 85,\n                \"canon\": \"Perez, Sergio\",\n                \"non_canon\": \"Mexican Minister of Defense\",\n                \"email\": \"theReturn@cadillac.org\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": true\n            }\n        }\n    ],\n    \"failed\": [\n        {\n            \"msg\": \"failed to update teacher with lookup: {'email': 'norris@f1.champ', 'canon': 'eman'}\",\n            \"error\": \"get() returned more than one Teacher -- it returned 2!\"\n        },\n        {\n            \"msg\": \"failed to update teacher with lookup: {'id': 10000}\",\n            \"error\": \"Teacher matching query does not exist.\"\n        }\n    ]\n}\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete teacher by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/124/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "124",
+                ""
+              ]
+            },
+            "description": "Deletes a \"Teacher\" object in the database using its primary key (integer)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "Find teacher",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{base_url}}/api/history/?name=Stephen Beard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "history",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Stephen Beard"
+                }
+              ]
+            },
+            "description": "Endpoint allows you to query the History table by a teacher's name. If there is a hit the corresponding History record is returned.\n\nWhile this endpoint probably won't be used on it's own it could be useful for seeing if something exists in the DB\n\n``` json\n{\n    \"msg\": \"History record matching query found\",\n    \"data\": {\n        \"id\": 7,\n        \"is_canon\": true,\n        \"name\": \"Messi\",\n        \"teacher\": 113\n    }\n}\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Survey",
+      "item": [
+        {
+          "name": "Survey Uploads",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "5b0d194b-2259-4915-94f0-bb8109657634",
+                  "src": "///wsl.localhost/Ubuntu/home/eman/SeniorProject/backend/test_files/test_survey.csv"
+                },
+                {
+                  "key": "cur_term",
+                  "value": "2254",
+                  "type": "text",
+                  "uuid": "be017435-a426-4fb4-88d0-0633637cf2a4"
+                },
+                {
+                  "key": "prev_term",
+                  "value": "2252",
+                  "type": "text",
+                  "uuid": "788bbdf1-5501-4097-a22d-9b5456cf97fe"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/surveys/file/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "surveys",
+                "file",
+                ""
+              ]
+            },
+            "description": "Assuming the current quarter is 2254 and the previous is 2252. If a teacher bleeds forward it is assumed the bleed forward survey field is \"Yes, use the same as last term\".\n\n``` json\n{\n    \"msg\": \"finish endpoint\",\n    \"success\": [\n        {\n            \"msg\": \"teacher\",\n            \"suvey_id\": 7,\n            \"creation\": true,\n            \"teacher_file_idx\": 0,\n            \"teacher\": {\n                \"id\": 85,\n                \"canon\": \"Perez, Sergio\",\n                \"non_canon\": \"Mexican Minister of Defense\",\n                \"email\": \"theReturn@cadillac.org\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        }\n    ],\n    \"failed\": []\n}\n\n ```\n\nAssuming the current quarter is 2258 and the previous is 2254\n\n``` json\n{\n    \"msg\": \"finish endpoint\",\n    \"success\": [\n        {\n            \"msg\": \"teacher\",\n            \"suvey_id\": 8,\n            \"creation\": true,\n            \"teacher_file_idx\": 1,\n            \"teacher\": {\n                \"id\": 85,\n                \"canon\": \"Perez, Sergio\",\n                \"non_canon\": \"Mexican Minister of Defense\",\n                \"email\": \"theReturn@cadillac.org\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        },\n        {\n            \"msg\": \"teacher\",\n            \"suvey_id\": 8,\n            \"creation\": false,\n            \"teacher_file_idx\": 2,\n            \"teacher\": {\n                \"id\": 85,\n                \"canon\": \"Perez, Sergio\",\n                \"non_canon\": \"Mexican Minister of Defense\",\n                \"email\": \"theReturn@cadillac.org\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        }\n    ],\n    \"failed\": [\n        {\n            \"msg\": \"suvery bled forward, but no previous survey found for the 2254 term\",\n            \"teacher_file_idx\": 0,\n            \"teacher\": {\n                \"id\": 84,\n                \"canon\": \"Norris, Lando\",\n                \"non_canon\": \"papaya\",\n                \"email\": \"norris@f1.champ\",\n                \"cpe\": false,\n                \"csc\": false,\n                \"faculty\": false\n            }\n        },\n        {\n            \"msg\": \"No teacher found in Teacher's table. Fell back to History table and no objects found\",\n            \"teacher_file_idx\": 3,\n            \"associated_data\": {\n                \"non_canon\": \"Does not Exist\"\n            }\n        }\n    ]\n}\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "get survey(s)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/surveys/?term=2254&name=Mexican Minister of Defense&all_flag=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "surveys",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "term",
+                  "value": "2254"
+                },
+                {
+                  "key": "name",
+                  "value": "Mexican Minister of Defense"
+                },
+                {
+                  "key": "all_flag",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "This endpoint will allow you to retrieve `Survey` objects from the `survey` table. Query parameters are to retrieve specific survey objects are `name`, `term`, and `all_flag`. If query parameters are passed, any `survey` object with that has the given parameter value will be returned. However, if the all_flag is set, `survey` objects returned must have all parameter values true.\n\n`name` parameter: name used for the survey(s) (non-canon name).\n\n`term` parmater: term the survey(s) was filled out for\n\n`all_flag` parameter: Valid values `true` and `false`. Flag indicating if all parameters must be set to true in returne survey object(s). If not included the flag is assumed to be false."
+          },
+          "response": []
+        },
+        {
+          "name": "delete survey instance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/surveys/1/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "surveys",
+                "1",
+                ""
+              ]
+            },
+            "description": "Delete a `Survey` object in the DB via primairy key."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://farming-simulator.pstmn.io"
+    }
+  ]
+}
