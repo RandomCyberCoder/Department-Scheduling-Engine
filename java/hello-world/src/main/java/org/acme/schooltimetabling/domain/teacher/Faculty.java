@@ -35,7 +35,7 @@ public class Faculty extends Teacher{
         final int NUM_BLOCKS_FULL_HOUR = 2;
         List<LocalTime> facultyTimes;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
-        final EnumSet<Days> FACULTY_DAYS = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        EnumSet<Days> facultyDays = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
 
         try{
             //set special bits for testing
@@ -45,27 +45,26 @@ public class Faculty extends Teacher{
                         EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY));
                 FACULTY_CONFLICT.or(temp);
             }
-//            /*CSC faculty times*/
-//            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
-//                facultyTimes = List.of(
-//                        LocalTime.parse("1:00PM", formatter),
-//                        LocalTime.parse("2:00PM", formatter)
-//                );
-//            }
-//            else{
-//                /*CPE faculty times*/
-//                facultyTimes = List.of(
-//                        LocalTime.parse("12:00PM", formatter),
-//                        LocalTime.parse("1:00PM", formatter),
-//                        LocalTime.parse("2:00PM", formatter)
-//                );
-//            }
-//
-//            /*create the BitSet for faculty conflict*/
-//            for(LocalTime localTime: facultyTimes) {
-//                BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, FACULTY_DAYS);
-//                FACULTY_CONFLICT.or(temp);
-//            }
+            /*CSC faculty times*/
+            if(ScheduleConfig.getDepartment().equalsIgnoreCase("csc")){
+                facultyTimes = List.of(
+                        LocalTime.parse("11:00AM", formatter)
+                );
+                facultyDays = EnumSet.of(Days.TUESDAY);
+            }
+            else{
+                /*CPE faculty times*/
+                facultyTimes = List.of(
+                        LocalTime.parse("11:00AM", formatter)
+                );
+                facultyDays = EnumSet.of(Days.WEDNESDAY);
+            }
+
+            /*create the BitSet for faculty conflict*/
+            for(LocalTime localTime: facultyTimes) {
+                BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, facultyDays);
+                FACULTY_CONFLICT.or(temp);
+            }
         }
         catch (Exception e){
             Faculty.LOGGER.error("Problem creating BitSet mask for the faculty tenure conflict.");
