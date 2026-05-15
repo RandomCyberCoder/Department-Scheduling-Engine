@@ -48,6 +48,8 @@ public class RoomGenerator extends Generator{
 
         //check for prescheduling
         if(PRESCHED_TIMES != null && PRESCHED_TIMES.getRooms().containsKey(roomName)){
+            //mark this var so that we know to include the prescheduling room constraint
+            Room.hasPrescheduled = true;
             LOGGER.info("Found prescheduling times for room '{}'. Using prescheduling times.", roomName);
             for(PrescheduleObject.PrescheduledWindow prescheduledWindow: PRESCHED_TIMES.getRooms().get(roomName)){
                 BitSet preBs = BitSetHelper.timeJsonToBs(prescheduledWindow);

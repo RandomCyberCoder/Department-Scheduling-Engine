@@ -90,6 +90,12 @@ public class TimetableConstraintProvider implements ConstraintProvider {
             System.exit(1);
         }
 
+        //add in the room prescheduling conflict constraint only if we prescheduled rooms detected
+        if(Room.hasPrescheduled){
+            LOGGER.info("At least on room has been found to be prescheduled. Including the room prescheduling constraint.");
+            solver_constraints.add(roomPreschedule(constraintFactory));
+        }
+
         return solver_constraints.toArray(Constraint[]::new);
     }
 
@@ -597,6 +603,25 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .filter(lesson -> lesson.maskOutCmprs().cardinality() > 0)
                 .penalize(HardMediumSoftScore.ONE_SOFT)
                 .asConstraint("Penalize time out of preferred time interval");
+    }
+
+    //--------------------- NEW COSNTRAINT FOR THE ROOM PRESCHEDULING ---------------//
+    Constraint roomPreschedule(ConstraintFactory constraintFactory){
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> {
+                    //skip lessons that are in the lecture only room
+                    //take into account only lessons that have a room that has prescheduling times
+                    if(Objects.equals(lesson.getRoom().getName(), Constants.LEC_ONLY)
+                            || !lesson.getRoom().getPrescheduled().isEmpty() ) return false;
+
+                    //penalize lessons that are scheduled in a rooms prescheduled time
+                    BitSet prescheduled = lesson.getRoom().getPrescheduled();
+
+                    return prescheduled.intersects(lesson.getTimeslot().getLectureBitSet()) ||
+                            prescheduled.intersects(lesson.getTimeslot().getLabActBitSet());
+                })
+                .penalize(HardMediumSoftScore.ONE_SOFT)
+                .asConstraint("Penalize a lesson ");
     }
 
 }
