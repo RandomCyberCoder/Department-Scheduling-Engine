@@ -527,13 +527,18 @@ public class ResultSaver {
         //we only consider lessons that don't violate any hard constraints as actually being scheduled
         List<Lesson> lsWithNoHard = extracted.getKey();
 
-        Map<String, List<Map<String, String>>> res = new HashMap<>();
+        Map<String, List<Map<String, String>>> teachers = new LinkedHashMap<>();
+        Map<String, List<Map<String, String>>> rooms = new LinkedHashMap<>();
         for(Lesson lesson: lsWithNoHard){
             final String teacherName = lesson.getTeacherObj().getName();
-            if(!res.containsKey(teacherName)) res.put(teacherName, new ArrayList<>());
-            List<Map<String, String>> teacherMap = res.get(teacherName);
+            if(!teachers.containsKey(teacherName)) teachers.put(teacherName, new ArrayList<>());
+            List<Map<String, String>> teacherMap = teachers.get(teacherName);
             teacherMap.addAll(lesson.toJson());
         }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("teachers", teachers);
+        res.put("rooms", rooms);
 
         Scanner retryScanner = new Scanner(System.in);
         boolean retryAllowed = true;

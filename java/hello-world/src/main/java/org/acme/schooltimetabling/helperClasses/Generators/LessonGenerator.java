@@ -7,6 +7,7 @@ import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -21,7 +22,8 @@ public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
-    private static final Map<String, List<Map<String, String>>> PRESCHED_TIMES = ParseInput.readPrescheduledFile();
+    private static final PrescheduleObject PRESCHED_TIMES = ScheduleConfig.getPrescheduledFileName() != null ?
+            ParseInput.readPrescheduledFile() : null;
     /**
      * Keeps track of the next available section number available for a course
      */
@@ -195,12 +197,12 @@ public class LessonGenerator extends Generator{
             teacher = noSurveyTeacher(teacherName, defaultTime);
 
             //add prescheduled times if possible
-            if(PRESCHED_TIMES.containsKey(teacherName)){
+            if(PRESCHED_TIMES != null && PRESCHED_TIMES.getTeachers().containsKey(teacherName)){
                 LOGGER.info(String.format("Found a prescheduled time for '%s'. Adding the time to their conflict bitset.",
                         teacherName));
 
                 try {
-                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.get(teacherName));
+                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.getTeachers().get(teacherName));
                     teacher.getAcceptable().andNot(addConflict);
                     teacher.getPreferences().andNot(addConflict);
                     teacher.getConflict().or(addConflict);

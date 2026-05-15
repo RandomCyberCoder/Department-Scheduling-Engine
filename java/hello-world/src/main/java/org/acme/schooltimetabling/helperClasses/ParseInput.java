@@ -218,18 +218,20 @@ public final class ParseInput {
         return faculty;
     }
 
-    public static Map<String, List<Map<String, String>>> readPrescheduledFile(){
+    public static PrescheduleObject readPrescheduledFile(){
         String filePath = "input/" + ScheduleConfig.getPrescheduledFileName();
         try(InputStream inputStream = getResourceAsStream(filePath)){
             ObjectMapper mapper = new ObjectMapper();
-
-            return mapper.readValue(inputStream, new TypeReference<>() {});
+            PrescheduleObject prescheduleObject = mapper.readValue(inputStream, PrescheduleObject.class);
+            prescheduleObject.validate();
+            return prescheduleObject;
         } catch (Exception e) {
             ParseInput.LOGGER.error("ERROR reading file containing teachers prescheduled times. Skipping inclusion of " +
-                    "these times.");
-            return new HashMap<>();
+                    "these times. System existing...");
+            e.printStackTrace();
+            System.exit(1);
+            throw new IllegalStateException("Failed to read prescheduled file", e);
         }
     }
-
 
 }

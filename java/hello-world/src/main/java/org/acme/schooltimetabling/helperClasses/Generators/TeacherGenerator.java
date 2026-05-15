@@ -4,18 +4,16 @@ import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyCalls;
 import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Constants;
-import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class TeacherGenerator extends Generator{
@@ -97,8 +95,10 @@ public class TeacherGenerator extends Generator{
 
         if(ScheduleConfig.getPrescheduledFileName() != null){
             LOGGER.info("Reading in prescheduled time file");
-            Map<String, List<Map<String, String>>> preschedTimes = ParseInput.readPrescheduledFile();
-            if(!preschedTimes.isEmpty()) prescheduleUpdate(teacherMap, preschedTimes);
+            PrescheduleObject preschedTimes = ParseInput.readPrescheduledFile();
+            if(preschedTimes.hasTeachers()) {
+                prescheduleUpdate(teacherMap, preschedTimes.getTeachers());
+            }
         }
 
         return teacherMap;
@@ -268,10 +268,11 @@ public class TeacherGenerator extends Generator{
     }
 
 
-    private static void prescheduleUpdate(Map<String, Teacher> teacherMap, Map<String, List<Map<String, String>>> presched){
-        Iterator<Map.Entry<String, List<Map<String, String>>>> iterator = presched.entrySet().iterator();
+    private static void prescheduleUpdate(Map<String, Teacher> teacherMap,
+                                          Map<String, List<PrescheduleObject.PrescheduledWindow>> presched){
+        Iterator<Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>>> iterator = presched.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, List<Map<String, String>>> entry = iterator.next();
+            Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>> entry = iterator.next();
             String name = entry.getKey();
             Teacher teacher = teacherMap.get(name);
             if (teacher == null){
@@ -302,9 +303,9 @@ public class TeacherGenerator extends Generator{
         }
     }
 
-    public static BitSet createPreschedBs(List<Map<String, String>> timeJson){
+    public static BitSet createPreschedBs(List<PrescheduleObject.PrescheduledWindow> timeJson){
         BitSet bs = new BitSet();
-        for(Map<String, String> time: timeJson){
+        for(PrescheduleObject.PrescheduledWindow time: timeJson){
             bs.or(BitSetHelper.timeJsonToBs(time));
         }
 
