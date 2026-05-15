@@ -1,4 +1,4 @@
-package org.acme.schooltimetabling.DefaultTimes;
+package org.acme.schooltimetabling.defaultTimes;
 
 import java.util.BitSet;
 

@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
-import org.acme.schooltimetabling.DefaultTimes.DefaultTime;
-import org.acme.schooltimetabling.DefaultTimes.DefaultTimeRegistry;
+import org.acme.schooltimetabling.defaultTimes.DefaultTime;
+import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;

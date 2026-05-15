@@ -1,4 +1,4 @@
-package org.acme.schooltimetabling.DefaultTimes;
+package org.acme.schooltimetabling.defaultTimes;
 
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
