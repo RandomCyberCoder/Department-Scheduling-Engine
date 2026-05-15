@@ -175,6 +175,13 @@ public class TeacherGenerator extends Generator{
                 /*Remove from teachers left to bleed*/
                 teacherBleed.remove(instructorName);
             }
+            else if(!teacherHashMap.containsKey(instructorName)){
+                LOGGER.warn("When reading the previous term's survey, instructor, with name '{}', was found but with no survey " +
+                        "for the current term. Using the the previous term's survey for them", instructorName);
+                Teacher teacher = generateTeacher(surveyEntry);
+                if(teacher == null) continue;
+                teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), teacher);
+            }
         }
 
         //go through teachers that didn't bleed and notify

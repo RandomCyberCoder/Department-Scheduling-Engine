@@ -27,6 +27,7 @@ public class DefaultTimeAll implements DefaultTime{
         EnumSet<Days> defaultDays = EnumSet.allOf(Days.class);
 
         List<LocalTime> acceptableTimes = List.of(
+                LocalTime.parse("7:00AM", FORMATTER),
                 LocalTime.parse("8:00AM", FORMATTER),
                 LocalTime.parse("9:00AM", FORMATTER),
                 LocalTime.parse("10:00AM", FORMATTER),
@@ -43,7 +44,6 @@ public class DefaultTimeAll implements DefaultTime{
         }
 
         List<LocalTime> conflictTimes = List.of(
-                LocalTime.parse("7:00AM", FORMATTER),
                 LocalTime.parse("6:00PM", FORMATTER),
                 LocalTime.parse("7:00PM", FORMATTER),
                 LocalTime.parse("8:00PM", FORMATTER),
