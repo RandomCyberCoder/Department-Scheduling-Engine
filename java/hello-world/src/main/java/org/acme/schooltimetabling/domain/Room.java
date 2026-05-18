@@ -32,6 +32,7 @@ public class Room {
         this.id = id;
         this.name = name;
         this.ID = ID;
+        this.prescheduled = new BitSet();
     }
 
     @Override
