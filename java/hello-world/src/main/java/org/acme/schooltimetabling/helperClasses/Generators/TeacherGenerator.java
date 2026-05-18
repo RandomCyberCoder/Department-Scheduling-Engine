@@ -161,7 +161,7 @@ public class TeacherGenerator extends Generator{
             /*Check if the instructor wanted to bleed forward*/
             if(teacherBleed.containsKey(instructorName)){
 
-                LOGGER.info(String.format("Trying to use %s's old survey", instructorName));
+                LOGGER.info(String.format("Trying to use %s's old survey so they can bleed forward", instructorName));
                 /*If the instructor choose to bleed forward in the previous survey
                 * we will be forced to skip them :( */
                 if(BLEED_FORWARD_STRING.equals(surveyEntry.get(BLEED_FORWARD_KEY))){
