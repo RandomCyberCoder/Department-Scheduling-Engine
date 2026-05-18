@@ -1,6 +1,7 @@
 package org.acme.schooltimetabling.helperClasses;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject.PrescheduledWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,5 +212,19 @@ public class BitSetHelper {
         BitSet bitSet = new BitSet();
         bitSet.set(dayOffset + startBlock, dayOffset + endBlock);
         return bitSet;
+    }
+
+    public static BitSet timeJsonToBs(PrescheduledWindow time) {
+        if (time == null) {
+            throw new IllegalArgumentException("Time window must not be null");
+        }
+
+        Map<String, String> mappedTime = Map.of(
+                "day", time.getDay(),
+                "start", time.getStart(),
+                "end", time.getEnd()
+        );
+
+        return timeJsonToBs(mappedTime);
     }
 }

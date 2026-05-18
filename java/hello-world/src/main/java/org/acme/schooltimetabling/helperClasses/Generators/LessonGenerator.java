@@ -1,12 +1,13 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
-import org.acme.schooltimetabling.DefaultTimes.DefaultTime;
-import org.acme.schooltimetabling.DefaultTimes.DefaultTimeRegistry;
+import org.acme.schooltimetabling.defaultTimes.DefaultTime;
+import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -21,7 +22,8 @@ public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
-    private static final Map<String, List<Map<String, String>>> PRESCHED_TIMES = ParseInput.readPrescheduledFile();
+    private static final PrescheduleObject PRESCHED_TIMES = ScheduleConfig.getPrescheduledFileName() != null ?
+            ParseInput.readPrescheduledFile() : null;
     /**
      * Keeps track of the next available section number available for a course
      */
@@ -195,12 +197,12 @@ public class LessonGenerator extends Generator{
             teacher = noSurveyTeacher(teacherName, defaultTime);
 
             //add prescheduled times if possible
-            if(PRESCHED_TIMES.containsKey(teacherName)){
+            if(PRESCHED_TIMES != null && PRESCHED_TIMES.getTeachers().containsKey(teacherName)){
                 LOGGER.info(String.format("Found a prescheduled time for '%s'. Adding the time to their conflict bitset.",
                         teacherName));
 
                 try {
-                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.get(teacherName));
+                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.getTeachers().get(teacherName));
                     teacher.getAcceptable().andNot(addConflict);
                     teacher.getPreferences().andNot(addConflict);
                     teacher.getConflict().or(addConflict);
@@ -327,19 +329,24 @@ public class LessonGenerator extends Generator{
     private static Teacher noSurveyTeacher(String name, DefaultTime defaultTime){
         final int LAST_NAME_POS = 0;
         String[] nameFragments = name.split(",");
+        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS]);
 
-        if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
-            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
+        if(isFaculty){
+            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting to Faculty"
                     , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
+            return new Faculty(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
                     Preference.NEUTRAL);
         }
-
-        return new Teacher(TeacherGenerator.getNextTeacherID(), name,
-                defaultTime.getPreference(),
-                defaultTime.getAcceptable(),
-                defaultTime.getConflict(),
-                Preference.NEUTRAL);
+        else{
+            return new Teacher(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
+                    Preference.NEUTRAL);
+        }
     }
 
 
