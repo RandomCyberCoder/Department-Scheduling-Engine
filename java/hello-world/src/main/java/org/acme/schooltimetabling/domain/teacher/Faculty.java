@@ -35,14 +35,14 @@ public class Faculty extends Teacher{
         final int NUM_BLOCKS_FULL_HOUR = 2;
         List<LocalTime> facultyTimes;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mma");
-        EnumSet<Days> facultyDays = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+        EnumSet<Days> facultyDays;
 
         try{
             //set special bits for testing
             if(Constants.TESTING){
                 LocalTime localTime = LocalTime.parse("9:00PM", formatter);
                 BitSet temp = BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR,
-                        EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY));
+                        EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY));
                 FACULTY_CONFLICT.or(temp);
             }
             /*CSC faculty times*/
