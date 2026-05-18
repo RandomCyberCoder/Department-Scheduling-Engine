@@ -26,18 +26,28 @@ public class DefaultTimeAll implements DefaultTime{
         final DateTimeFormatter FORMATTER = Constants.TIME_FORMATTER;
         EnumSet<Days> defaultDays = EnumSet.allOf(Days.class);
 
-        List<LocalTime> acceptableTimes = List.of(
+        //I'm trying to set preferred times outside of prime time to help solver push more lectures into this time.
+        List<LocalTime> preferredTimes = List.of(
                 LocalTime.parse("7:00AM", FORMATTER),
                 LocalTime.parse("8:00AM", FORMATTER),
+                LocalTime.parse("3:00PM", FORMATTER),
+                LocalTime.parse("4:00PM", FORMATTER),
+                LocalTime.parse("5:00PM", FORMATTER)
+
+        );
+
+        for(LocalTime localTime : preferredTimes){
+            INSTANCE.preference.or(BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, defaultDays));
+        }
+
+
+        List<LocalTime> acceptableTimes = List.of(
                 LocalTime.parse("9:00AM", FORMATTER),
                 LocalTime.parse("10:00AM", FORMATTER),
                 LocalTime.parse("11:00AM", FORMATTER),
                 LocalTime.parse("12:00PM", FORMATTER),
                 LocalTime.parse("1:00PM", FORMATTER),
-                LocalTime.parse("2:00PM", FORMATTER),
-                LocalTime.parse("3:00PM", FORMATTER),
-                LocalTime.parse("4:00PM", FORMATTER),
-                LocalTime.parse("5:00PM", FORMATTER)
+                LocalTime.parse("2:00PM", FORMATTER)
         );
         for(LocalTime localTime : acceptableTimes) {
             INSTANCE.acceptable.or(BitSetHelper.timeSlotBitSet(localTime, NUM_BLOCKS_FULL_HOUR, defaultDays));
