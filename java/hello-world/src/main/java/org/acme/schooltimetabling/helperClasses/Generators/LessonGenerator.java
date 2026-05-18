@@ -329,19 +329,24 @@ public class LessonGenerator extends Generator{
     private static Teacher noSurveyTeacher(String name, DefaultTime defaultTime){
         final int LAST_NAME_POS = 0;
         String[] nameFragments = name.split(",");
+        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS]);
 
-        if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
-            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
+        if(isFaculty){
+            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting to Faculty"
                     , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
+            return new Faculty(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
                     Preference.NEUTRAL);
         }
-
-        return new Teacher(TeacherGenerator.getNextTeacherID(), name,
-                defaultTime.getPreference(),
-                defaultTime.getAcceptable(),
-                defaultTime.getConflict(),
-                Preference.NEUTRAL);
+        else{
+            return new Teacher(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
+                    Preference.NEUTRAL);
+        }
     }
 
 
