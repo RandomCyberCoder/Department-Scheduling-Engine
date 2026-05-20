@@ -43,7 +43,7 @@
         <acceptor>
 <!--        adding entity tabu helps a lot, the lower, the better. Using entity size rather than ratio is better
             from my experiments. Upon the semester switch adding tabu could harm the solution quality-->
-<!--            <entityTabuSize>1</entityTabuSize>-->
+            <entityTabuSize>1</entityTabuSize>
             <simulatedAnnealingStartingTemperature>2hard/10medium/20soft</simulatedAnnealingStartingTemperature>
         </acceptor>
 
@@ -60,16 +60,16 @@
         <termination>
             <terminationCompositionStyle>OR</terminationCompositionStyle>
             <diminishedReturns />
-            <unimprovedSecondsSpentLimit>20</unimprovedSecondsSpentLimit>
+            <unimprovedSecondsSpentLimit>30</unimprovedSecondsSpentLimit>
             <!--The solver already heavily favors time outside primetime, so we only look to increase
             the medium score-->
             <unimprovedScoreDifferenceThreshold>0hard/1medium/*soft</unimprovedScoreDifferenceThreshold>
         </termination>
         <acceptor>
             <!--I honestly can't tell if adding in Tabu really makes a difference; I think it's better off w/o it-->
-<!--            <entityTabuSize>1</entityTabuSize>-->
-<!--            &lt;!&ndash;using a ration for the values throws an error currently&ndash;&gt;-->
-<!--            <valueTabuSize>3</valueTabuSize>-->
+            <entityTabuSize>1</entityTabuSize>
+            <!--using a ration for the values throws an error currently-->
+            <valueTabuSize>3</valueTabuSize>
             <simulatedAnnealingStartingTemperature>3hard/5medium/5soft</simulatedAnnealingStartingTemperature>
         </acceptor>
         <forager>

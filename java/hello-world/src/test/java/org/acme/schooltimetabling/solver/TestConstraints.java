@@ -12,14 +12,11 @@ import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
-import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
 
-import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
@@ -342,7 +339,7 @@ public class TestConstraints {
         Lesson lesson2 = Lesson.test_buildLesson("1", 1, "some only lec course", "",
                 "", "1-0-0", 1111, ConstraintTestHelper.DUMMY_TEACHER,
                 ConstraintTestHelper.DUMMY_TS, LEC_ONLY_ROOM);
-        Lesson lsLabOnly = Lesson.test_buildLesson("2", 1, ConstraintTestHelper.TEST_RANDOM_LAB_ROOM,
+        Lesson lsLabOnly = Lesson.test_buildLesson("2", 1, ConstraintTestHelper.TEST_NAME_RANDOM_LAB_ROOM,
                 "noName", "", "0-0-1", 1, ConstraintTestHelper.DUMMY_TEACHER,
                 ConstraintTestHelper.DUMMY_TS, ConstraintTestHelper.DUMMY_ROOM);
 
@@ -710,6 +707,56 @@ public class TestConstraints {
                         likedGap1, likedGap2)
                 .penalizesBy(2);
     }
+
+    @Test
+    @DisplayName("Penalty: room prescheduling blocks lab and studio lecture")
+    void roomPrescheduleConflict() {
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+
+        BitSet blockedLessonBits = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, MWF);
+        BitSet blockedLessonBits2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
+        Timeslot blockedTimeslot = Timeslot.test_lecLabBitAndDays(1, blockedLessonBits, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+        Timeslot blockedTimeslot_LecLab = Timeslot.test_lecLabBitAndDays(2, blockedLessonBits2, blockedLessonBits,
+                MWF, MWF);
+
+        Lesson blockedLessonLab = Lesson.test_buildLesson("room-blocked-lab", 2, "", "", "",
+                "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER,blockedTimeslot_LecLab,
+                ConstraintTestHelper.TEST_ROOM_PRESCHEDULED);
+        Lesson blockedStudio = Lesson.test_buildLesson("room-blocked-studio", 3, ConstraintTestHelper.DUMMY_STUDIO,
+                "", "", "1-0-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
+                ConstraintTestHelper.DUMMY_TEACHER, blockedTimeslot, ConstraintTestHelper.TEST_ROOM_PRESCHEDULED);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomPreschedule)
+                .given(blockedLessonLab, blockedStudio)
+                .penalizesBy(2);
+    }
+
+    @Test
+    @DisplayName("No Penalty: room prescheduling skip branches")
+    void noRoomPrescheduleConflict() {
+        EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
+
+        BitSet roomBlocked = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, MWF);
+        BitSet bs_10AM = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter), 2, MWF);
+
+        Timeslot blockedTimeslot = Timeslot.test_lecLabBitAndDays(2, roomBlocked, ConstraintTestHelper.EMPTY_BS,
+                MWF, ConstraintTestHelper.NO_DAYS);
+        Timeslot ts_9AM_10AM_MWF = Timeslot.test_lecLabBitAndDays(2, roomBlocked, bs_10AM, MWF, MWF);
+        Timeslot ts_10AM_MWF = Timeslot.test_lecLabBitAndDays(2, bs_10AM, ConstraintTestHelper.EMPTY_BS, MWF,
+                ConstraintTestHelper.NO_DAYS);
+
+        Lesson openLessonLec = Lesson.test_buildLesson("room-open-lec", 1, "", "", "",
+                "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_9AM_10AM_MWF,
+                ConstraintTestHelper.TEST_ROOM_PRESCHEDULED);
+        Lesson lecOnlyRoomLesson = Lesson.test_buildLesson("room-lec-only", 3, "", "", "",
+                "1-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, blockedTimeslot,
+                ConstraintTestHelper.TEST_ROOM_PRESCHEDULED);
+        Lesson emptyRoomLesson = Lesson.test_buildLesson("room-empty", 4, "", "", "",
+                "1-0-0", 1, ConstraintTestHelper.DUMMY_TEACHER, blockedTimeslot, ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomPreschedule)
+                .given(openLessonLec, lecOnlyRoomLesson, emptyRoomLesson)
+                .penalizesBy(0);
+    }
 }
-
-

@@ -1,6 +1,7 @@
 package org.acme.schooltimetabling.helperClasses;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject.PrescheduledWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,8 +195,8 @@ public class BitSetHelper {
         if (time == null || time.get("day") == null || time.get("start") == null || time.get("end") == null) {
             throw new IllegalArgumentException("Time map must contain day, start, and end");
         }
-        LocalTime start = LocalTime.parse(time.get("start"), Constants.TIME_FMT);
-        LocalTime end = LocalTime.parse(time.get("end"), Constants.TIME_FMT);
+        LocalTime start = LocalTime.parse(time.get("start"), Constants.TIME_FORMATTER);
+        LocalTime end = LocalTime.parse(time.get("end"), Constants.TIME_FORMATTER);
         LocalTime earliest = LocalTime.of(7, 0);
         LocalTime latest = LocalTime.of(22, 0);
         if (start.isBefore(earliest) || end.isAfter(latest) || !end.isAfter(start)) {
@@ -211,5 +212,19 @@ public class BitSetHelper {
         BitSet bitSet = new BitSet();
         bitSet.set(dayOffset + startBlock, dayOffset + endBlock);
         return bitSet;
+    }
+
+    public static BitSet timeJsonToBs(PrescheduledWindow time) {
+        if (time == null) {
+            throw new IllegalArgumentException("Time window must not be null");
+        }
+
+        Map<String, String> mappedTime = Map.of(
+                "day", time.getDay(),
+                "start", time.getStart(),
+                "end", time.getEnd()
+        );
+
+        return timeJsonToBs(mappedTime);
     }
 }

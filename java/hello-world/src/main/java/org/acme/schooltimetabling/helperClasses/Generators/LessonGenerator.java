@@ -1,10 +1,13 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
+import org.acme.schooltimetabling.defaultTimes.DefaultTime;
+import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.ScheduleFormat;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -19,7 +22,8 @@ public class LessonGenerator extends Generator{
     public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
-    private static final Map<String, List<Map<String, String>>> PRESCHED_TIMES = ParseInput.readPrescheduledFile();
+    private static final PrescheduleObject PRESCHED_TIMES = ScheduleConfig.getPrescheduledFileName() != null ?
+            ParseInput.readPrescheduledFile() : null;
     /**
      * Keeps track of the next available section number available for a course
      */
@@ -168,34 +172,37 @@ public class LessonGenerator extends Generator{
 
     /**
      * Get the teacher object associated for the given <i>teacher name</i>; if no associated object
-     * exists, then one is created, but with no conflict, preference, or acceptable times
+     * exists, then one is created, using a default schedule from {@link DefaultTimeRegistry}
      *
      * @param teacherHashMap map with a canon name as a key and teacher object as a value
      * @param teacherName canon teacher name
      * @return teacher object for given teacher name
-     * @see LessonGenerator#noSurveyTeacher(String)
+     * @see LessonGenerator#noSurveyTeacher(String, DefaultTime)
      */
     private static Teacher getTeacher(Map<String, Teacher> teacherHashMap, String teacherName){
         /*checking if we can find the teacher; skip teacher if we can't
          * find their teacher object*/
         Teacher teacher = teacherHashMap.get(teacherName);
         if(teacher == null){
+            DefaultTime defaultTime = DefaultTimeRegistry.getRandomDefault();
+
             if(Constants.DEBUG){
                 LOGGER.warn(String.format("Couldn't find a teacher object for '%s'. Most likely due to them not having" +
                         " a survey filled out or old noncanon-canon mapping is used;" +
-                        "Creating one for them with now with no conflict, pref, or acceptable times.", teacherName));
+                        "Creating one for them with now using the default time %s.", teacherName,
+                        defaultTime.getClass().getSimpleName()));
             }
 
             //create teacher object
-            teacher = noSurveyTeacher(teacherName);
+            teacher = noSurveyTeacher(teacherName, defaultTime);
 
             //add prescheduled times if possible
-            if(PRESCHED_TIMES.containsKey(teacherName)){
+            if(PRESCHED_TIMES != null && PRESCHED_TIMES.getTeachers().containsKey(teacherName)){
                 LOGGER.info(String.format("Found a prescheduled time for '%s'. Adding the time to their conflict bitset.",
                         teacherName));
 
                 try {
-                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.get(teacherName));
+                    BitSet addConflict = TeacherGenerator.createPreschedBs(PRESCHED_TIMES.getTeachers().get(teacherName));
                     teacher.getAcceptable().andNot(addConflict);
                     teacher.getPreferences().andNot(addConflict);
                     teacher.getConflict().or(addConflict);
@@ -310,27 +317,36 @@ public class LessonGenerator extends Generator{
 
     /**
      * This function is used to create a teacher object during lesson creation if a teacher object can't be found
-     * for the name. It will return a faculty object if the person is found to be a faculty member. Note that the object
-     * returned will have empty conflict, preferences, and acceptable BitSets.
+     * for the name. It will return a faculty object if the person is found to be a faculty member. The object returned
+     * will have a copy of the preference, acceptable, and conflict {@link BitSet} as the {@link DefaultTime} prototype
+     * object
      *
      * @param name name of teacher. Assumes it's in canon name format (i.e. &lt;last name&gt, &lt;rest of name&gt;)
      * @return a teacher object; or faculty if found to be a faculty member
      * @see Teacher
      * @see Faculty
      */
-    private static Teacher noSurveyTeacher(String name){
+    private static Teacher noSurveyTeacher(String name, DefaultTime defaultTime){
         final int LAST_NAME_POS = 0;
         String[] nameFragments = name.split(",");
+        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS]);
 
-        if(Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS])){
-            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting Teacher obj to Faculty"
+        if(isFaculty){
+            LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting to Faculty"
                     , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
+            return new Faculty(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
                     Preference.NEUTRAL);
         }
-
-        return new Teacher(TeacherGenerator.getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet(),
-                Preference.NEUTRAL);
+        else{
+            return new Teacher(TeacherGenerator.getNextTeacherID(), name,
+                    defaultTime.getPreference(),
+                    defaultTime.getAcceptable(),
+                    defaultTime.getConflict(),
+                    Preference.NEUTRAL);
+        }
     }
 
 

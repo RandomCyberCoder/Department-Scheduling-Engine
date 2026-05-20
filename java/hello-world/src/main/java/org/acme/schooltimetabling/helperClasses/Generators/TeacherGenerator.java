@@ -4,18 +4,16 @@ import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyCalls;
 import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.constants.Constants;
-import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class TeacherGenerator extends Generator{
@@ -97,8 +95,10 @@ public class TeacherGenerator extends Generator{
 
         if(ScheduleConfig.getPrescheduledFileName() != null){
             LOGGER.info("Reading in prescheduled time file");
-            Map<String, List<Map<String, String>>> preschedTimes = ParseInput.readPrescheduledFile();
-            if(!preschedTimes.isEmpty()) prescheduleUpdate(teacherMap, preschedTimes);
+            PrescheduleObject preschedTimes = ParseInput.readPrescheduledFile();
+            if(preschedTimes.hasTeachers()) {
+                prescheduleUpdate(teacherMap, preschedTimes.getTeachers());
+            }
         }
 
         return teacherMap;
@@ -108,7 +108,9 @@ public class TeacherGenerator extends Generator{
     /**
      * Returns a hashmap of the teacher's canon name mapped to their teacher's object. If the person is a faculty
      * member the teacher object will actually be a <i>Faculty</i> object.  The function will try to bleed an old survey
-     * if the professor chooses. If a professor bleeds forward in the old survey, the teacher is skipped
+     * if the professor chooses. If a professor bleeds forward in the old survey, the teacher is skipped.
+     *
+     * If a teacher has no survey for the current quarter, then we will try to use the survey from the previous quarter
      *
      * @param curQuarterSurvey current quarter survey file path assuming it's in src directory
      * @param prevQuarterSurvey prev quarter survey file path assuming it's in src directory
@@ -117,9 +119,10 @@ public class TeacherGenerator extends Generator{
      * */
     public static HashMap<String, Teacher> generateTeachers(List<HashMap<String, String>> curQuarterSurvey,
                                                      List<HashMap<String, String>> prevQuarterSurvey){
-        /* This Hash map will map the teacher's name to the teacher's object */
+        /* This Hash map will map the teacher's CANON name to their teacher object */
         HashMap<String, Teacher> teacherHashMap = new HashMap<> ();
         final String BLEED_FORWARD_STRING = "Yes, use the same as last term";
+        final String BLEED_FORWARD_KEY = "use_old";
 
         /*we will use a hashmap to keep track of who want to bleed forward for
         * easy lookup*/
@@ -130,7 +133,7 @@ public class TeacherGenerator extends Generator{
             String instructorName = surveyEntry.get("name");
 
             /*check if the instructor wants to bleed forward in current quarter's survey*/
-            if(BLEED_FORWARD_STRING.equals(surveyEntry.get("use_old"))){
+            if(BLEED_FORWARD_STRING.equals(surveyEntry.get(BLEED_FORWARD_KEY))){
                 LOGGER.info(String.format("Bleeding forward %s", instructorName));
                 teacherBleed.put(instructorName, null);
 
@@ -153,13 +156,15 @@ public class TeacherGenerator extends Generator{
         /*read the previous quarter survey entries in case anyone bled forward*/
         for(HashMap<String, String> surveyEntry : prevQuarterSurvey){
             String instructorName = surveyEntry.get("name").strip();
+            final String canonName = Constants.TEACHER_NAME_TO_CANON.get(instructorName);
+
             /*Check if the instructor wanted to bleed forward*/
             if(teacherBleed.containsKey(instructorName)){
 
-                LOGGER.info(String.format("Trying to use %s's old survey", instructorName));
+                LOGGER.info(String.format("Trying to use %s's old survey so they can bleed forward", instructorName));
                 /*If the instructor choose to bleed forward in the previous survey
                 * we will be forced to skip them :( */
-                if(BLEED_FORWARD_STRING.equals(surveyEntry.get("use_old"))){
+                if(BLEED_FORWARD_STRING.equals(surveyEntry.get(BLEED_FORWARD_KEY))){
                     LOGGER.warn(String.format("Previous survey also bleeds forward. SKIPPING %s", instructorName));
                     continue;
                 }
@@ -171,9 +176,19 @@ public class TeacherGenerator extends Generator{
                 * Teacher instance*/
                 Teacher curTeacher = generateTeacher(surveyEntry);
                 if(curTeacher == null) continue;
-                teacherHashMap.put(Constants.TEACHER_NAME_TO_CANON.get(instructorName), curTeacher);
+                teacherHashMap.put(canonName, curTeacher);
                 /*Remove from teachers left to bleed*/
                 teacherBleed.remove(instructorName);
+            }
+            //try to use an instructor's old survey if they are missing one for the current term
+            //make sure they didn't bleed forward though
+            else if(!teacherHashMap.containsKey(canonName) &&
+                    !BLEED_FORWARD_STRING.equals(surveyEntry.get(BLEED_FORWARD_KEY))){
+                Teacher teacher = generateTeacher(surveyEntry);
+                if(teacher == null) continue;
+                LOGGER.warn("When reading the previous term's survey, instructor, with name '{}', was found but with no survey " +
+                        "for the current term. Using the the previous term's survey for them", instructorName);
+                teacherHashMap.put(canonName, teacher);
             }
         }
 
@@ -261,10 +276,11 @@ public class TeacherGenerator extends Generator{
     }
 
 
-    private static void prescheduleUpdate(Map<String, Teacher> teacherMap, Map<String, List<Map<String, String>>> presched){
-        Iterator<Map.Entry<String, List<Map<String, String>>>> iterator = presched.entrySet().iterator();
+    private static void prescheduleUpdate(Map<String, Teacher> teacherMap,
+                                          Map<String, List<PrescheduleObject.PrescheduledWindow>> presched){
+        Iterator<Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>>> iterator = presched.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, List<Map<String, String>>> entry = iterator.next();
+            Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>> entry = iterator.next();
             String name = entry.getKey();
             Teacher teacher = teacherMap.get(name);
             if (teacher == null){
@@ -295,9 +311,9 @@ public class TeacherGenerator extends Generator{
         }
     }
 
-    public static BitSet createPreschedBs(List<Map<String, String>> timeJson){
+    public static BitSet createPreschedBs(List<PrescheduleObject.PrescheduledWindow> timeJson){
         BitSet bs = new BitSet();
-        for(Map<String, String> time: timeJson){
+        for(PrescheduleObject.PrescheduledWindow time: timeJson){
             bs.or(BitSetHelper.timeJsonToBs(time));
         }
 

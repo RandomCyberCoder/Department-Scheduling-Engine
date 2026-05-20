@@ -27,7 +27,7 @@ public class Constants {
     /**
      * Global time formatter
      */
-    public static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mma");
+    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("h:mma");
     /**
     * Set to True for testing. Helps by pass some checks
     * */

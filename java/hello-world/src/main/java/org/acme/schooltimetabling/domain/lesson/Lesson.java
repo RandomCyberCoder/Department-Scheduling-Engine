@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -313,8 +312,8 @@ public class Lesson {
                 LocalTime endTime = BASE_TIME.plusMinutes((end + 1) * 30L);
                 res.add(Map.of(
                         "day", day.name(),
-                        "start", startTime.format(Constants.TIME_FMT),
-                        "end", endTime.format(Constants.TIME_FMT)
+                        "start", startTime.format(Constants.TIME_FORMATTER),
+                        "end", endTime.format(Constants.TIME_FORMATTER)
                 ));
                 start = dayBits.nextSetBit(end + 1);
             }
