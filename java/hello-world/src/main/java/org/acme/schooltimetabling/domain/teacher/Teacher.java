@@ -1,5 +1,6 @@
 package org.acme.schooltimetabling.domain.teacher;
 
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
 import org.acme.schooltimetabling.constants.Preference;
 
 import java.util.BitSet;
@@ -16,11 +17,17 @@ public class Teacher {
     public BitSet conflict;
     private Preference gapPref;
 
+    /**
+     * use {@link TeacherBuilder} instead if possible
+     */
     public Teacher(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict, Preference gapPref){
         this(id, name, preferences, acceptable, conflict);
         this.gapPref = gapPref;
     }
 
+    /**
+     * use {@link TeacherBuilder} instead if possible
+     */
     public Teacher(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict) {
         this.id = id;
         this.name = name;
@@ -59,4 +66,10 @@ public class Teacher {
     }
 
     public Preference getGapPref(){ return gapPref; }
+
+    public void preschedule(BitSet preschedule){
+        preferences.andNot(preschedule);
+        acceptable.andNot(preschedule);
+        conflict.or(preschedule);
+    }
 }

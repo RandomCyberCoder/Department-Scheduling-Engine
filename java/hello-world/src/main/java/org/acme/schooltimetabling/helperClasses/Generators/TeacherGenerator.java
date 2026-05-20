@@ -3,8 +3,13 @@ package org.acme.schooltimetabling.helperClasses.Generators;
 import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyCalls;
 import org.acme.schooltimetabling.apiCalls.surveyEndpoint.SurveyRecord;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
+import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
+import org.acme.schooltimetabling.builders.teachers.policies.FacultyPolicy;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
+import org.acme.schooltimetabling.defaultTimes.DefaultTime;
+import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
@@ -184,10 +189,10 @@ public class TeacherGenerator extends Generator{
             //make sure they didn't bleed forward though
             else if(!teacherHashMap.containsKey(canonName) &&
                     !BLEED_FORWARD_STRING.equals(surveyEntry.get(BLEED_FORWARD_KEY))){
+                LOGGER.warn("When reading the previous term's survey, instructor, with name '{}', was found but with no survey " +
+                        "for the current term. Trying to use the previous term's survey for them", instructorName);
                 Teacher teacher = generateTeacher(surveyEntry);
                 if(teacher == null) continue;
-                LOGGER.warn("When reading the previous term's survey, instructor, with name '{}', was found but with no survey " +
-                        "for the current term. Using the the previous term's survey for them", instructorName);
                 teacherHashMap.put(canonName, teacher);
             }
         }
@@ -266,43 +271,74 @@ public class TeacherGenerator extends Generator{
             }
         }
 
+        //TODO; CHECK UPDATE
         String[] splitName = canonName.split(",");
-        Preference pref = Preference.parsePref(surveyEntry.get("gap"));
-        if(Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip())){
-            LOGGER.info(String.format("Instructor '%s' identified as faculty", canonName));
-            return new Faculty(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
+        Preference gapPref = Preference.parsePref(surveyEntry.get("gap"));
+        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip());
+        TeacherBuilder builder = new TeacherBuilder(new DefaultTeachingPolicy());
+        if(isFaculty){
+            LOGGER.info(String.format("Instructor '%s' identified as faculty. Promoting to faculty.....", canonName));
+            builder.setPolicy(new FacultyPolicy());
         }
-        return new Teacher(getNextTeacherID(), canonName, preferred, acceptable, conflicts, pref);
+        return builder.preference(preferred)
+                .acceptable(acceptable)
+                .conflict(conflicts)
+                .canon(canonName)
+                .gapPref(gapPref)
+                .build();
     }
 
 
+    /**
+     * Preschedule a teacher. If not teacher object has been created previously
+     * @param teacherMap map of canon name to <i>Teacher</i> object
+     * @param presched map of non canon name to their
+     */
     private static void prescheduleUpdate(Map<String, Teacher> teacherMap,
                                           Map<String, List<PrescheduleObject.PrescheduledWindow>> presched){
         Iterator<Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>>> iterator = presched.entrySet().iterator();
+        //TODO use builder here for teacher creation; we should use a default time here actually; lets update; CHECK UPDATE
         while (iterator.hasNext()) {
             Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>> entry = iterator.next();
             String name = entry.getKey();
-            Teacher teacher = teacherMap.get(name);
-            if (teacher == null){
-                teacher = new Teacher(getNextTeacherID(), name, new BitSet(), new BitSet(), new BitSet());
-                LOGGER.warn("Couldn't find a teacher object for {} during prescheduling setup; creating one...", name);
-                if(Constants.FACULTY_LAST_NAMES.contains(name.split(",")[0].strip())){
-                    LOGGER.info("promoting {} to faculty", name);
-                    teacher = new Faculty(teacher);
-                }
-                teacherMap.put(name, teacher);
-            }
+            BitSet prescheduleBs;
 
             try {
-                BitSet addConflict = createPreschedBs(entry.getValue());
-                teacher.getAcceptable().andNot(addConflict);
-                teacher.getPreferences().andNot(addConflict);
-                teacher.getConflict().or(addConflict);
+                prescheduleBs = createPreschedBs(entry.getValue());
                 iterator.remove(); // safe removal while iterating
             } catch (Exception e) {
                 LOGGER.info("Couldn't parse prescheduled times for '{}' because of error: '{}'",
                         name, e.getMessage());
+                continue;
             }
+
+            Teacher teacher = teacherMap.get(name);
+            //create the teacher object with a default schedule to ensure their preschedule conflicts are taken into account
+            if(teacher == null){
+                LOGGER.warn("Couldn't find a teacher object for {} during prescheduling setup; creating one...", name);
+                DefaultTime defaultTime = DefaultTimeRegistry.getRandomDefault();
+                boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(name.split(",")[0].strip());
+                TeacherBuilder builder = new TeacherBuilder(new DefaultTeachingPolicy());
+
+                if(isFaculty){
+                    LOGGER.info("promoting {} to faculty", name);
+                    builder.setPolicy(new FacultyPolicy());
+                }
+
+                teacher = builder.preference(defaultTime.getPreference())
+                        .acceptable(defaultTime.getAcceptable())
+                        .conflict(defaultTime.getConflict())
+                        .canon(name)
+                        .gapPref(Preference.NEUTRAL)
+                        .preschedule(prescheduleBs)
+                        .build();
+
+                teacherMap.put(name, teacher);
+            }
+            else{
+                teacher.preschedule(prescheduleBs);
+            }
+
         }
 
         if(!presched.isEmpty()){
