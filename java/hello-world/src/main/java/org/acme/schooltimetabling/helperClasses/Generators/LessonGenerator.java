@@ -1,5 +1,8 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
+import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
+import org.acme.schooltimetabling.builders.teachers.policies.FacultyPolicy;
 import org.acme.schooltimetabling.defaultTimes.DefaultTime;
 import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
 import org.acme.schooltimetabling.constants.Constants;
@@ -329,24 +332,21 @@ public class LessonGenerator extends Generator{
     private static Teacher noSurveyTeacher(String name, DefaultTime defaultTime){
         final int LAST_NAME_POS = 0;
         String[] nameFragments = name.split(",");
-        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS]);
-
+        boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS].strip());
+        TeacherBuilder builder = new TeacherBuilder(new DefaultTeachingPolicy());
+        //TODO; CHECK UPDATE
         if(isFaculty){
             LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting to Faculty"
                     , name));
-            return new Faculty(TeacherGenerator.getNextTeacherID(), name,
-                    defaultTime.getPreference(),
-                    defaultTime.getAcceptable(),
-                    defaultTime.getConflict(),
-                    Preference.NEUTRAL);
+            builder.setPolicy(new FacultyPolicy());
         }
-        else{
-            return new Teacher(TeacherGenerator.getNextTeacherID(), name,
-                    defaultTime.getPreference(),
-                    defaultTime.getAcceptable(),
-                    defaultTime.getConflict(),
-                    Preference.NEUTRAL);
-        }
+
+        return builder.preference(defaultTime.getPreference())
+                .acceptable(defaultTime.getAcceptable())
+                .conflict(defaultTime.getConflict())
+                .canon(name)
+                .gapPref(Preference.NEUTRAL)
+                .build();
     }
 
 

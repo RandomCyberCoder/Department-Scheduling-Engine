@@ -1,5 +1,8 @@
 package org.acme.schooltimetabling.solver;
 
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
+import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
+import org.acme.schooltimetabling.builders.teachers.policies.FacultyPolicy;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
@@ -12,6 +15,7 @@ import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,8 +76,13 @@ public class TestConstraints {
         EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         BitSet teacher1Bits = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter)
                 , 4, MW);
-        Teacher teacher1 = new Teacher(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, teacher1Bits);
+        Teacher teacher1 = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(teacher1Bits)
+                .canon("instructor1")
+                .gapPref(Preference.NEUTRAL)
+                .build();
         BitSet ts1 = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter)
                 , 4, MW);
         Timeslot timeslot1 = Timeslot.test_lecLabBitAndDays(1, ts1, ConstraintTestHelper.EMPTY_BS,
@@ -84,8 +93,13 @@ public class TestConstraints {
         //No Penalty 1+ for teacher2
         BitSet teacher2Bits = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter)
                 , 4, MW);
-        Teacher teacher2 = new Teacher(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, teacher2Bits);
+        Teacher teacher2 = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(teacher2Bits)
+                .canon("instructor2")
+                .gapPref(Preference.NEUTRAL)
+                .build();
         BitSet bs_MW_7AM_blck2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("7:00AM", formatter), 2, MW);
         BitSet bs_MW_8AM_blcks2 = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MW);
         Timeslot timeslot2 = Timeslot.test_lecLabBitAndDays(1, bs_MW_7AM_blck2, bs_MW_8AM_blcks2, MW, MW);
@@ -104,22 +118,30 @@ public class TestConstraints {
         //NOTE: the faculty class sets bits from 9pm-10pm MWF a faculty time only during testing
         EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
 
-        Teacher teacher = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
         BitSet bs_9pm_2blcks_MW = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00PM", formatter)
                 , 2, MW);
         BitSet bs_8pm_2blcks_MW = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00PM", formatter)
                 , 2, MW);
+
+        Teacher teacher = new TeacherBuilder(new FacultyPolicy(bs_9pm_2blcks_MW))
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("instructor1")
+                .gapPref(Preference.NEUTRAL)
+                .preschedule(bs_9pm_2blcks_MW)
+                .build();
+
         Timeslot ts_9pm_2bl = Timeslot.test_lecLabBitAndDays(1, bs_9pm_2blcks_MW, ConstraintTestHelper.EMPTY_BS, MW,
                 ConstraintTestHelper.NO_DAYS);
         Timeslot ts_8pm_2bl_9pm_2bl = Timeslot.test_lecLabBitAndDays(2, bs_8pm_2blcks_MW, bs_9pm_2blcks_MW, MW, MW);
         Timeslot ts_8pm_2bl = Timeslot.test_lecLabBitAndDays(1, bs_8pm_2blcks_MW, ConstraintTestHelper.EMPTY_BS, MW,
                 ConstraintTestHelper.NO_DAYS);
+
         Lesson lesson1 = Lesson.test_buildLesson("1", 1, "", "", "",
                 "3-1-0", 1, teacher, ts_9pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
         Lesson lesson2 = Lesson.test_buildLesson("2", 1, "dummyName", "noName",
                 "", "3-1-0", 2,  teacher, ts_8pm_2bl_9pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
-
         //no penalty
         Lesson lesson3 = Lesson.test_buildLesson("3", 1, "dummyName", "noName",
                 "", "3-0-0", 2,  teacher, ts_8pm_2bl, ConstraintTestHelper.DUMMY_ROOM);
@@ -133,16 +155,14 @@ public class TestConstraints {
     @Test
     @DisplayName("Test: teacher can't teach two lessons at the same time")
     void teacherLessonSameTime(){
-        Teacher teacher1 = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
-
         EnumSet<Days> enumSet = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         BitSet ts1 = BitSetHelper.timeSlotBitSet(LocalTime.parse("1:00PM", formatter)
                 , 6, enumSet);
         //1PM-4 MW
         Timeslot timeslot1 = Timeslot.test_lecLabBitAndDays(1, ts1, ConstraintTestHelper.EMPTY_BS, enumSet, enumSet);
         Lesson lesson1 = Lesson.test_buildLesson("1", 1, "dummyName", "noName",
-                "", "3-1-0", 2,  teacher1, timeslot1, ConstraintTestHelper.DUMMY_ROOM);
+                "", "3-1-0", 2,  ConstraintTestHelper.DUMMY_TEACHER, timeslot1,
+                ConstraintTestHelper.DUMMY_ROOM);
 
 
         EnumSet<Days> enumSet2 = EnumSet.of(Days.WEDNESDAY);
@@ -152,7 +172,8 @@ public class TestConstraints {
         Timeslot timeslot2 = Timeslot.test_lecLabBitAndDays(2, ConstraintTestHelper.EMPTY_BS, ts2,
                 ConstraintTestHelper.NO_DAYS, enumSet2);
         Lesson lesson2 = Lesson.test_buildLesson("2", 2, "dummyName", "noName",
-                "", "3-1-0", 3, teacher1, timeslot2, ConstraintTestHelper.DUMMY_ROOM);
+                "", "3-1-0", 3, ConstraintTestHelper.DUMMY_TEACHER, timeslot2,
+                ConstraintTestHelper.DUMMY_ROOM);
 
 
         EnumSet<Days> soloDay = EnumSet.of(Days.MONDAY);
@@ -164,8 +185,13 @@ public class TestConstraints {
                 , MWF);
 
         Timeslot ts3 = Timeslot.test_lecLabBitAndDays(1, bs3, ConstraintTestHelper.EMPTY_BS, soloDay, ConstraintTestHelper.NO_DAYS);
-        Teacher teacher2 = new Faculty(2, "instructor2", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
+        Teacher teacher2 = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("instructor2")
+                .gapPref(Preference.NEUTRAL)
+                .build();
         Lesson lesson3 = Lesson.test_buildLesson("3", 3, "dummyName", "noName",
                 "", "3-1-0", 3,  teacher2, ts_1PM_MWF_blks4, ConstraintTestHelper.DUMMY_ROOM);
 
@@ -225,9 +251,13 @@ public class TestConstraints {
         EnumSet<Days> MW = EnumSet.of(Days.MONDAY, Days.WEDNESDAY);
         EnumSet<Days> MTWR = EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY);
         Room room = new Room("1", "dummyRoom", 1);
-        Teacher teacher = new Faculty(1, "instructor1", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
-
+        Teacher teacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("instructor1")
+                .gapPref(Preference.NEUTRAL)
+                .build();
         /*9-10 MWF*/
         BitSet bs_mwf_9_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter)
                 , 2, MWF);
@@ -523,10 +553,20 @@ public class TestConstraints {
     void penalizeLargeGapsAndLongDays(){
 
         EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
-        Teacher TEACHER1 = new Teacher( 1, "dummyInstructor", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
-        Teacher TEACHER2 = new Teacher( 1, "dummyInstructor", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS);
+        Teacher TEACHER1 = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("teacher1")
+                .gapPref(Preference.NEUTRAL)
+                .build();
+        Teacher TEACHER2 = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("teacher2")
+                .gapPref(Preference.NEUTRAL)
+                .build();
 
 
     /* ---------------------------
@@ -619,8 +659,13 @@ public class TestConstraints {
     @DisplayName("Reward: teacher prefers one-hour gaps")
     void rewardPreferredHourGap() {
         EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY, Days.FRIDAY);
-        Teacher teacher = new Teacher(1, "prefers gaps", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+        Teacher teacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("prefers gaps")
+                .gapPref(Preference.AGREE)
+                .build();
 
         BitSet early = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", formatter), 2, MWF);
         BitSet late = BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", formatter), 2, MWF);
@@ -638,14 +683,24 @@ public class TestConstraints {
         BitSet rfLecture = BitSetHelper.timeSlotBitSet(LocalTime.parse("3:00PM", formatter), 2, RF);
         BitSet rfLab = BitSetHelper.timeSlotBitSet(LocalTime.parse("5:00PM", formatter), 2, RF);
         Timeslot rfTimeslot = Timeslot.test_lecLabBitAndDays(6, rfLecture, rfLab, RF, RF);
-        Teacher singleCourseTeacher = new Teacher(4, "single slot", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+        Teacher singleCourseTeacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("single slot")
+                .gapPref(Preference.AGREE)
+                .build();
         Lesson singleCourse = Lesson.test_buildLesson("gap3", 1, "", "", "",
                 "0-0-0", 1, singleCourseTeacher, rfTimeslot, ConstraintTestHelper.DUMMY_ROOM);
 
         //------ no reward
-        Teacher disagreeTeacher = new Teacher(2, "hates gaps", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+        Teacher disagreeTeacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("hates gaps")
+                .gapPref(Preference.DISAGREE)
+                .build();
 
         Lesson disagreeLesson1 = Lesson.test_buildLesson("gapDisagree1", 1, "", "", "",
                 "0-0-0", 1, disagreeTeacher, tsEarly, ConstraintTestHelper.DUMMY_ROOM);
@@ -664,8 +719,13 @@ public class TestConstraints {
     void penalizeDislikedHourGap() {
         EnumSet<Days> TR = EnumSet.of(Days.TUESDAY, Days.THURSDAY);
         EnumSet<Days> T = EnumSet.of(Days.TUESDAY);
-        Teacher teacher = new Teacher(2, "hates gaps", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+        Teacher teacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("hates gaps")
+                .gapPref(Preference.DISAGREE)
+                .build();
 
         BitSet blockA = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", formatter), 2, TR);
         BitSet blockB = BitSetHelper.timeSlotBitSet(LocalTime.parse("11:00AM", formatter), 2, TR);
@@ -687,13 +747,23 @@ public class TestConstraints {
         BitSet lectureRf = BitSetHelper.timeSlotBitSet(LocalTime.parse("3:00PM", formatter), 2, RF);
         BitSet labRf = BitSetHelper.timeSlotBitSet(LocalTime.parse("5:00PM", formatter), 2, RF);
         Timeslot rfTimeslot = Timeslot.test_lecLabBitAndDays(6, lectureRf, labRf, RF, RF);
-        Teacher singleCourseTeacher = new Teacher(4, "single course", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.DISAGREE);
+        Teacher singleCourseTeacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("single course")
+                .gapPref(Preference.DISAGREE)
+                .build();
         Lesson singleCourse = Lesson.test_buildLesson("singleCourse", 1, "", "", "",
                 "0-0-0", 1, singleCourseTeacher, rfTimeslot, ConstraintTestHelper.DUMMY_ROOM);
         //-------- No penalty
-        Teacher gapPrefTeacher = new Teacher(3, "likes gaps", ConstraintTestHelper.EMPTY_BS,
-                ConstraintTestHelper.EMPTY_BS, ConstraintTestHelper.EMPTY_BS, Preference.AGREE);
+        Teacher gapPrefTeacher = new TeacherBuilder(new DefaultTeachingPolicy())
+                .preference(ConstraintTestHelper.EMPTY_BS)
+                .acceptable(ConstraintTestHelper.EMPTY_BS)
+                .conflict(ConstraintTestHelper.EMPTY_BS)
+                .canon("likes gaps")
+                .gapPref(Preference.AGREE)
+                .build();
 
         Lesson likedGap1 = Lesson.test_buildLesson("agree1", 1, "", "", "",
                 "0-0-0", 1, gapPrefTeacher, tsA, ConstraintTestHelper.DUMMY_ROOM);

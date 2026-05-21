@@ -10,6 +10,7 @@ import java.util.BitSet;
  * 7AM-10PM for MTWRF
  */
 public interface DefaultTime {
+    //these should all return copies of the bitsets for safety
     BitSet getPreference();
     BitSet getAcceptable();
     BitSet getConflict();

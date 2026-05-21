@@ -2,6 +2,7 @@ package org.acme.schooltimetabling.domain.teacher;
 
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import org.acme.schooltimetabling.TimetableApp;
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
@@ -18,8 +19,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * The Faculty object represents a teacher that is a faculty member. It extends the Teacher object and overrides the
- * {@link #getConflict()}  getConflict}
+ * The Faculty object represents a teacher that is a faculty member. It extends the Teacher object.
+ * It no longer has any special behavior.
  */
 public class Faculty extends Teacher{
     private static final Logger LOGGER = LoggerFactory.getLogger(Faculty.class);
@@ -28,7 +29,10 @@ public class Faculty extends Teacher{
      */
     private static final BitSet FACULTY_CONFLICT;
 
-    /*static block for setting up times faculty members can't be scheduled during*/
+    /*THIS IS NO LONGER USED BUT I'M LEAVING IT FOR NOW BECAUSE IT HAS TEST BEHAVIOR; THE FACULTY MASKING IS NOW
+    * DONE WHEN I CREATE THE FACULTY OBJECT; L
+    *
+    * static block for setting up times faculty members can't be scheduled during*/
     static {
         /*enter here the bitsets needed for faculty time*/
         FACULTY_CONFLICT = new BitSet();
@@ -74,31 +78,22 @@ public class Faculty extends Teacher{
 
     }
 
+    /**
+     * use {@link TeacherBuilder} instead if possible
+     */
     public Faculty(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict) {
         super(id, name, preferences, acceptable, conflict);
     }
 
+    /**
+     * use {@link TeacherBuilder} instead if possible
+     */
     public Faculty(int id, String name, BitSet preferences, BitSet acceptable, BitSet conflict, Preference gap) {
         super(id, name, preferences, acceptable, conflict, gap);
     }
 
     public Faculty(Teacher teacher){
         super(teacher);
-    }
-
-    /**
-     * Needs to be overridden, faculty can't be scheduled during a certain time. Faculty's {@link Teacher#conflict conflict BitSet}
-     * is combined with {@link Faculty#FACULTY_CONFLICT BitSet facutly restriction}. Needed for the
-     * {@link org.acme.schooltimetabling.solver.TimetableConstraintProvider#teacherLessonConflict teacherLessonConflict}
-     * constraint
-     * @return BitSet representing faculty's conflict preferences and faculty conflict
-     */
-    @Override
-    public BitSet getConflict() {
-        BitSet conflict = super.getConflict();
-        BitSet facultyConflictCopy = conflict.get(0, conflict.size());
-        facultyConflictCopy.or(FACULTY_CONFLICT);
-        return facultyConflictCopy;
     }
 
     public static BitSet getFacultyConflict() {
