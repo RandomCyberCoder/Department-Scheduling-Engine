@@ -1,20 +1,15 @@
 package org.acme.schooltimetabling.TestClasses;
 
-import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
 import org.acme.schooltimetabling.builders.teachers.policies.FacultyPolicy;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.teacher.Faculty;
-import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
-import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.acme.schooltimetabling.solver.ConstraintTestHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 import java.util.*;
 

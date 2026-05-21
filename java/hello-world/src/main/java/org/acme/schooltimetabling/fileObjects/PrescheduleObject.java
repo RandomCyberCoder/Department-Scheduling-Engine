@@ -1,4 +1,4 @@
-package org.acme.schooltimetabling.helperClasses;
+package org.acme.schooltimetabling.fileObjects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

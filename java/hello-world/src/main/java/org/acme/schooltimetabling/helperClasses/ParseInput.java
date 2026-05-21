@@ -3,9 +3,11 @@ package org.acme.schooltimetabling.helperClasses;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
+import org.acme.schooltimetabling.fileObjects.PrescheduleObject;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

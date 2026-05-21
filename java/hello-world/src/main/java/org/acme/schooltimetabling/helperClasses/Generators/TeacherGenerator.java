@@ -10,12 +10,11 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.defaultTimes.DefaultTime;
 import org.acme.schooltimetabling.defaultTimes.DefaultTimeRegistry;
-import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
+import org.acme.schooltimetabling.fileObjects.PrescheduleObject;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

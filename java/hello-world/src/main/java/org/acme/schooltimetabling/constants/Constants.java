@@ -6,7 +6,7 @@ import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherCalls;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
 import org.acme.schooltimetabling.helperClasses.Generators.Generator;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

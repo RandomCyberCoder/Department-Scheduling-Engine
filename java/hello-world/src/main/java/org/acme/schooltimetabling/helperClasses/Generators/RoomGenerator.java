@@ -4,9 +4,8 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.PrescheduleObject;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
-import org.apache.commons.math3.random.BitsStreamGenerator;
+import org.acme.schooltimetabling.fileObjects.PrescheduleObject;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

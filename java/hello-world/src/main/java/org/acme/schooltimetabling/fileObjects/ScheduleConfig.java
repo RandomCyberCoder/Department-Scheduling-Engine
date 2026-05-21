@@ -1,6 +1,8 @@
-package org.acme.schooltimetabling.helperClasses;
+package org.acme.schooltimetabling.fileObjects;
 
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.time.Duration;

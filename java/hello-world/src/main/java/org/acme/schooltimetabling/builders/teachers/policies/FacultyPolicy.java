@@ -3,7 +3,7 @@ package org.acme.schooltimetabling.builders.teachers.policies;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;

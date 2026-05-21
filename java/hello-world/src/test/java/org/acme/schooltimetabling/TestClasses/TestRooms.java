@@ -3,7 +3,7 @@ package org.acme.schooltimetabling.TestClasses;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.helperClasses.Generators.RoomGenerator;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.Executable;
 
