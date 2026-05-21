@@ -3,6 +3,7 @@ package org.acme.schooltimetabling.helperClasses;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
+import org.acme.schooltimetabling.fileObjects.CoursePatterns;
 import org.acme.schooltimetabling.fileObjects.PrescheduleObject;
 import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.acme.schooltimetabling.fileObjects.ScheduleFormat;
@@ -233,6 +234,26 @@ public final class ParseInput {
             e.printStackTrace();
             System.exit(1);
             throw new IllegalStateException("Failed to read prescheduled file", e);
+        }
+    }
+
+    public static CoursePatterns readCoursePatterns(String filePath) {
+        try (InputStream inputStream = getResourceAsStream(filePath)) {
+            if (inputStream == null) {
+                throw new IllegalStateException("Could not find resource: " + filePath);
+            }
+            return readCoursePatterns(inputStream);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to close stream for: " + filePath, e);
+        }
+    }
+
+    public static CoursePatterns readCoursePatterns(InputStream inputStream) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(inputStream, CoursePatterns.class);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read CoursePatterns JSON", e);
         }
     }
 
