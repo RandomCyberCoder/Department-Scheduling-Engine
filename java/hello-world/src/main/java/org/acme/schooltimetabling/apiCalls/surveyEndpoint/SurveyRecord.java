@@ -2,20 +2,17 @@ package org.acme.schooltimetabling.apiCalls.surveyEndpoint;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.apiCalls.teacherEndpoint.TeacherRecord;
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
+import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
+import org.acme.schooltimetabling.builders.teachers.policies.FacultyPolicy;
 import org.acme.schooltimetabling.constants.Constants;
-import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
-import org.acme.schooltimetabling.domain.teacher.Faculty;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.Generators.TeacherGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class SurveyRecord {
@@ -51,7 +48,7 @@ public class SurveyRecord {
     private int teacherFK;
     @JsonProperty("teacher_detail")
     private TeacherRecord teacherRecord;
-    /**All extra Json properties not captured by class members with the @JsonProperty tag will
+    /**All extra JSON properties not captured by class members with the @JsonProperty tag will
      * be placed into this variable*/
     private Map<String, Object> extraFields = new HashMap<>();
 
@@ -74,7 +71,6 @@ public class SurveyRecord {
      * Only one Teacher(or Faculty) object will be if and only if this function is called. The class
      * will hold on to the created object to prevent the teacher from existing multiple times.
      * @return Teacher representation of the survey. In other words, they have their preferences set.
-     * @throws Exception
      */
     public Teacher toTeacher(){
         if(teacher_rep == null) teacher_rep = createTeacherRep();
@@ -100,10 +96,17 @@ public class SurveyRecord {
                 conflict.or(bsRep);
             }
         }
-        Teacher teacher = new Teacher(TeacherGenerator.getNextTeacherID(), Constants.TEACHER_NAME_TO_CANON.get(nonCanonName),
-                preferences, acceptable, conflict, Preference.parsePref((String) extraFields.get("gap")));
-        if(teacherRecord.isFaculty()) teacher = new Faculty(teacher);
-        return teacher;
+
+        TeacherBuilder builder = new TeacherBuilder(new DefaultTeachingPolicy());
+        if(teacherRecord.isFaculty()) builder.setPolicy(new FacultyPolicy());
+
+        return builder
+                .preference(preferences)
+                .acceptable(acceptable)
+                .conflict(conflict)
+                .canon(Constants.TEACHER_NAME_TO_CANON.get(nonCanonName))
+                .gapPref(Preference.parsePref((String) extraFields.get("gap")))
+                .build();
     }
 
     /**

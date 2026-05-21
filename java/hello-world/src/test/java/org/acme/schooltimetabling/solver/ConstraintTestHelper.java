@@ -1,7 +1,10 @@
 package org.acme.schooltimetabling.solver;
 
+import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
+import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
@@ -18,8 +21,13 @@ public class ConstraintTestHelper {
     public static final BitSet EMPTY_BS = new BitSet();
     public final static String DUMMY_STUDIO = "dummyStudioCourse";
     public final static Room DUMMY_ROOM = new Room("1", "dummyRoom", 1);
-    public final static Teacher DUMMY_TEACHER = new Teacher(
-            1, "dummyInstructor", EMPTY_BS, EMPTY_BS, EMPTY_BS);
+    public final static Teacher DUMMY_TEACHER = new TeacherBuilder(new DefaultTeachingPolicy())
+            .preference(new BitSet())
+            .acceptable(new BitSet())
+            .conflict(new BitSet())
+            .gapPref(Preference.NEUTRAL)
+            .canon("dummyInstructor")
+            .build();
     public final static Timeslot DUMMY_TS = Timeslot.test_lecLabBitAndDays(999, EMPTY_BS, EMPTY_BS, NO_DAYS, NO_DAYS);
     /**
      * Test: room name; will be used by a specific course {@link #TEST_L_W_LAB_SPECIFIC}
