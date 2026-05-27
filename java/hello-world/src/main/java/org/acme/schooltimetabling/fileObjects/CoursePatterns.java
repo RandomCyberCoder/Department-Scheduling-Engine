@@ -35,7 +35,7 @@ public class CoursePatterns {
      *
      * @param course course whose preference we want
      * @param name name of teacher whose preference we want
-     * @return preference of the <i>course</i> for the given <i>instructor</i>. If not preference was found,
+     * @return preference of the <i>course</i> for the given <i>instructor</i>. If no preference was found,
      * {@code null} will be returned.
      */
     public LabPatterns getTeacherPref(String course, String name) {
@@ -55,5 +55,7 @@ public class CoursePatterns {
         this.teacherPreference = teacherPreference;
     }
 
-
+    static public CoursePatterns empty(){
+        return new CoursePatterns();
+    }
 }

@@ -8,6 +8,7 @@ import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.fileObjects.LabPatterns;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.slf4j.Logger;
@@ -37,12 +38,6 @@ public class Lesson {
      */
     @PlanningId
     private String id;
-    public String courseName, teacherName, modifiers;
-    public int courseID, lecSection, labActSection;
-    public boolean hasLecture, hasLabAct;
-    public int lecHours, labActHours;
-    public Teacher teacherObj;
-
 
     @PlanningVariable
     private Timeslot timeslot;
@@ -50,13 +45,22 @@ public class Lesson {
     @PlanningVariable
     private Room room;
 
-    /**Don't for default constructor use*/
+    public String courseName, modifiers;
+    public int courseID, sectionNumber;
+    public boolean hasLecture, hasLabAct;
+    public int lecHours, labActHours;
+    public Teacher teacherObj;
+    private LabPatterns labPattern;
+
+    /**Prevent default constructor use*/
     private Lesson() {
     }
 
 
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
+
+    //TODO update to remove the teacherName field from all constructors. This will simplify the generators funcs
 
     /* Test factory methods */
     public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
@@ -65,9 +69,8 @@ public class Lesson {
                 , timeslot, room);
     }
 
-    /* Test constructor(s)*/
-
-    private Lesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+    //only used by test_buildLesson
+    private Lesson(String Id, int sectionNumber, String courseName, String teacherName, String modifiers,
                   String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         /*the courseConfig stream is assumed to come in the format
          * E-L-A where E is the number of lecture units, L is the number of
@@ -85,11 +88,9 @@ public class Lesson {
         this.hasLecture = lecUnits != NO_HOURS;
         this.hasLabAct = labActHours != NO_HOURS;
         this.id = Id;
-        this.lecSection = lecSection;
-        this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
+        this.sectionNumber = sectionNumber;
         this.courseID = courseID;
         this.courseName = courseName;
-        this.teacherName = teacherName;
         this.teacherObj = teacherObj;
         this.modifiers = modifiers;
         /*Populate planning variables*/
@@ -106,13 +107,13 @@ public class Lesson {
      * </p>
      *
      * @param Id unique ID for the lesson
-     * @param lecSection unique section number for the lecture
+     * @param sectionNumber unique section number for the lecture
      * @param courseName name of the course that will be taught for this lesson
      * @param modifiers any course modifiers. If no modifiers pass a "" string
      * @param courseConfig configuration of the <i>courseName</i> for this lesson
      * @param teacherObj teacher object associated with the <i>teacherName</i>
      */
-    public Lesson(String Id, int lecSection, String courseName, String modifiers,
+    public Lesson(String Id, int sectionNumber, String courseName, String modifiers,
                   String courseConfig, Teacher teacherObj){
         /*the courseConfig stream is assumed to come in the format
         * E-L-A where E is the number of lecture units, L is the number of
@@ -130,14 +131,18 @@ public class Lesson {
         this.hasLecture = lecUnits != NO_HOURS;
         this.hasLabAct = labActHours != NO_HOURS;
         this.id = Id;
-        this.lecSection = lecSection;
-        this.labActSection = this.hasLabAct ? lecSection + 1 : NO_SECTION;
+        this.sectionNumber = sectionNumber;
         this.courseID = Constants.COURSE_ID_BIMAP.get(courseName);
         this.courseName = courseName;
         this.teacherObj = teacherObj;
-        /*TODO check if we can delete this field*/
-        this.teacherName = teacherObj.getName();
         this.modifiers = modifiers;
+        this.labPattern = null;
+    }
+
+    public Lesson(String Id, int lecSection, String courseName, String modifiers,
+                  String courseConfig, Teacher teacherObj, LabPatterns labPattern){
+        this(Id, lecSection, courseName, modifiers, courseConfig, teacherObj);
+        this.labPattern = labPattern;
     }
 
     /**
@@ -150,11 +155,12 @@ public class Lesson {
     public static Lesson dummyRecord(String courseName, String modifiers, Teacher teacher){
         return new Lesson(courseName, modifiers, teacher);
     }
+
+    //only used by dummyRecord();
     private Lesson(String courseName, String modifiers, Teacher teacher){
         this.courseName = courseName;
         this.modifiers = modifiers;
         this.teacherObj = teacher;
-        this.teacherName = teacher.getName();
     }
     @Override
     public String toString() {
@@ -187,12 +193,16 @@ public class Lesson {
         this.room = room;
     }
 
+    public LabPatterns getLabPattern() {
+        return this.labPattern;
+    }
+
     public String getCourseName() {
         return courseName;
     }
 
     public String getTeacherName() {
-        return teacherName;
+        return teacherObj.getName();
     }
 
     public String getModifiers() {
@@ -203,18 +213,32 @@ public class Lesson {
         return courseID;
     }
 
+    /**
+     * Retrieve a lec section if one exists
+     * @return lec section if one exists; otherwise -1
+     */
     public int getLecSection() {
-        return lecSection;
+        return this.hasLecture ? this.sectionNumber : -1;
     }
 
+    /**
+     * Retrieve a lec/act section if one exists
+     * @return lab/act section if one exists; otherwise -1
+     */
     public int getLabActSection() {
-        return labActSection;
+        /*Note that if the lesson has both a lecture and a lab/act, the section number stored  is assumed to be
+        for the lecture and the next section number is assumed to be reserved for the lab/act portion of the lesson
+         */
+        if(this.hasLabAct && this.hasLecture) return this.sectionNumber + 1;
+        if(this.hasLabAct) return this.sectionNumber;
+        return -1;
     }
 
+    //I guess we technically don't need this with the current setup up of getLecSection()
     public boolean isHasLecture() {
         return hasLecture;
     }
-
+    //I guess we technically don't need this with the current setup up of getLabActSection()
     public boolean isHasLabAct() {
         return hasLabAct;
     }

@@ -30,6 +30,7 @@ public class ScheduleConfig {
     public String compressStart;
     public String compressEnd;
     public String prescheduledFileName;
+    public String patternsFileName;
     //------------ values calculated ------------
     private BitSet cpmrsInBs;
     private BitSet cmprsOutBs;
@@ -156,5 +157,10 @@ public class ScheduleConfig {
     public static String getPrescheduledFileName(){
         if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
         return HOLDER.scheduleConfig.prescheduledFileName;
+    }
+
+    public static String getPatternsFileName(){
+        if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
+        return HOLDER.scheduleConfig.patternsFileName;
     }
 }

@@ -268,7 +268,6 @@ public class ResultSaver {
 
         for(Lesson lesson: lessons){
             final Timeslot lsTs = lesson.getTimeslot();
-            Timeslot.test_minSetUp("1");
             if(lesson.isHasLecture()){
                 Row row = listSheet.createRow(rowIdx++);
                 String roomName = lesson.isStudio() ? lesson.getRoom().getName() : "University Room";
