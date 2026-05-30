@@ -1,4 +1,4 @@
-days, time_start, time_end, lecture_hours, total_hours, lab_days, lab_start, lab_end, lab_hours
+days, startTime, endTime, startHours, totalHours, days2, startTime2, endTime2, totalHours2
 MWF, 7:00AM, 9:00AM, 1, 2,,,,
 MWF, 8:00AM, 10:00AM, 1, 2,,,,
 MWF, 9:00AM, 11:00AM, 1, 2,,,,

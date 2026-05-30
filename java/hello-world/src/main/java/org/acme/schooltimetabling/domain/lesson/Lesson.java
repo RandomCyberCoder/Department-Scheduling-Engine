@@ -221,6 +221,7 @@ public class Lesson {
         return this.hasLecture ? this.sectionNumber : -1;
     }
 
+    //TODO UPDATE
     /**
      * Retrieve a lec/act section if one exists
      * @return lab/act section if one exists; otherwise -1
@@ -259,6 +260,7 @@ public class Lesson {
         return Constants.STUDIO_STYLE_COURSES.contains(this.courseName);
     }
 
+
     /**
      * Masks the lecture bitset with {@link BitSetHelper#PRIME_TIME_MASK}
      * @return a BitSet with any lecture bits set during primetime
@@ -266,7 +268,8 @@ public class Lesson {
     public BitSet maskInPT(){
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
-        BitSet lecBitSet = timeslot.getLectureBitSet();
+        if(!hasLecture) return new BitSet();
+        BitSet lecBitSet = timeslot.getBitSetSlot1();
         BitSet copy = lecBitSet.get(0, lecBitSet.length());
         copy.and(BitSetHelper.PRIME_TIME_MASK);
         return copy;
@@ -279,7 +282,8 @@ public class Lesson {
     public BitSet maskOutPT(){
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
-        BitSet lecBitSet = timeslot.getLectureBitSet();
+        if(!hasLecture) return new BitSet();
+        BitSet lecBitSet = timeslot.getBitSetSlot1();
         BitSet copy = lecBitSet.get(0, lecBitSet.length());
         copy.and(BitSetHelper.NON_PRIME_TIME_MASK);
         return copy;
@@ -293,8 +297,8 @@ public class Lesson {
     public BitSet maskInCmprs(){//if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
         BitSet copy = new BitSet();
-        copy.or(timeslot.getLectureBitSet());
-        copy.or(timeslot.getLabActBitSet());
+        copy.or(timeslot.getBitSetSlot1());
+        copy.or(timeslot.getBitSetSlot2());
         copy.and(ScheduleConfig.getCompressInMask());
         return copy;
     }
@@ -309,8 +313,8 @@ public class Lesson {
         //if the lesson has gone through the solver the timeslot will be null;
         if(timeslot == null) return null;
         BitSet copy = new BitSet();
-        copy.or(timeslot.getLectureBitSet());
-        copy.or(timeslot.getLabActBitSet());
+        copy.or(timeslot.getBitSetSlot1());
+        copy.or(timeslot.getBitSetSlot2());
         copy.and(ScheduleConfig.getCompressOutMask());
         return copy;
     }
