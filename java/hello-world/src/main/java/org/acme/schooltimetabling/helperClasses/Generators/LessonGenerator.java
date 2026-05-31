@@ -95,8 +95,8 @@ public class LessonGenerator extends Generator{
         /*loop through the schedule (list of courses) a teacher is planned
          * to teach*/
         for (ScheduleFormat schedule : schedules) {
-            //TODO just make the tacher object and pass that instead of the teacher name
             teacherName = schedule.getName();
+            Teacher teacher = getTeacher(teacherHashMap, teacherName);
             /*This is a list courses that will be scheduled*/
             List<String> coursesToSchedule;
 
@@ -114,6 +114,7 @@ public class LessonGenerator extends Generator{
                 String courseModifier = parsedCourse.getFirst();
                 String courseName = parsedCourse.getSecond();
                 String courseConfig = Constants.COURSE_CONFIGS.get(courseName);
+
                 if(courseConfig == null) throw new RuntimeException(String.format("Unable to find a configuration for " +
                         "the course '%s'", courseName));
 
@@ -127,7 +128,6 @@ public class LessonGenerator extends Generator{
                     skippedLessons.add(newLesson);
                 }
                 else{
-                    //TODO here we will have to update when splitting
                     //check if we have to split
                     LabPatterns defaultPattern = getLabPattern(courseName, teacherName);
                     if(LabPatterns.ONE.equals(defaultPattern)){
@@ -141,7 +141,7 @@ public class LessonGenerator extends Generator{
                         //check if this course has a lecture portion
                         if(courseUnits[LEC_POS] != 0){
                             lessons.add(
-                                    generateLesson(teacherHashMap, course, teacherName,
+                                    generateLesson(teacher, course,
                                             String.format("%d-0-0", courseUnits[LEC_POS]),
                                             null)
                             );
@@ -150,21 +150,21 @@ public class LessonGenerator extends Generator{
                            checks below:
                            -the lesson geneorator take into account the section numbers well
                            -Does the lesson object take this into account well? done
-                           + DO THIS BEFORE THE BELOW: Update the timeslots
+                           - DO THIS BEFORE THE BELOW: Update the timeslots
+                           +check over constraints
                            +how does the above effect print out? It doesn't I already check before printing if the
                            lesson has lecture or lab. ACUTALLY update the timeslots first. This will determine how
                            the print out and the constraints will have to be updated
-                           +check over constraints
                            */
                         lessons.add(
-                                generateLesson(teacherHashMap, course, teacherName,
+                                generateLesson(teacher, course,
                                         String.format("0-%d-%d", courseUnits[LAB_POS], courseUnits[ACT_POS]),
                                         LabPatterns.ONE)
                         );
                     }
                     //if not we do the below
                     else{
-                        newLesson = generateLesson(teacherHashMap, course, teacherName);
+                        newLesson = generateLesson(teacher, course);
                         if(newLesson.isStudio()) proper_studio_detected = true;
                         lessons.add(newLesson);
                     }
@@ -176,22 +176,17 @@ public class LessonGenerator extends Generator{
     }
 
 
-
-
-    //TODO lets update so we stop passing teacherHashMap and teacherName. No point since they both get combined here; normalize this
     /**
      * <p>Generates a new lesson for the course that a teacher will teach.</p>
      *
-     * @param teacherHashMap Hashmap of teacher's <i>canon name</i> mapped to its respective <i>Teacher</i> object
+     * @param teacher Object for teacher who will be scheduled
      * @param course course slug for the lesson that will be created; expected format is <i>modifier-courseName</i> or
      *               <i>courseName</i>
-     * @param teacherName name of the teacher who will teach the lesson
      * @return returns a new lesson to be scheduled
      * @see Constants#COURSE_CONFIGS
      * @see Constants#COURSE_ID_BIMAP
      */
-    private static Lesson generateLesson(Map<String, Teacher> teacherHashMap, String course, String teacherName){
-        Teacher teacher = getTeacher(teacherHashMap, teacherName);;
+    private static Lesson generateLesson(Teacher teacher, String course){
         //first element = modifier; second element = course name
         Pair<String, String> courseDetails = getCourseDetails(course);
         String courseModifier = courseDetails.getFirst();
@@ -215,10 +210,8 @@ public class LessonGenerator extends Generator{
     /**
      * used only for when we split a course into two lesson objects
      */
-    private static Lesson generateLesson(Map<String, Teacher> teacherHashMap, String course, String teacherName,
-                                         String config, LabPatterns labPattern){
-        Teacher teacher = getTeacher(teacherHashMap, teacherName);;
-        //first element = modifier; second element = course name
+    private static Lesson generateLesson(Teacher teacher, String course, String config, LabPatterns labPattern){
+       //first element = modifier; second element = course name
         Pair<String, String> courseDetails = getCourseDetails(course);
         String courseModifier = courseDetails.getFirst();
         String courseName = courseDetails.getSecond();

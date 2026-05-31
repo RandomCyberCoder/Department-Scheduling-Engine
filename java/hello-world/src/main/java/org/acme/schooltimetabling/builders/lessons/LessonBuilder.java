@@ -36,7 +36,7 @@ public class LessonBuilder {
 
     public LessonBuilder id(int id){
         if(id < 0) throw new IllegalArgumentException("the id must be greater then zero");
-        this.id = courseName;
+        this.id = String.valueOf(id);
         return this;
     }
 
@@ -66,7 +66,7 @@ public class LessonBuilder {
     }
 
     private boolean validateConfig(String config){
-        return courseConfig.matches("^(?=.*[1-9])[0-9]-[0-9]-[0-9]$");
+        return config.matches("^(?=.*[1-9])[0-9]-[0-9]-[0-9]$");
     }
 
     public LessonBuilder teacherObj(Teacher teacherObj) {
