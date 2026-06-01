@@ -12,6 +12,41 @@ import java.util.BitSet;
 import java.util.EnumSet;
 
 public class Timeslot {
+    public class Partition{
+        private EnumSet<Days> days = EnumSet.noneOf(Days.class);
+        private LocalTime startTime = null;
+        private LocalTime endTime = null;
+        private BitSet bitSet = new BitSet();
+        /**
+         * Amount of hours per day for this partition
+         */
+        private float hours = 0f;
+
+        public LocalTime getStartTime() {
+            return startTime;
+        }
+
+        public LocalTime getEndTime() {
+            return endTime;
+        }
+
+        public EnumSet<Days> getDays() {
+            return days;
+        }
+
+        public BitSet getBitSet() {
+            return bitSet;
+        }
+
+        public float getHours() {
+            return hours;
+        }
+
+        public boolean isContinuous(){
+            return days.size() == 1 && bitSet.cardinality() > 2;
+        }
+    }
+
     /*TODO checklist
     *  -convert names having lecture or lab/act to first slot and second slot; maybe rething names
     *  -update callers for getting previous lecture or lab/act bitsets
@@ -19,31 +54,18 @@ public class Timeslot {
     *   if we have only one slot and also returning lecture time if we have only one slot this will be messy
     *   This should be handle by callers to decide how they want to handle this info
     *  -we might also want to update the parsers to reflect this; this should just boil down to the header names
+    *  -merge attributes into the Partition slot
     *  +Update the constraints that are accessing the times. We might want to look into adding another constraint
     *   so we can divided up responsibilities*/
     @PlanningId
     private String id;
     private int ID;
-    /*I should make these days into a class or something*/
-    private EnumSet<Days> daysSlot1;
-    public LocalTime startTimeSlot1;
-    public LocalTime endTimeSlot1;
-    public BitSet bitSetSlot1;
-    /**
-     * Amount of hours per day in portion one of this timeslot;
-     * This slot can be either for lecture or lab/act time
-     */
-    public float hoursSlot1;
+
+    private Partition partition1;
+    private Partition partition2;
+
     public boolean hasSlot2;
-    private EnumSet<Days> daysSlot2;
-    public LocalTime startTimeSlot2;
-    public LocalTime endTimeSlot2;
-    public BitSet bitSetSlot2;
-    /**
-     * Amount of hours per day in the second portion of this timeslot if any;
-     * currently used only for lab/act
-     */
-    private float hoursSlot2;
+
     public BitSet allTimesBitSet;
 
     //static vars
@@ -103,31 +125,35 @@ public class Timeslot {
      */
     private Timeslot(int ID, EnumSet<Days> daysSlot1, EnumSet<Days> daysSlot2){
         if(daysSlot1.isEmpty()) throw new IllegalArgumentException("Slot1 must always include a time");
+        this.partition1 = new Partition();
+        this.partition2 = new Partition();
         this.id = Integer.toString(ID);
-        this.daysSlot1 = daysSlot1.clone();
-        this.daysSlot2 = daysSlot2.clone();
-        this.hasSlot2 = !this.daysSlot2.isEmpty();
+        this.partition1.days = daysSlot1.clone();
+        this.partition2.days = daysSlot2.clone();
+        this.hasSlot2 = !this.partition2.days.isEmpty();
     }
 
     /**
      * test constructor
      */
-    private Timeslot(int ID, BitSet lecBitSet, BitSet bitSetSlot2, EnumSet<Days> daysSlot1, EnumSet<Days> labActDays){
+    private Timeslot(int ID, BitSet bitset1, BitSet bitSetSlot2, EnumSet<Days> daysSlot1, EnumSet<Days> daysSlot2){
         if(daysSlot1.isEmpty()) throw new IllegalArgumentException("Slot1 must always include a time");
 
+        this.partition1 = new Partition();
+        this.partition2 = new Partition();
         this.id = Integer.toString(ID);
         this.ID = ID;
-        this.bitSetSlot1 = (BitSet) lecBitSet.clone();
-        this.bitSetSlot2 = (BitSet) bitSetSlot2.clone();
-        this.daysSlot1 = daysSlot1.clone();
-        this.daysSlot2 = labActDays.clone();
-        this.hasSlot2 = !this.daysSlot2.isEmpty();
+        this.partition1.bitSet = (BitSet) bitset1.clone();
+        this.partition2.bitSet = (BitSet) bitSetSlot2.clone();
+        this.partition1.days = daysSlot1.clone();
+        this.partition2.days = daysSlot2.clone();
+        this.hasSlot2 = !this.partition2.days.isEmpty();
         BitSet allBitSet = new BitSet();
-        allBitSet.or(this.bitSetSlot1);
-        allBitSet.or(this.bitSetSlot2);
+        allBitSet.or(this.partition1.bitSet);
+        allBitSet.or(this.partition2.bitSet);
         this.allTimesBitSet = allBitSet;
-        this.hoursSlot1 = lecBitSet.cardinality() /(float) daysSlot1.size() / 2f;
-        this.hoursSlot2 = bitSetSlot2.cardinality() /(float)labActDays.size() /2f;
+        this.partition1.hours = bitset1.cardinality() /(float) daysSlot1.size() / 2f;
+        this.partition2.hours = bitSetSlot2.cardinality() /(float)daysSlot2.size() /2f;
     }
 
     /**
@@ -168,6 +194,9 @@ public class Timeslot {
         validate(daysSlot1, startTimeSlot1, endTimeSlot1, startHours, totalHours,
                 daysSlot2, startTimeSlot2, endTimeSlot2, totalHours2);
 
+        partition1 = new Partition();
+        partition2 = new Partition();
+
         this.ID = ID;
         this.id = String.valueOf(ID);
         //process parsed inputs after we have validated them;
@@ -179,71 +208,87 @@ public class Timeslot {
             if(startMinutes == totalMinutes){
                 this.hasSlot2 = false;
 
-                this.daysSlot1 = daysSlot1;
-                this.startTimeSlot1 = startTimeSlot1;
-                this.endTimeSlot1 = endTimeSlot1;
-                this.hoursSlot1 = totalHours;
-                this.bitSetSlot1 = BitSetHelper.timeSlotBitSet(
-                        this.startTimeSlot1, Math.round(this.hoursSlot1 * 2f), this.daysSlot1
+                this.partition1.days = daysSlot1;
+                this.partition1.hours = totalHours;
+                this.partition1.startTime = startTimeSlot1;
+                this.partition1.endTime = endTimeSlot1;
+                this.partition1.bitSet = BitSetHelper.timeSlotBitSet(
+                        this.partition1.startTime,
+                        Math.round(this.partition1.hours * 2f),
+                        this.partition1.days
                 );
 
-                this.daysSlot2 = EnumSet.noneOf(Days.class);
-                this.startTimeSlot2 = null;
-                this.endTimeSlot2 = null;
-                this.hoursSlot2 = 0;
-                this.bitSetSlot2 = new BitSet();
+                this.partition2.days = EnumSet.noneOf(Days.class);
+                this.partition2.startTime = null;
+                this.partition2.endTime = null;
+                this.partition2.hours = 0f;
+                this.partition2.bitSet = new BitSet();
 
                 this.allTimesBitSet = new BitSet();
-                this.allTimesBitSet.or(this.bitSetSlot1);
+                this.allTimesBitSet.or(this.partition1.bitSet);
             }
             //other scenario when it doesn't
             //this means we have the slot1 and slot2 populated
             else{
                 this.hasSlot2 = true;
 
-                this.daysSlot1 = daysSlot1;
-                this.hoursSlot1 = startHours;
-                this.startTimeSlot1 = startTimeSlot1;
-                this.endTimeSlot1 = this.startTimeSlot1.plusMinutes(Math.round(this.hoursSlot1 * 60f));
-                this.bitSetSlot1 = BitSetHelper.timeSlotBitSet(
-                        this.startTimeSlot1, Math.round(this.hoursSlot1 * 2f), this.daysSlot1
+                this.partition1.days = daysSlot1;
+                this.partition1.hours = startHours;
+                this.partition1.startTime = startTimeSlot1;
+                this.partition1.endTime = this.partition1.startTime.plusMinutes(
+                        Math.round(this.partition1.hours * 60f)
+                );
+                this.partition1.bitSet = BitSetHelper.timeSlotBitSet(
+                        this.partition1.startTime,
+                        Math.round(this.partition1.hours * 2f),
+                        this.partition1.days
                 );
 
-                this.daysSlot2 = daysSlot1;
-                this.hoursSlot2 = startHours;
-                this.startTimeSlot2 = endTimeSlot1.minusMinutes(Math.round(this.hoursSlot2 * 60f));
-                this.endTimeSlot2 = endTimeSlot1;
-                this.bitSetSlot2 = BitSetHelper.timeSlotBitSet(
-                        this.startTimeSlot2, Math.round(this.hoursSlot2 * 2f), this.daysSlot2
+                this.partition2.days = daysSlot1;
+                this.partition2.hours = startHours;
+                this.partition2.startTime = endTimeSlot1.minusMinutes(
+                        Math.round(this.partition2.hours * 60f)
+                );
+                this.partition2.endTime = endTimeSlot1;
+                this.partition2.bitSet = BitSetHelper.timeSlotBitSet(
+                        this.partition2.startTime,
+                        Math.round(this.partition2.hours * 2f),
+                        this.partition2.days
                 );
 
                 this.allTimesBitSet = BitSetHelper.timeSlotBitSet(
-                        this.startTimeSlot1, Math.round(totalHours * 2f), this.daysSlot1
+                        this.partition1.startTime,
+                        Math.round(totalHours * 2f),
+                        this.partition1.days
                 );
             }
         }
         else{
             this.hasSlot2 = true;
 
-            this.daysSlot1 = daysSlot1;
-            this.startTimeSlot1 = startTimeSlot1;
-            this.endTimeSlot1 = endTimeSlot1;
-            this.hoursSlot1 = totalHours;
-            this.bitSetSlot1 = BitSetHelper.timeSlotBitSet(
-                    this.startTimeSlot1, Math.round(this.hoursSlot1 * 2), this.daysSlot1
+            this.partition1.days = daysSlot1;
+            this.partition1.hours = totalHours;
+            this.partition1.startTime = startTimeSlot1;
+            this.partition1.endTime = endTimeSlot1;
+            this.partition1.bitSet = BitSetHelper.timeSlotBitSet(
+                    this.partition1.startTime,
+                    Math.round(this.partition1.hours * 2),
+                    this.partition1.days
             );
 
-            this.daysSlot2 = daysSlot2;
-            this.startTimeSlot2 = startTimeSlot2;
-            this.endTimeSlot2 = endTimeSlot2;
-            this.hoursSlot2 = totalHours2;
-            this.bitSetSlot2 = BitSetHelper.timeSlotBitSet(
-                    this.startTimeSlot2, Math.round(this.hoursSlot2 * 2), this.daysSlot2
+            this.partition2.days = daysSlot2;
+            this.partition2.hours = totalHours2;
+            this.partition2.startTime = startTimeSlot2;
+            this.partition2.endTime = endTimeSlot2;
+            this.partition2.bitSet = BitSetHelper.timeSlotBitSet(
+                    this.partition2.startTime,
+                    Math.round(this.partition2.hours * 2),
+                    this.partition2.days
             );
 
             this.allTimesBitSet = new BitSet();
-            this.allTimesBitSet.or(this.bitSetSlot1);
-            this.allTimesBitSet.or(this.bitSetSlot2);
+            this.allTimesBitSet.or(this.partition1.bitSet);
+            this.allTimesBitSet.or(this.partition2.bitSet);
         }
     }
 
@@ -361,8 +406,20 @@ public class Timeslot {
      * @return True if continuous; Otherwise false. One hour long (continuous) single day timeslots are marked
      * as not continuous;
      */
-    public boolean isContinuous(){
-        return daysSlot1.size() == 1 && !hasSlot2 && bitSetSlot1.cardinality() > 2;
+    public boolean isContinuousSlot1(){
+        return partition1.isContinuous();
+    }
+
+    /**
+     * Checks that second partition has all its time in one block; all time in one day and all back to back
+     * @return true if continuous; otherwise false. It will throw an error if there is no second slot.
+     */
+    public boolean isContinuousSlot2(){
+        if(!hasSlot2) throw new RuntimeException(String.format(
+                "Timeslot with id '%d' has no second slot",
+                ID
+        ));
+        return partition2.isContinuous();
     }
 
     @Override
@@ -371,13 +428,21 @@ public class Timeslot {
     }
 
     private String toStringSlot1(){
-        return getString(daysSlot1, startTimeSlot1, endTimeSlot1);
+        return getString(
+                this.partition1.days,
+                this.partition1.startTime,
+                this.partition1.endTime
+        );
     }
 
     private String toStringSlot2(){
         if(!this.hasSlot2) return "No second slot";
 
-        return getString(daysSlot2, startTimeSlot2, endTimeSlot2);
+        return getString(
+                this.partition2.days,
+                this.partition2.startTime,
+                this.partition2.endTime
+        );
     }
 
     private String getString(EnumSet<Days> days, LocalTime startTime, LocalTime endTime) {
@@ -409,15 +474,15 @@ public class Timeslot {
     }
 
     public LocalTime getStartTimeSlot1() {
-        return startTimeSlot1;
+        return partition1.startTime;
     }
 
     public LocalTime getEndTimeSlot1() {
-        return endTimeSlot1;
+        return partition1.endTime;
     }
 
     public BitSet getBitSetSlot1() {
-        return bitSetSlot1;
+        return partition1.bitSet;
     }
 
     public boolean isHasSlot2() {
@@ -425,15 +490,15 @@ public class Timeslot {
     }
 
     public LocalTime getStartTimeSlot2() {
-        return startTimeSlot2;
+        return partition2.startTime;
     }
 
     public LocalTime getEndTimeSlot2() {
-        return endTimeSlot2;
+        return partition2.endTime;
     }
 
     public BitSet getBitSetSlot2() {
-        return bitSetSlot2;
+        return partition2.bitSet;
     }
 
     public BitSet getAllTimesBitSet() {
@@ -445,7 +510,7 @@ public class Timeslot {
      * @return number of lec hours the timeslot can accommodate per day
      */
     public float getHoursSlot1() {
-        return hoursSlot1;
+        return partition1.hours;
     }
 
     /**
@@ -453,14 +518,22 @@ public class Timeslot {
      */
     public float getHoursSlot2(){
         if(!this.hasSlot2) return 0;
-        else return hoursSlot2;
+        else return partition2.hours;
     }
 
     public EnumSet<Days> getDaysSlot1() {
-        return daysSlot1;
+        return partition1.days;
     }
 
     public EnumSet<Days> getDaysSlot2() {
-        return daysSlot2;
+        return partition2.days;
+    }
+
+    public Partition getPartition1(){
+        return partition1;
+    }
+
+    public Partition getPartition2(){
+        return partition2;
     }
 }
