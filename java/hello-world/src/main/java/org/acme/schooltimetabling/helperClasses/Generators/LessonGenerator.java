@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import static org.acme.schooltimetabling.helperClasses.ParseInput.readCoursePatterns;
 
 public class LessonGenerator extends Generator{
-    public static boolean OLD_studio_detected = false;
     public static boolean proper_studio_detected = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(LessonGenerator.class);
     private static final PrescheduleObject PRESCHED_TIMES = ScheduleConfig.getPrescheduledFileName() != null ?
@@ -39,6 +38,10 @@ public class LessonGenerator extends Generator{
      * available lesson ID rather than using this attribute directly.
      */
     private static int lessonID = 1;
+    /**
+     * contains the next available linker id
+     */
+    private static int nextLinkerId = 1;
     private static List<Lesson> skippedLessons = new ArrayList<>();
 
     static {
@@ -151,10 +154,13 @@ public class LessonGenerator extends Generator{
                            -the lesson geneorator take into account the section numbers well
                            -Does the lesson object take this into account well? done
                            - DO THIS BEFORE THE BELOW: Update the timeslots
-                           +check over constraints
+                           -check over constraints
                            +how does the above effect print out? It doesn't I already check before printing if the
                            lesson has lecture or lab. ACUTALLY update the timeslots first. This will determine how
                            the print out and the constraints will have to be updated
+                           NOTE: THAT WHEN THINKING ABOUT THIS CHANGE THINK ABOUT LESSONS THAT COULD HAVE ONLY
+                           LEC/ACT AS WELL. THIS CAN HELP US THINK ABOUT THE IMPLEMENTATION. ALSO THINK ABOUT HOW STUDIO
+                           COURSES MAYBE COULD BE SPLIT AS WELL
                            */
                         lessons.add(
                                 generateLesson(teacher, course,
@@ -391,7 +397,6 @@ public class LessonGenerator extends Generator{
         String[] nameFragments = name.split(",");
         boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(nameFragments[LAST_NAME_POS].strip());
         TeacherBuilder builder = new TeacherBuilder(new DefaultTeachingPolicy());
-        //TODO; CHECK UPDATE
         if(isFaculty){
             LOGGER.info(String.format("Found teacher '%s' to be a faculty member. Promoting to Faculty"
                     , name));
@@ -436,6 +441,10 @@ public class LessonGenerator extends Generator{
      */
     public static int nextLessonID(){
         return lessonID++;
+    }
+
+    public static int nextLinkerID(){
+        return nextLinkerId++;
     }
 
     /** This method requires the config to determine if the course will need a section for a lecture,

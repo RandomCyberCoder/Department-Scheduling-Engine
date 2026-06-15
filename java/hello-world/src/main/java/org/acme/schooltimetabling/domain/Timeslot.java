@@ -47,16 +47,7 @@ public class Timeslot {
         }
     }
 
-    /*TODO checklist
-    *  -convert names having lecture or lab/act to first slot and second slot; maybe rething names
-    *  -update callers for getting previous lecture or lab/act bitsets
-    *   Note that we shouldn't try to do any smart behavior like returning lab/act time
-    *   if we have only one slot and also returning lecture time if we have only one slot this will be messy
-    *   This should be handle by callers to decide how they want to handle this info
-    *  -we might also want to update the parsers to reflect this; this should just boil down to the header names
-    *  -merge attributes into the Partition slot
-    *  +Update the constraints that are accessing the times. We might want to look into adding another constraint
-    *   so we can divided up responsibilities*/
+
     @PlanningId
     private String id;
     private int ID;

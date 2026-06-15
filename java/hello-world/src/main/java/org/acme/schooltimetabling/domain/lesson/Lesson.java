@@ -51,6 +51,7 @@ public class Lesson {
     public int lecHours, labActHours;
     public Teacher teacherObj;
     private LabPatterns labPattern;
+    private Integer linkerId;
 
     /**Prevent default constructor use*/
     private Lesson() {
@@ -59,10 +60,16 @@ public class Lesson {
 
     /*TODO change all planning variable IDs to a int/Integer as mentioned in the documentation
     *  https://docs.timefold.ai/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningId*/
-
-    //TODO update to remove the teacherName field from all constructors. This will simplify the generators funcs
-
     /* Test factory methods */
+    public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
+                                          String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room,
+                                          Integer linkerId, LabPatterns labPattern){
+        Lesson lesson = new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
+                , timeslot, room);
+        lesson.linkerId = linkerId;
+        lesson.labPattern = labPattern;
+        return lesson;
+    }
     public static Lesson test_buildLesson(String Id, int lecSection, String courseName, String teacherName, String modifiers,
                             String courseConfig, int courseID, Teacher teacherObj, Timeslot timeslot, Room room){
         return new Lesson(Id, lecSection, courseName, teacherName, modifiers, courseConfig, courseID, teacherObj
@@ -112,9 +119,11 @@ public class Lesson {
      * @param modifiers any course modifiers. If no modifiers pass a "" string
      * @param courseConfig configuration of the <i>courseName</i> for this lesson
      * @param teacherObj teacher object associated with the <i>teacherName</i>
+     * @param linkerId ID used to link courses that got split into distinct lesson
+     *                 objects; Otherwise use <i>null</i> in on such split exists
      */
     public Lesson(String Id, int sectionNumber, String courseName, String modifiers,
-                  String courseConfig, Teacher teacherObj){
+                  String courseConfig, Teacher teacherObj, LabPatterns labPattern, Integer linkerId){
         /*the courseConfig stream is assumed to come in the format
         * E-L-A where E is the number of lecture units, L is the number of
         * lab units, and A is the number of activity units */
@@ -136,14 +145,15 @@ public class Lesson {
         this.courseName = courseName;
         this.teacherObj = teacherObj;
         this.modifiers = modifiers;
-        this.labPattern = null;
+        this.labPattern = labPattern;
+        this.linkerId = linkerId;
     }
 
-    public Lesson(String Id, int lecSection, String courseName, String modifiers,
-                  String courseConfig, Teacher teacherObj, LabPatterns labPattern){
-        this(Id, lecSection, courseName, modifiers, courseConfig, teacherObj);
-        this.labPattern = labPattern;
-    }
+//    public Lesson(String Id, int lecSection, String courseName, String modifiers,
+//                  String courseConfig, Teacher teacherObj, LabPatterns labPattern){
+//        this(Id, lecSection, courseName, modifiers, courseConfig, teacherObj, (Integer) null);
+//        this.labPattern = labPattern;
+//    }
 
     /**
      * Built using minimum fields needed for excel file print out
@@ -221,7 +231,7 @@ public class Lesson {
         return this.hasLecture ? this.sectionNumber : -1;
     }
 
-    //TODO UPDATE
+
     /**
      * Retrieve a lec/act section if one exists
      * @return lab/act section if one exists; otherwise -1
@@ -231,8 +241,8 @@ public class Lesson {
         for the lecture and the next section number is assumed to be reserved for the lab/act portion of the lesson
          */
         if(this.hasLabAct && this.hasLecture) return this.sectionNumber + 1;
-        if(this.hasLabAct) return this.sectionNumber;
-        return -1;
+        else if(this.hasLabAct) return this.sectionNumber;
+        else return -1;
     }
 
     //I guess we technically don't need this with the current setup up of getLecSection()
@@ -254,6 +264,10 @@ public class Lesson {
 
     public Teacher getTeacherObj() {
         return teacherObj;
+    }
+
+    public Integer getLinkerId(){
+        return this.linkerId;
     }
 
     public boolean isStudio(){

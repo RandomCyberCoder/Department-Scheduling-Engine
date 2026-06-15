@@ -163,4 +163,12 @@ public class ScheduleConfig {
         if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
         return HOLDER.scheduleConfig.patternsFileName;
     }
+
+    public static void setCompressBits(BitSet compressIn, BitSet compressOut){
+        if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
+        if(!HOLDER.scheduleConfig.testing) throw new IllegalStateException("This is only allowed during testing");
+
+        HOLDER.scheduleConfig.cpmrsInBs = compressIn;
+        HOLDER.scheduleConfig.cmprsOutBs = compressOut;
+    }
 }

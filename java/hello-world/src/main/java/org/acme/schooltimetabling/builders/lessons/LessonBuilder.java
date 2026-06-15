@@ -1,9 +1,12 @@
 package org.acme.schooltimetabling.builders.lessons;
 
 import org.acme.schooltimetabling.constants.Constants;
+import org.acme.schooltimetabling.domain.Room;
+import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
 import org.acme.schooltimetabling.fileObjects.LabPatterns;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 
 
 /**
@@ -32,8 +35,17 @@ public class LessonBuilder {
     //optional build fields
     private String modifier = "";
     private LabPatterns labPattern = null;
+    private Integer linkerId = null;
+
+    //fields used only when testing
+    private Timeslot timeslot = null;
+    private Room room = null;
+    private int courseId = -1;
 
 
+    /**
+     * unique id of the Lesson object that will be built
+     */
     public LessonBuilder id(int id){
         if(id < 0) throw new IllegalArgumentException("the id must be greater then zero");
         this.id = String.valueOf(id);
@@ -79,6 +91,36 @@ public class LessonBuilder {
         return this;
     }
 
+    public LessonBuilder linkerId(Integer linkerId){
+        this.linkerId = linkerId;
+        return this;
+    }
+
+    public LessonBuilder timeslot(Timeslot timeslot){
+        if(!ScheduleConfig.isTesting()) throw new RuntimeException("This is only available during testing, Shouldn't be " +
+                "set manually");
+        this.timeslot = timeslot;
+        return this;
+    }
+
+    public LessonBuilder room(Room room){
+        if(!ScheduleConfig.isTesting()) throw new RuntimeException("This is only available during testing, Shouldn't be " +
+                "set manually");
+        this.room = room;
+        return this;
+    }
+
+    /**
+     * id for the course; i.e all lessons that are scheduling course 'csc1000' will share the same
+     * <i>courseId</i>, like '1';
+     */
+    public LessonBuilder courseId(int courseId){
+        if(!ScheduleConfig.isTesting()) throw new RuntimeException("This is only available during testing, Shouldn't be " +
+                "set manually");
+        this.courseId = courseId;
+        return this;
+    }
+
     public LessonBuilder clear() {
         id = null;
         section = null;
@@ -87,15 +129,22 @@ public class LessonBuilder {
         courseConfig = null;
         teacherObj = null;
         labPattern = null;
+        linkerId = null;
+        timeslot = null;
+        room = null;
+        courseId = -1;
         return this;
     }
 
     public Lesson build() {
+        //mandatory fields
         if (id == null || section == null || courseName == null || courseConfig == null || teacherObj == null) {
             throw new IllegalCallerException(
                     "When calling build() you must have values set for id, section, courseName, courseConfig, and teacherObj"
             );
         }
+
+
 
         //check if we need a default for the lab
         String[] units = courseConfig.split("-");
@@ -105,6 +154,15 @@ public class LessonBuilder {
 
         if(modifier == null) modifier = "";
 
-        return new Lesson(id, section, courseName, modifier, courseConfig, teacherObj, labPattern);
+        if(ScheduleConfig.isTesting()){
+            if(timeslot == null || room == null) throw new RuntimeException("When building a lesson during testing, " +
+                    "a 'timeslot' and a 'room' or else the lesson won't be detected by the constraint");
+            return Lesson.test_buildLesson(
+                    id, section, courseName, teacherObj.getName(), modifier, courseConfig, courseId, teacherObj,
+                    timeslot, room, linkerId, labPattern
+            );
+        }
+
+        return new Lesson(id, section, courseName, modifier, courseConfig, teacherObj, labPattern, linkerId);
     }
 }

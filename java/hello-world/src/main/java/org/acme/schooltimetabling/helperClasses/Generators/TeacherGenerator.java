@@ -270,7 +270,7 @@ public class TeacherGenerator extends Generator{
             }
         }
 
-        //TODO; CHECK UPDATE
+
         String[] splitName = canonName.split(",");
         Preference gapPref = Preference.parsePref(surveyEntry.get("gap"));
         boolean isFaculty = Constants.FACULTY_LAST_NAMES.contains(splitName[0].strip());
@@ -296,7 +296,6 @@ public class TeacherGenerator extends Generator{
     private static void prescheduleUpdate(Map<String, Teacher> teacherMap,
                                           Map<String, List<PrescheduleObject.PrescheduledWindow>> presched){
         Iterator<Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>>> iterator = presched.entrySet().iterator();
-        //TODO use builder here for teacher creation; we should use a default time here actually; lets update; CHECK UPDATE
         while (iterator.hasNext()) {
             Map.Entry<String, List<PrescheduleObject.PrescheduledWindow>> entry = iterator.next();
             String name = entry.getKey();
