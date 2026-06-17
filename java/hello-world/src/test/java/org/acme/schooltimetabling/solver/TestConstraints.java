@@ -225,7 +225,7 @@ public class TestConstraints {
     void roomMultiLessons(){
         EnumSet<Days> MWF = EnumSet.of(Days.MONDAY, Days.WEDNESDAY,Days.FRIDAY);
         //9-11 MWF
-        BitSet bs_MWF_8AM_4blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("8:00AM", FORMATTER)
+        BitSet bs_MWF_9AM_4blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", FORMATTER)
                 , 4, MWF);
         //9-10 MWF
         BitSet bs_MWF_9AM_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", FORMATTER)
@@ -237,7 +237,7 @@ public class TestConstraints {
         BitSet bs_MWF_11_2blcks = BitSetHelper.timeSlotBitSet(LocalTime.parse("11:00AM", FORMATTER),
                 2, MWF);
 
-        Timeslot ts_mwf_8_4blcks = Timeslot.test_lecLabBitAndDays(1, bs_MWF_8AM_4blcks, ConstraintTestHelper.EMPTY_BS,
+        Timeslot ts_mwf_9_4blcks = Timeslot.test_lecLabBitAndDays(1, bs_MWF_9AM_4blcks, ConstraintTestHelper.EMPTY_BS,
                 MWF, ConstraintTestHelper.NO_DAYS);
         Timeslot ts_mwf_9_10_2blcks = Timeslot.test_lecLabBitAndDays(2, bs_MWF_9AM_2blcks, bs_MWF_10_2blcks,
                 MWF, MWF);
@@ -248,15 +248,19 @@ public class TestConstraints {
                 MWF, ConstraintTestHelper.NO_DAYS);
 
 
+        //potential time conflict: 8-10am
         Lesson lesson1 = Lesson.test_buildLesson("1", 1, "dummyName", "noName"
-                , "", "0-0-1", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_mwf_8_4blcks,
+                , "", "0-0-1", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_mwf_9_4blcks,
                 ConstraintTestHelper.DUMMY_ROOM);
+        //potential time conflict: mwf 10-11pm
         Lesson lesson2 = Lesson.test_buildLesson("2", 2, "dummyName", "noName"
                 , "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_mwf_9_10_2blcks,
                 ConstraintTestHelper.DUMMY_ROOM);
+        //potential time conflict: mwf 11-12pm
         Lesson lesson3 = Lesson.test_buildLesson("3", 3, "dummyName", "noName"
                 , "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, ts_lec_mwf_10_lab_mwf_11,
                 ConstraintTestHelper.DUMMY_ROOM);
+        //potential time conflict mwf: 11-12pm
         Lesson lesson4studio = Lesson.test_buildLesson("4", 1, ConstraintTestHelper.DUMMY_STUDIO, "", "",
                 "3-0-0", 2, ConstraintTestHelper.DUMMY_TEACHER, ts_mwf_11,
                 ConstraintTestHelper.DUMMY_ROOM);
@@ -264,6 +268,28 @@ public class TestConstraints {
         constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
                 .given(lesson1, lesson2, lesson3, lesson4studio)
                 .penalizesBy(2);
+    }
+
+    @Test
+    @DisplayName("A room accommodates only one lesson at a time; test2")
+    void roomMultiLessons2(){
+        Timeslot timeslot1 = new Timeslot(1,
+                "M", "9:00AM", "12:00PM", 3f, 3f,
+                "", "", "", 0);
+        Lesson lesson1 = Lesson.test_buildLesson("1", 1, "dummyName", "noName"
+                , "", "0-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot1,
+                ConstraintTestHelper.DUMMY_ROOM);
+
+        Timeslot timeslot2 = new Timeslot(2,
+                "MWF", "8:00AM", "10:00AM", 1f, 2f,
+                "", "", "", 0);
+        Lesson lesson2 = Lesson.test_buildLesson("2", 2, "dummyName", "noName"
+                , "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot2,
+                ConstraintTestHelper.DUMMY_ROOM);
+
+        constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
+                .given(lesson1, lesson2)
+                .penalizesBy(1);
     }
 
 
@@ -1440,10 +1466,26 @@ public class TestConstraints {
                 .courseId(COMMON_COURSE_ID)
                 .build();
 
+        Timeslot timeslot4 = new Timeslot(4,
+                "MWF", "7:00AM", "8:00AM", 1f, 1f,
+                "TR", "3:00PM" ,"4:00PM", 1f);
+        Lesson lesson4 = builder
+                .clear()
+                .id(4)
+                .section(4)
+                .courseName("course1")
+                .courseConfig("3-1-0")
+                .teacherObj(TEACHER2)
+                .timeslot(timeslot4)
+                .room(ConstraintTestHelper.DUMMY_ROOM)
+                .courseId(COMMON_COURSE_ID)
+                .build();
+
         constraintVerifier.verifyThat(TimetableConstraintProvider::rewardCoursesDiffTimes)
-                .given(lesson1, lesson2, lesson3)
-                .rewardsWith(2);
+                .given(lesson1, lesson2, lesson3, lesson4)
+                .rewardsWith(3);
     }
+
 
 
 

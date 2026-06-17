@@ -140,32 +140,21 @@ public class LessonGenerator extends Generator{
                         final int LEC_POS = 0;
                         final int LAB_POS = 1;
                         final int ACT_POS = 2;
+                        final Integer linkerId = courseUnits[LEC_POS] != 0 ? nextLinkerID() : null;
 
                         //check if this course has a lecture portion
                         if(courseUnits[LEC_POS] != 0){
                             lessons.add(
                                     generateLesson(teacher, course,
                                             String.format("%d-0-0", courseUnits[LEC_POS]),
-                                            null)
+                                            null, linkerId)
                             );
                         }
-                        /*TODO make sure we can make a lab only lesson.
-                           checks below:
-                           -the lesson geneorator take into account the section numbers well
-                           -Does the lesson object take this into account well? done
-                           - DO THIS BEFORE THE BELOW: Update the timeslots
-                           -check over constraints
-                           +how does the above effect print out? It doesn't I already check before printing if the
-                           lesson has lecture or lab. ACUTALLY update the timeslots first. This will determine how
-                           the print out and the constraints will have to be updated
-                           NOTE: THAT WHEN THINKING ABOUT THIS CHANGE THINK ABOUT LESSONS THAT COULD HAVE ONLY
-                           LEC/ACT AS WELL. THIS CAN HELP US THINK ABOUT THE IMPLEMENTATION. ALSO THINK ABOUT HOW STUDIO
-                           COURSES MAYBE COULD BE SPLIT AS WELL
-                           */
+
                         lessons.add(
                                 generateLesson(teacher, course,
                                         String.format("0-%d-%d", courseUnits[LAB_POS], courseUnits[ACT_POS]),
-                                        LabPatterns.ONE)
+                                        LabPatterns.ONE, linkerId)
                         );
                     }
                     //if not we do the below
@@ -209,14 +198,15 @@ public class LessonGenerator extends Generator{
                 .courseConfig(courseConfig)
                 .modifier(courseModifier)
                 .teacherObj(teacher)
-                .labPattern(getLabPattern(courseName, courseModifier))
+                .labPattern(getLabPattern(courseName, teacher.getName()))
                 .build();
     }
 
     /**
      * used only for when we split a course into two lesson objects
      */
-    private static Lesson generateLesson(Teacher teacher, String course, String config, LabPatterns labPattern){
+    private static Lesson generateLesson(Teacher teacher, String course, String config, LabPatterns labPattern,
+                                         Integer linkerId){
        //first element = modifier; second element = course name
         Pair<String, String> courseDetails = getCourseDetails(course);
         String courseModifier = courseDetails.getFirst();
@@ -230,6 +220,7 @@ public class LessonGenerator extends Generator{
                 .modifier(courseModifier)
                 .teacherObj(teacher)
                 .labPattern(labPattern)
+                .linkerId(linkerId)
                 .build();
     }
 

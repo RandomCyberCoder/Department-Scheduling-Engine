@@ -170,15 +170,15 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                 .forEachUniquePair(Lesson.class,
                     Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
                     Joiners.equal(Lesson::getCourseID))
-                .filter((lesson, lesson2) -> {
-                    /*Penalize courses not on the same day taught by the same professor */
-                    EnumSet<Days> lsnSlot1Days = lesson.getTimeslot().getDaysSlot1();
-                    EnumSet<Days> lsn2Slot1Days = lesson2.getTimeslot().getDaysSlot1();
-                    return lsnSlot1Days.contains(Days.MONDAY) != lsn2Slot1Days.contains(Days.MONDAY) ||
-                            lsnSlot1Days.contains(Days.TUESDAY) != lsn2Slot1Days.contains(Days.TUESDAY) ||
-                            lsnSlot1Days.contains(Days.WEDNESDAY) != lsn2Slot1Days.contains(Days.WEDNESDAY) ||
-                            lsnSlot1Days.contains(Days.THURSDAY) != lsn2Slot1Days.contains(Days.THURSDAY) ||
-                            lsnSlot1Days.contains(Days.FRIDAY) != lsn2Slot1Days.contains(Days.FRIDAY);
+                .filter((lesson1, lesson2) -> {
+                    if(!lesson1.isHasLecture() || !lesson2.isHasLecture()) return false;
+                    /*Make sure they are on the same time pattern; note the same pattern is guaranteed when you
+                    * take this constraint and the constraint ensuring the exact hours in the timeslot match that
+                    * of the lesson into account. Remember the timeslot architecture results in each day having
+                    * the same amount of hours for each subpartition the timeslot has*/
+                    EnumSet<Days> lesson1Days = lesson1.getTimeslot().getPartition1().getDays();
+                    EnumSet<Days> lesson2Days = lesson2.getTimeslot().getPartition1().getDays();
+                    return lesson1Days.size() != lesson2Days.size();
                 })
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("Teacher has same course on same days");
@@ -274,7 +274,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     }
                     /*If the split is for a non studio course or course simply has no lecture then the first slot
                      will contain the bitset we need*/
-                    else if(!lesson.isHasLecture()) bitSet2 = lesson2.getTimeslot().getBitSetSlot1();
+                    else if(!lesson2.isHasLecture()) bitSet2 = lesson2.getTimeslot().getBitSetSlot1();
                     else bitSet2 = lesson2.getTimeslot().getBitSetSlot2();
 
                     //penalize any overlap; aka room being occupied at the same time
@@ -452,13 +452,13 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         return  constraintFactory.forEach(Lesson.class)
                 .filter(lesson -> {
                     Timeslot timeslot = lesson.getTimeslot();
-                    //lab + lab/act
+                    //lab + lab/act; this will always require lab to be spread out
                     if(lesson.hasLecture && lesson.hasLabAct){
                         //in such a configuration the lab/act portion will be spread out; right now no lab with continuous
                         //time are in second slots
                         return !timeslot.hasSlot2 || timeslot.isContinuousSlot1() || timeslot.isContinuousSlot2();
                     }
-                    //lab/act only
+                    //lab/act only; lab could be either be spread or all in one block
                     else if(lesson.hasLabAct){
                         return timeslot.isHasSlot2() ||
                                 //the next portion depends on if the lab has to be all in one block
@@ -485,7 +485,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         EnumSet<Days> daysTeaching = EnumSet.noneOf(Days.class);
         //keeps track of what lesson pairs have already been counted towards the number of gaps
         Set<Set<Integer>> used = new HashSet<>();
-        System.out.println(lessons.size());
         for (Lesson lesson : lessons) {
             Timeslot ts = lesson.getTimeslot();
             scheduledTime.or(ts.getAllTimesBitSet());
@@ -770,9 +769,12 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                             Integer lesson1LinkerId = lesson1.getLinkerId();
                             Integer lesson2LinkerId = lesson2.getLinkerId();
 
-                            return lesson1LinkerId != null
-                                    && !lesson1LinkerId.equals(lesson2LinkerId)
-                                    && lesson1.getCourseID() == lesson2.getCourseID();
+                            //pass through if no linker id; if linker id exists allow if they are not the same
+                            return (
+                                    lesson1LinkerId == null && lesson2LinkerId == null ||
+                                            lesson1LinkerId != null && !lesson1LinkerId.equals(lesson2LinkerId) ||
+                                            !lesson2LinkerId.equals(lesson1LinkerId)
+                            ) && lesson1.getCourseID() == lesson2.getCourseID();
                         }))
                 .filter(((lesson1, lesson2) -> {
                     BitSet bitSet1 = lesson1.getTimeslot().getAllTimesBitSet();
@@ -781,7 +783,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
                     return !bitSet1.intersects(bitSet2);
                 }))
                 .reward(HardMediumSoftScore.ONE_MEDIUM)
-                .asConstraint("Reward linked courses at different times");
+                .asConstraint("Reward lesson instances of a course scheduled at different times");
     }
 
     //-------------------------------------- Soft Constraints --------------------------------------
