@@ -109,6 +109,7 @@ the lecture units and lab/act units will be bundled together into a lesson insta
 Other things to consider:
 - If a studio course instance is scheduled to have all it's lab/act time to be in **one** block, then the constraint
 enforcing that lab/act time must be immediately after lecture will not be enforced for this lesson.
+- When setting the instructor preference, the key (aka the instructor's name) should be their canonical name.
 
 
 

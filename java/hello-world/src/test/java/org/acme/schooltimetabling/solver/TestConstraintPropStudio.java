@@ -46,7 +46,7 @@ public class TestConstraintPropStudio {
                 ConstraintTestHelper.DUMMY_TEACHER, ts_TR_TR, ConstraintTestHelper.DUMMY_ROOM);
 
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::sameClassSameDays)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::teacherSameCourseSamePattern)
                 .given(ls1_MWF_TR, ls2_TR_TR
                 )
                 /*Note this takes into account weight of rewards*/
@@ -67,7 +67,7 @@ public class TestConstraintPropStudio {
                 "", "3-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
                 ConstraintTestHelper.DUMMY_TEACHER, ts_MWF_MWF, ConstraintTestHelper.DUMMY_ROOM);
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::sameClassSameDays)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::teacherSameCourseSamePattern)
                 .given(ls1_MWF_TR, ls2_MWF_MWF
                 )
                 /*Note this takes into account weight of rewards*/
@@ -116,7 +116,7 @@ public class TestConstraintPropStudio {
                 "", "3-1-0", Constants.COURSE_ID_BIMAP.get(ConstraintTestHelper.DUMMY_STUDIO),
                 ConstraintTestHelper.DUMMY_TEACHER, ts_TR_830AM_3blcks_10AM_3blcks, ConstraintTestHelper.DUMMY_ROOM);
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomConflict)
                 .given(combo1_st1, combo1_non_st1,
                         combo2_st2, combo2_st3)
                 .penalizesBy(2);
@@ -147,7 +147,7 @@ public class TestConstraintPropStudio {
                 ConstraintTestHelper.DUMMY_ROOM);
 
         //reasoning: proper studios use lab room for lec and lab/act portions, but non proper doesn't use it during lec
-        constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomConflict)
                 .given(combo1_st1, combo1_non_st1)
                 .penalizesBy(NO_PENALTY);
 

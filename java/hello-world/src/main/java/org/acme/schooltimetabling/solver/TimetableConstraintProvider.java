@@ -35,10 +35,10 @@ public class TimetableConstraintProvider implements ConstraintProvider {
         //universal constraints
         List<Constraint> solver_constraints = new ArrayList<>(Arrays.asList(
                 // Hard constraints
-                sameClassSameDays(constraintFactory),
+                teacherSameCourseSamePattern(constraintFactory),
                 teacherLessonConflict(constraintFactory),
                 lessonConflict(constraintFactory),
-                labActRoomConflict(constraintFactory),
+                roomConflict(constraintFactory),
                 wrongHoursAmount(constraintFactory),
                 wrongRoomType(constraintFactory),
                 timeslotPatternMatch(constraintFactory),
@@ -145,7 +145,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
      *
      * @return Penalize by {@link HardMediumSoftScore#ONE_HARD}
      */
-    Constraint sameClassSameDays(ConstraintFactory constraintFactory){
+    Constraint teacherSameCourseSamePattern(ConstraintFactory constraintFactory){
         return constraintFactory
                 .forEachUniquePair(Lesson.class,
                     Joiners.equal(lesson -> lesson.getTeacherObj().getId()),
@@ -217,7 +217,7 @@ public class TimetableConstraintProvider implements ConstraintProvider {
      * This constraint will penalize any unique pair of lessons (w/ lab/act) that use the same room
      * at the same time
      */
-    Constraint labActRoomConflict(ConstraintFactory constraintFactory){
+    Constraint roomConflict(ConstraintFactory constraintFactory){
         return constraintFactory
                 //for each lesson
                 .forEachUniquePair(Lesson.class,

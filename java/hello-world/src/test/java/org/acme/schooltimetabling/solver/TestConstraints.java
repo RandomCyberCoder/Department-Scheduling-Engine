@@ -1,6 +1,5 @@
 package org.acme.schooltimetabling.solver;
 
-import ai.timefold.solver.core.api.score.stream.Constraint;
 import org.acme.schooltimetabling.builders.lessons.LessonBuilder;
 import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
 import org.acme.schooltimetabling.builders.teachers.policies.DefaultTeachingPolicy;
@@ -80,7 +79,7 @@ public class TestConstraints {
                 .build();
 
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::sameClassSameDays)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::teacherSameCourseSamePattern)
                 .given(ls1, ls2, ls3, ls4, ls5)
                 /*Note this takes into account weight of rewards*/
                 .penalizesBy(3);
@@ -265,7 +264,7 @@ public class TestConstraints {
                 "3-0-0", 2, ConstraintTestHelper.DUMMY_TEACHER, ts_mwf_11,
                 ConstraintTestHelper.DUMMY_ROOM);
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomConflict)
                 .given(lesson1, lesson2, lesson3, lesson4studio)
                 .penalizesBy(2);
     }
@@ -287,7 +286,7 @@ public class TestConstraints {
                 , "", "3-1-0", 1, ConstraintTestHelper.DUMMY_TEACHER, timeslot2,
                 ConstraintTestHelper.DUMMY_ROOM);
 
-        constraintVerifier.verifyThat(TimetableConstraintProvider::labActRoomConflict)
+        constraintVerifier.verifyThat(TimetableConstraintProvider::roomConflict)
                 .given(lesson1, lesson2)
                 .penalizesBy(1);
     }
