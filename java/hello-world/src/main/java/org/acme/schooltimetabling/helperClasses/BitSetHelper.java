@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.helperClasses;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
-import org.acme.schooltimetabling.helperClasses.PrescheduleObject.PrescheduledWindow;
+import org.acme.schooltimetabling.fileObjects.PrescheduleObject.PrescheduledWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

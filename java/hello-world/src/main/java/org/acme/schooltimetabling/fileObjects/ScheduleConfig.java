@@ -1,6 +1,8 @@
-package org.acme.schooltimetabling.helperClasses;
+package org.acme.schooltimetabling.fileObjects;
 
 import org.acme.schooltimetabling.constants.Days;
+import org.acme.schooltimetabling.helperClasses.BitSetHelper;
+import org.acme.schooltimetabling.helperClasses.ParseInput;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.time.Duration;
@@ -28,6 +30,7 @@ public class ScheduleConfig {
     public String compressStart;
     public String compressEnd;
     public String prescheduledFileName;
+    public String patternsFileName;
     //------------ values calculated ------------
     private BitSet cpmrsInBs;
     private BitSet cmprsOutBs;
@@ -154,5 +157,18 @@ public class ScheduleConfig {
     public static String getPrescheduledFileName(){
         if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
         return HOLDER.scheduleConfig.prescheduledFileName;
+    }
+
+    public static String getPatternsFileName(){
+        if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
+        return HOLDER.scheduleConfig.patternsFileName;
+    }
+
+    public static void setCompressBits(BitSet compressIn, BitSet compressOut){
+        if(HOLDER.scheduleConfig == null) throw new IllegalStateException("Configuration must be loaded");
+        if(!HOLDER.scheduleConfig.testing) throw new IllegalStateException("This is only allowed during testing");
+
+        HOLDER.scheduleConfig.cpmrsInBs = compressIn;
+        HOLDER.scheduleConfig.cmprsOutBs = compressOut;
     }
 }

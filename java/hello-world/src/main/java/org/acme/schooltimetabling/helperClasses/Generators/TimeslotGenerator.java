@@ -50,35 +50,35 @@ public class TimeslotGenerator extends Generator{
         String days = Optional.ofNullable(timeslotMap.get("days"))
                 .filter(s -> !s.isBlank())
                 .orElse("").strip();
-        String timeStart = timeslotMap.get("time_start");
-        String timeEnd = timeslotMap.get("time_end");
-        float lectureHours = Float.parseFloat(
-                Optional.ofNullable(timeslotMap.get("lecture_hours"))
+        String startTime = timeslotMap.get("startTime");
+        String endTime = timeslotMap.get("endTime");
+        float startHours = Float.parseFloat(
+                Optional.ofNullable(timeslotMap.get("startHours"))
                         .filter(s -> !s.isBlank())
                         .orElse("-1"));
         float totalHours = Float.parseFloat(
-                Optional.ofNullable(timeslotMap.get("total_hours"))
+                Optional.ofNullable(timeslotMap.get("totalHours"))
                         .filter(s -> !s.isBlank())
                         .orElse("-1"));
-        String labDays = Optional.ofNullable(timeslotMap.get("lab_days"))
+        String days2 = Optional.ofNullable(timeslotMap.get("days2"))
                 .filter(s -> !s.isBlank())
                 .orElse("").strip();
-        String labStart = timeslotMap.get("lab_start");
-        String labEnd = timeslotMap.get("lab_end");
-        float labHours = Float.parseFloat(
-                Optional.ofNullable(timeslotMap.get("lab_hours"))
+        String startTime2 = timeslotMap.get("startTime2");
+        String endTime2 = timeslotMap.get("endTime2");
+        float totalHours2 = Float.parseFloat(
+                Optional.ofNullable(timeslotMap.get("totalHours2"))
                         .filter(s -> !s.isBlank())
                         .orElse("-1")
         );
 
         try {
-            newTimeslot = new Timeslot(ID, days, timeStart, timeEnd, lectureHours, totalHours,
-                    labDays, labStart, labEnd, labHours);
+            newTimeslot = new Timeslot(ID, days, startTime, endTime, startHours, totalHours,
+                    days2, startTime2, endTime2, totalHours2);
         }
         catch (Exception e){
             LOGGER.error("Terminating program. Failed to generate a timeslot with the following (check format):\n " +
-                    String.format("days: %s; timeStart: %s; timeEnd: %s; lecHours: %s; totalHours: %s; labDays: %s"
-                            ,days, timeStart, timeEnd, lectureHours, totalHours, labDays));
+                    String.format("days: %s; startTime: %s; endTime: %s; startHours: %s; totalHours: %s; days2: %s"
+                            ,days, startTime, endTime, startHours, totalHours, days2));
             e.printStackTrace();
             System.exit(ParseInput.PROGRAM_FAILURE);
         }

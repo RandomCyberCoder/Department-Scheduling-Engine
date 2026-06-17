@@ -1,14 +1,12 @@
 package org.acme.schooltimetabling.domain.teacher;
 
-import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
-import org.acme.schooltimetabling.TimetableApp;
 import org.acme.schooltimetabling.builders.teachers.TeacherBuilder;
 import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
 import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

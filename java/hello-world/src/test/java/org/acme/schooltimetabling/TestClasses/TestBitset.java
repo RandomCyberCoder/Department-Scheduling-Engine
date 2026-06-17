@@ -1,7 +1,7 @@
 package org.acme.schooltimetabling.TestClasses;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

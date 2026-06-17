@@ -8,8 +8,8 @@ import org.acme.schooltimetabling.constants.Preference;
 import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.BitSetHelper;
-import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 
 import java.time.LocalTime;
 import java.util.BitSet;
@@ -28,9 +28,9 @@ public class ConstraintTestHelper {
             .gapPref(Preference.NEUTRAL)
             .canon("dummyInstructor")
             .build();
-    public final static Timeslot DUMMY_TS = Timeslot.test_lecLabBitAndDays(999, EMPTY_BS, EMPTY_BS, NO_DAYS, NO_DAYS);
+    public final static Timeslot DUMMY_TS = Timeslot.test_minSetUp("999");
     /**
-     * Test: room name; will be used by a specific course {@link #TEST_L_W_LAB_SPECIFIC}
+     * Test: room name; will be used by a specific course {@link #TEST_STUDIO_SPECIFIC}
      */
     public final static String TEST_NAME_LAB_ROOM_SPECIFIC = "LabRoom";
     /**
@@ -44,7 +44,7 @@ public class ConstraintTestHelper {
     public final static Set<String> TEST_SET_LAB_ROOMS = Set.of(TEST_NAME_LAB_ROOM_SPECIFIC);
     /**
      * Test: name of a course that has a specific lab*/
-    public final static String TEST_L_W_LAB_SPECIFIC = "Lab/Act course";
+    public final static String TEST_STUDIO_SPECIFIC = "Lab/Act course";
     /**
      * Room that can be used by any lab
      */
@@ -54,7 +54,7 @@ public class ConstraintTestHelper {
      */
     public static Room TEST_ROOM_SPECIFIC;
     /**
-     * Room prescheduled
+     * Room prescheduled: currently MWF 9-10am
      */
     public static Room TEST_ROOM_PRESCHEDULED;
     public static String NON_STUDIO_SPECIFIC = "non studio course with a specific room";
@@ -76,10 +76,10 @@ public class ConstraintTestHelper {
 
         //add which lessons are studios
         Constants.STUDIO_STYLE_COURSES.add(DUMMY_STUDIO);
-        Constants.STUDIO_STYLE_COURSES.add(TEST_L_W_LAB_SPECIFIC);
+        Constants.STUDIO_STYLE_COURSES.add(TEST_STUDIO_SPECIFIC);
 
         //add mapping for which courses can be in certain rooms
-        Constants.COURSE_TO_ROOMS.put(TEST_L_W_LAB_SPECIFIC, TEST_SET_LAB_ROOMS);
+        Constants.COURSE_TO_ROOMS.put(TEST_STUDIO_SPECIFIC, TEST_SET_LAB_ROOMS);
         Constants.COURSE_TO_ROOMS.put(NON_STUDIO_SPECIFIC, TEST_SET_LAB_ROOMS);
 
         //create the room objects
@@ -95,9 +95,21 @@ public class ConstraintTestHelper {
         BitSet roomBlocked = BitSetHelper.timeSlotBitSet(LocalTime.parse("9:00AM", Constants.TIME_FORMATTER), 2, MWF);
         TEST_ROOM_PRESCHEDULED.prescheduleUpdate(roomBlocked);
 
+        //add
+        EnumSet<Days> MTWRF = EnumSet.of(Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY, Days.FRIDAY);
+        BitSet compressIn = new BitSet(150);
+        compressIn.or(
+                BitSetHelper.timeSlotBitSet(LocalTime.parse("10:00AM", Constants.TIME_FORMATTER),
+                8, MTWRF)
+        );
+        BitSet compressOut = (BitSet) compressIn.clone();
+        compressOut.flip(0,150);
+        ScheduleConfig.setCompressBits(compressIn, compressOut);
 
         Constants.TESTING = true;
     }
+
+
     public static void load(){
 
     }

@@ -1,8 +1,7 @@
 package org.acme.schooltimetabling.helperClasses.Generators;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import org.acme.schooltimetabling.helperClasses.ParseInput;
-import org.acme.schooltimetabling.helperClasses.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,6 +14,9 @@ import org.acme.schooltimetabling.domain.Room;
 import org.acme.schooltimetabling.domain.Timeslot;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.fileObjects.CoursePatterns;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
+import org.acme.schooltimetabling.fileObjects.ScheduleFormat;
 import org.acme.schooltimetabling.helperClasses.*;
 import org.acme.schooltimetabling.helperClasses.Generators.*;
 import org.slf4j.Logger;
@@ -39,6 +42,10 @@ public class TimetableApp {
                 ScheduleConfig.getSeasonTerm()));
         LOGGER.info("Loading critical constants");
         Constants.load();
+        if(ScheduleConfig.isTesting()){
+            LOGGER.error("Configuration must not have testing set to true when creating a solution. Exiting...");
+            return;
+        }
 
         Map<String, Teacher> teacherMap = TeacherGenerator.teacherGenDriver();
         /*generate timeslots*/

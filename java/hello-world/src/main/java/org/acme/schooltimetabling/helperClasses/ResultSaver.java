@@ -14,8 +14,10 @@ import org.acme.schooltimetabling.constants.Constants;
 import org.acme.schooltimetabling.constants.Days;
 import org.acme.schooltimetabling.domain.lesson.Lesson;
 import org.acme.schooltimetabling.domain.Timeslot;
+import org.acme.schooltimetabling.domain.Timeslot.Partition;
 import org.acme.schooltimetabling.domain.Timetable;
 import org.acme.schooltimetabling.domain.teacher.Teacher;
+import org.acme.schooltimetabling.fileObjects.ScheduleConfig;
 import org.acme.schooltimetabling.helperClasses.Generators.LessonGenerator;
 import org.acme.schooltimetabling.solver.justifications.WrongHoursAmountJustification;
 import org.apache.commons.math3.util.Pair;
@@ -39,6 +41,7 @@ import java.util.*;
 public class ResultSaver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultSaver.class);
     private static final DateTimeFormatter LOCALTIME_FORMATTER = DateTimeFormatter.ofPattern("h:mma");
+    private static final String UNIVERSITY_ROOM = "University Room";
     private static final int COLUMN_SPACING = 5;
     private static final int START_COLUMN = 1;
     private static final Map<String, Integer> ROOM_COL_MAP;
@@ -66,6 +69,7 @@ public class ResultSaver {
             localTime = localTime.plusMinutes(30);
         }
     }
+
     public ResultSaver(Timetable solution){
         solToPrint = solution;
         buildTeacherMap();
@@ -76,6 +80,10 @@ public class ResultSaver {
         buildTeacherMap();
     }
 
+    /**
+     * builds an internal map that is used to determine the starting column that belongs to an instructor
+     * in the Excel file. Used only for the "Room Usage" and "Teacher Schedule" sheets
+     */
     private void buildTeacherMap(){
         List<Lesson> lessonList = solToPrint.getLessons();
         int rowNum = 0;
@@ -264,24 +272,23 @@ public class ResultSaver {
     private int listViewPrntHlpr(XSSFSheet listSheet, List<Lesson> lessons, int rowIdx) {
 
         lessons = sortLessons(lessons);
-
         for(Lesson lesson: lessons){
-            final Timeslot lsTs = lesson.getTimeslot();
-            Timeslot.test_minSetUp("1");
+            final Timeslot ts = lesson.getTimeslot();
             if(lesson.isHasLecture()){
                 Row row = listSheet.createRow(rowIdx++);
-                String roomName = lesson.isStudio() ? lesson.getRoom().getName() : "University Room";
+                String roomName = lesson.isStudio() ? lesson.getRoom().getName() : UNIVERSITY_ROOM;
                 Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLecSection(), lesson.getModifiers(),
-                        lesson.getTeacherObj().getName(), roomName, lsTs.getLecDays().toString(),
-                        lsTs.getStartTimeLec().toString(), lsTs.getEndTimeLec().toString(), true};
+                        lesson.getTeacherObj().getName(), roomName, ts.getDaysSlot1().toString(),
+                        ts.getStartTimeSlot1().toString(), ts.getEndTimeSlot1().toString(), true};
                 lstViewRowHelper(row, vals);
             }
             if(lesson.isHasLabAct()){
-                //lab print out
+                //slot/partition we access depends on if the lesson has a lecture associated with it
+                Partition partition = lesson.isHasLecture() ? ts.getPartition2() : ts.getPartition1();
                 Row row = listSheet.createRow(rowIdx++);
                 Object[] vals = new Object[]{lesson.getCourseName(), lesson.getLabActSection(), lesson.getModifiers(),
-                        lesson.getTeacherObj().getName(), lesson.getRoom().getName(), lsTs.getNonLecDays().toString(),
-                        lsTs.getStartTimeLabAct().toString(), lsTs.getEndTimeLabAct().toString(), false};
+                        lesson.getTeacherObj().getName(), lesson.getRoom().getName(), partition.getDays().toString(),
+                        partition.getStartTime().toString(), partition.getEndTime().toString(), false};
                 lstViewRowHelper(row, vals);
             }
         }
@@ -324,16 +331,20 @@ public class ResultSaver {
         }
     }
 
-
     private List<Lesson> sortLessons(List<Lesson> list){
-        //sort the list so it look neat to look at; sort by course name
+        //sort the list so it look neat to look at; sort by course name and by id in case we split or no lecture
         //make the list mutable for sorting
         List<Lesson> toSort = new ArrayList<>(list);
         toSort.sort((a, b) -> {
             String nameA = a.getCourseName();
             String nameB = b.getCourseName();
-
-            return nameA.compareTo(nameB);
+            //lecture section will be smaller if lesson has both lec and lab/act
+            int sectionA = a.isHasLecture() ? a.getLecSection() : a.getLabActSection();
+            int sectionB = b.isHasLecture() ? b.getLecSection() : b.getLabActSection();
+            int order;
+            if(nameA.equals(nameB)) order = Integer.compare(sectionA, sectionB);
+            else order = nameA.compareTo(nameB);
+            return order;
         });
 
         return toSort;
@@ -352,18 +363,21 @@ public class ResultSaver {
             //lecture
             if(lesson.isHasLecture()){
                 String lecStr = lecToStr(lesson);
-                fillTimeCell(teacherSheet, rowsBuilt, lecStr, TEACHER_COL_MAP.get(teacher.getName()), ts.getLecDays(),
-                        ts.getStartTimeLec(), ts.getEndTimeLec());
+                fillTimeCell(teacherSheet, rowsBuilt, lecStr, TEACHER_COL_MAP.get(teacher.getName()), ts.getDaysSlot1(),
+                        ts.getStartTimeSlot1(), ts.getEndTimeSlot1());
             }
-            //lab
+            //lab/act
             if(lesson.isHasLabAct()){
                 String labStr = labToStr(lesson);
-                fillTimeCell(teacherSheet, rowsBuilt, labStr, TEACHER_COL_MAP.get(teacher.getName()), ts.getNonLecDays(),
-                        ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
+                //check in the case that we split or no lecture exists
+                Partition partition = lesson.isHasLecture() ? ts.getPartition2() : ts.getPartition1();
+                fillTimeCell(teacherSheet, rowsBuilt, labStr, TEACHER_COL_MAP.get(teacher.getName()), partition.getDays(),
+                        partition.getStartTime(), partition.getEndTime());
             }
 
         }
     }
+
 
     /**
      * Driver function for printing out the room sheet
@@ -375,12 +389,14 @@ public class ResultSaver {
             Timeslot ts = lesson.getTimeslot();
             if(lesson.getRoom().getName().equals(Constants.LEC_ONLY)) continue;
             //if the course is a studio course also print out the lecture that is also occupying the room
-            if(lesson.isStudio()){
-                fillTimeCell(roomSheet, rowsBuilt, lecToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getLecDays(),
-                        ts.getStartTimeLec(), ts.getEndTimeLec());
+            if(lesson.isStudio() && lesson.isHasLecture()){
+                fillTimeCell(roomSheet, rowsBuilt, lecToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()),
+                        ts.getDaysSlot1(), ts.getStartTimeSlot1(), ts.getEndTimeSlot1());
             }
-            fillTimeCell(roomSheet, rowsBuilt, labToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()), ts.getNonLecDays(),
-                            ts.getStartTimeLabAct(), ts.getEndTimeLabAct());
+
+            Partition partition = lesson.isHasLecture() ? ts.getPartition2() : ts.getPartition1();
+            fillTimeCell(roomSheet, rowsBuilt, labToStr(lesson), ROOM_COL_MAP.get(lesson.getRoom().getName()),
+                    partition.getDays(), partition.getStartTime(), partition.getEndTime());
 
         }
     }
@@ -500,28 +516,38 @@ public class ResultSaver {
         }
     }
 
+
     private String labToStr(Lesson lesson){
         Timeslot ts = lesson.getTimeslot();
+        Partition partition = lesson.isHasLecture() ? ts.getPartition2() : ts.getPartition1();
         return String.format("%s\n", lesson.getTeacherObj().getName()) +
                 String.format("%s\n", lesson.getCourseName()) +
                 String.format("%s\n", lesson.getRoom().getName()) +
                 String.format("Lab Sec Num: %s\n", lesson.getLabActSection()) +
-                String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLabAct().format(LOCALTIME_FORMATTER),
-                        ts.getEndTimeLabAct().format(LOCALTIME_FORMATTER));
+                String.format("%s  %s-%s", partition.getDays().toString(),
+                        partition.getStartTime().format(LOCALTIME_FORMATTER),
+                        partition.getEndTime().format(LOCALTIME_FORMATTER)
+                );
     }
+
 
     private String lecToStr(Lesson lesson){
         Timeslot ts = lesson.getTimeslot();
         return String.format("%s\n", lesson.getTeacherObj().getName()) +
                 String.format("%s\n", lesson.getCourseName()) +
-                String.format("%s\n", lesson.isStudio() ? lesson.getRoom().getName() : "University Room") +
+                String.format("%s\n", lesson.isStudio() ? lesson.getRoom().getName() : UNIVERSITY_ROOM) +
                 String.format("Lecture Sec Num: %s\n", lesson.getLecSection()) +
-                String.format("%s  %s-%s", ts.getLecDays().toString(), ts.getStartTimeLec().format(LOCALTIME_FORMATTER),
-                        ts.getEndTimeLec().format(LOCALTIME_FORMATTER));
+                String.format("%s  %s-%s", ts.getDaysSlot1().toString(), ts.getStartTimeSlot1().format(LOCALTIME_FORMATTER),
+                        ts.getEndTimeSlot1().format(LOCALTIME_FORMATTER));
 
 
     }
 
+
+    /**
+     * Dumps times a teacher has been scheduled during for the given solution as JSON.
+     * @throws IOException
+     */
     public void teacherTimesToJson() throws IOException {
         Pair<List<Lesson>, List<Lesson>> extracted = extractLessons();
         //we only consider lessons that don't violate any hard constraints as actually being scheduled
