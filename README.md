@@ -56,6 +56,10 @@ __Optional Files:__
 An example file has been given for you to understand the formatting.
 This file can be included if you want to add in prescheduled times.
 For example, an instructor was scheduled in another department.
+- `your_name_choice.json` [java/hello-world/src/main/resources/input/](java/hello-world/src/main/resources/input/).
+An example file is given for you to understand th formatting.
+This file can be used if you want to specify if a courses lab or activity time should be spread out across multiple
+days or if the time should be all in one block.
 
 Note I'll give you some of the files that aren't included.
 

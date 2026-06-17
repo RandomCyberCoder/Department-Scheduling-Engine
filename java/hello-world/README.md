@@ -86,7 +86,31 @@ If instructors teach in multiple departments, you can include the times they hav
 The file should be a `json` placed in the [./src/main/resources/input/](./src/main/resources/input/) directory. 
 An example of the file has been provided in the same directory your file should be placed.
 
-Once your file containing preshceulded times is placed, create the key in your `config.yaml` named `prescheduledFileName` mapped to the value of your file name, as seen in this example [file](./src/main/resources/constants/config.example.yaml)
+Once your file containing prescheduled times is placed, create the key in your `config.yaml` named `prescheduledFileName` mapped to the value of your file name, as seen in this example [file](./src/main/resources/constants/config.example.yaml)
+
+
+# Setting lab/act pattern
+If a course contains a lab or activity you can set if the course should have all it's lab/act time all in one block of time
+or spread out amongst various days. 
+You can set the pattern for a course globally and/or per instructor.
+Note, instructor choice takes precedence over global.
+If a course has a lab/act and no pattern is given to the course, the default is **"Multiple"**
+
+Time use this option you must include in your `config.yaml` they key name `patternsFileName` mapped the value of your
+file name, which must be a JSON file. An example of the JSON format that is expected is given 
+[here](./src/main/resources/input/coursePatterns.example.json). 
+
+The only patterns available for a course are **"One"** and **"Multiple"**. 
+If the pattern **"One"** is chosen and the course has lecture portion to it, the course will be split into two lessons. 
+One lesson will have only the lecture units while the other lesson contains only the lab/act units. 
+If the pattern **"Multiple"** is selected or defaulted to and the course has a lecture portion, 
+the lecture units and lab/act units will be bundled together into a lesson instance.
+
+Other things to consider:
+- If a studio course instance is scheduled to have all it's lab/act time to be in **one** block, then the constraint
+enforcing that lab/act time must be immediately after lecture will not be enforced for this lesson.
+
+
 
 
 
@@ -107,6 +131,6 @@ If there aren't any or there is a test you want to inlcude, follow the image gui
 
 **Example setup in intellij**  
 On step 1 you will see pop up. Select `edit` under configuration.  
-On step 2 you will see a menu and you should choose the `JUnit` option.  
+On step 2 you will see a menu, and you should choose the `JUnit` option.  
 On step 3 you will choose the same first 2 options and then choose the test class you want to run.
 ![example intellij test setup](../../documentation_media/intellij_test_setup.png)

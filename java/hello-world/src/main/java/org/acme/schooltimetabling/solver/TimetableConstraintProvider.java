@@ -26,26 +26,6 @@ public class TimetableConstraintProvider implements ConstraintProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimetableConstraintProvider.class);
     private static final float FLOAT_TIME_DELTA = 0.01f;
     @Override
-    /*TODO to consider now that we need to consider we can actually have lessons with only activities. Before this was
-    *  technically possible already but the constraints or lesson creation never actually allowed this to happen.
-    *  It might be worth making a new constraint for accommodating lab only lessons and those that need lab all in one
-    *  block.
-    *  Things to consider now in this new change that might not be in here already:
-    *  -Lessons can now have lab/act only
-    *  -We now have lessons whose lab may be required to be all in one block. Note such lessons will have lab only
-    *  -For lessons whose lab days may be on multiple days, the lesson could have a lecture or be lab only
-    *  -What the above means is that we now need to be careful how we assign timeslots to a lesson object and how
-    *   we check for the correct amount of hours
-    *  -timeslots with only one slot, can be used for lessons with either lab/act or lecture only now
-    *  -for lecture blocks we have to be careful that it isn't given a timeslot that is continuous
-    *  Summary:
-    *  -lesson can be: lab + lab/act, lab/act only, or lecture only;
-    *  -for lec + lab/act lessons, the lab/act will always be spread out
-    *  -for lab/act only lessons, the time might either be all in one block or spread out
-    *  -it might be worth making a constraint whose only responsibility is to handle that the right type of slot
-    *   is given to a lesson; Actually lets start off doing this while updating all the other constraints
-    *   and then figure out if we can merge it; This will be cognitively easier; make global flag for including
-    *   only if we have a lesson with lab only that want all the time in one block????*/
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
 
         Constraint[] studioConstraint = new Constraint[]{
